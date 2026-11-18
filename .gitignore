@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+.venv-win/
+venv/
+env/
+.pytest_cache/
+.playwright-cli/
+.mypy_cache/
+.ruff_cache/
+/dist/
+/build/
+/*.egg-info/
+.DS_Store
+.streamlit/secrets.toml
+benchmark_*.csv
+*_benchmark.csv
+parity_fixture/
+validation/generated/
+*.log
+backups/
+
+# Local source archives for retained research evidence
+/validation/source_snapshots/

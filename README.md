@@ -2,7 +2,9 @@
 
 Many-facet Rasch analysis (RSM / PCM with JMLE or fixed-population-SD MML) and balanced observed-score generalizability / decision (G/D) studies in Python.
 
-- **PyPI package (`0.2.0`):** [pypi.org/project/mfrmpy/0.2.0](https://pypi.org/project/mfrmpy/0.2.0/)
+This is the Python package repository. Report library problems in [mfrmpy issues](https://github.com/Ryuya-dot-com/mfrmpy/issues). The Web and Desktop repository maintains the applications and shares their calculation engine with this package.
+
+- **PyPI releases:** [mfrmpy](https://pypi.org/project/mfrmpy/)
 - **Package documentation:** [docs/python_library.md](docs/python_library.md)
 - **Statistical scope and interpretation boundaries:** [docs/analysis_scope.md](docs/analysis_scope.md)
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)

@@ -6,6 +6,7 @@ This is the Python package repository. Report library problems in [mfrmpy issues
 
 - **PyPI releases:** [mfrmpy](https://pypi.org/project/mfrmpy/)
 - **Package documentation:** [docs/python_library.md](docs/python_library.md)
+- **Rater comparisons:** [trace shared works and check planned scoring](docs/python_library.md#which-ratings-support-a-rater-comparison)
 - **Statistical scope and interpretation boundaries:** [docs/analysis_scope.md](docs/analysis_scope.md)
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 - **Web & Desktop applications:** [MFRM_Python_Application](https://github.com/Ryuya-dot-com/MFRM_Python_Application)

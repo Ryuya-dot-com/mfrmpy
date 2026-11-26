@@ -160,7 +160,7 @@ def test_minque_unidentified_and_local_nested_labels(nested):
 
 @pytest.mark.parametrize('multi', [False, True])
 def test_minque_retained_outputs_and_components_only(tmp_path, monkeypatch, multi):
-    from mfrm_app import unbalanced_gd
+    from mfrmpy._core import unbalanced_gd
     data, cfg = data_and_settings(True, multivariate=multi)
     data.iloc[0, data.columns.get_loc('A')] = np.nan
     cfg['missing'] = 'omit'
@@ -190,7 +190,7 @@ def test_minque_retained_outputs_and_components_only(tmp_path, monkeypatch, mult
 
 def test_minque_boundaries_and_archive_validation(tmp_path):
     from copy import deepcopy
-    from mfrm_app import project
+    from mfrmpy._core import project
     data, cfg = data_and_settings(multivariate=False)
     for values in (np.zeros(len(data)), np.full(len(data), 4.)):
         a = run(data.assign(A=values), cfg)
@@ -234,7 +234,7 @@ def test_minque_boundaries_and_archive_validation(tmp_path):
 @pytest.mark.parametrize('multi', [False, True])
 def test_minque_figures_and_html(tmp_path, monkeypatch, multi):
     import matplotlib.pyplot as plt
-    from mfrm_app import unbalanced_gd
+    from mfrmpy._core import unbalanced_gd
     data, cfg = data_and_settings(True, multivariate=multi)
     cases = [run(data, cfg), run(data, dict(cfg, selected_plan=None)), run(data.assign(A=0., B=0.), cfg)]
     monkeypatch.setattr(unbalanced_gd, 'study', lambda *a, **k: pytest.fail('must not re-estimate'))

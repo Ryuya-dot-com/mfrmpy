@@ -79,7 +79,7 @@ def test_example_is_bundled_and_not_shared_mutable_state():
 
 @pytest.mark.parametrize("key", ["Facet", "Level"])
 def test_unidentified_measure_rows_are_withheld_with_a_reason(key):
-    from mfrm_app.reporting_facts import publication_measure_table
+    from mfrmpy._core.reporting_facts import publication_measure_table
 
     raw = pd.DataFrame({"Facet": ["Task"], "Level": ["T1"], "Estimate": [4.]})
     for source in (raw.drop(columns=key), raw.assign(**{key: [None]}), raw.assign(**{key: [" "]})):
@@ -98,7 +98,7 @@ def fitted(request):
 
 
 def forbid_refit(monkeypatch):
-    from mfrm_app import engine, bias_analysis, generalizability, structural_intervals, joint_interaction
+    from mfrmpy._core import engine, bias_analysis, generalizability, structural_intervals, joint_interaction
     def forbidden(*args, **kwargs):
         pytest.fail("Reading retained public results must not refit")
     for module, names in (
@@ -115,7 +115,7 @@ def forbid_refit(monkeypatch):
 def test_anchor_sensitivity_retains_constraints_and_holds(tmp_path, monkeypatch):
     import json
 
-    from mfrm_app import project
+    from mfrmpy._core import project
 
     data = ratings()
     opts = settings(method="MML")
@@ -244,7 +244,7 @@ def test_anchor_interval_bases_and_sd_persist(tmp_path, monkeypatch):
 
 def test_shared_anchor_calibration_links_events_and_reopens(tmp_path, monkeypatch):
     from copy import deepcopy
-    from mfrm_app import project
+    from mfrmpy._core import project
 
     data = ratings()
     data["Event"] = ["event-" + str(i) for i in range(len(data))]
@@ -395,7 +395,7 @@ def group_dff_fit(request):
 
 
 def test_group_dff_saved_request_tables_and_csv(group_dff_fit, monkeypatch, tmp_path):
-    from mfrm_app import project
+    from mfrmpy._core import project
 
     fit, args, held = group_dff_fit
     forbid_refit(monkeypatch)
@@ -505,7 +505,7 @@ def test_group_dff_figures_and_html_from_archive(group_dff_fit, monkeypatch, tmp
 
 @pytest.mark.parametrize("model", ["RSM", "PCM"])
 def test_category_design_probabilities_and_severity_contrasts(model, tmp_path, monkeypatch):
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     from scipy.special import softmax
 
     rng = np.random.default_rng(436)
@@ -650,7 +650,7 @@ def gd_normal_ratings(shape=(12, 6, 5)):
 @pytest.mark.parametrize("shape", [(12, 6), (12, 6, 5)])
 @pytest.mark.figures
 def test_gd_normal_intervals_outputs_and_roundtrip(shape, tmp_path, monkeypatch):
-    from mfrm_app import gd_intervals
+    from mfrmpy._core import gd_intervals
     data = gd_normal_ratings(shape)
     facets = list(data.columns[1:-1])
     settings = dict(object_facet="Person", random_facets=facets,
@@ -691,7 +691,7 @@ def test_gd_normal_intervals_outputs_and_roundtrip(shape, tmp_path, monkeypatch)
 @pytest.mark.parametrize("shape", [(5, 4), (5, 4, 3)])
 def test_gd_covariance_matches_gaussian_quadratic_forms(shape):
     from functools import reduce
-    from mfrm_app import gd_intervals
+    from mfrmpy._core import gd_intervals
     data = gd_normal_ratings(shape)
     analysis = mfrmpy.analyze(data, workflow="gd", gd_settings=dict(
         object_facet="Person", random_facets=list(data.columns[1:-1])))
@@ -718,7 +718,7 @@ def test_gd_covariance_matches_gaussian_quadratic_forms(shape):
 
 
 def test_gd_interval_boundaries_and_explicit_assumptions():
-    from mfrm_app import gd_intervals, generalizability
+    from mfrmpy._core import gd_intervals, generalizability
     for request in ({}, {"method": "normal_delta"}, {"method": "bootstrap", "assumption": "normal"},
                     *[dict(method="normal_delta", assumption="normal", confidence=x)
                       for x in (True, 0, 1, np.nan, 1j)]):
@@ -786,7 +786,7 @@ def multivariate_settings(data):
 
 @pytest.mark.parametrize("shape", [(12, 6), (12, 6, 5)])
 def test_multivariate_gd_matches_scores_and_direct_composite(shape):
-    from mfrm_app import generalizability as gd
+    from mfrmpy._core import generalizability as gd
     data = multivariate_ratings(shape)
     cfg = multivariate_settings(data)
     cfg["selected_plan"] = {f: 13 for f in cfg["random_facets"]}
@@ -850,7 +850,7 @@ def test_multivariate_outputs_roundtrip_and_boundary_components(tmp_path, monkey
     assert np.isnan(result["observed_coefficients"]["G"])
     assert result["selected_plan"]["GStatus"] == "undefined_zero_denominator"
     assert not a["gd_analysis"]["result"]["multivariate"]["component_diagnostics"].PositiveSemidefinite.all()
-    from mfrm_app import multivariate_gd
+    from mfrmpy._core import multivariate_gd
     forbid_refit(monkeypatch)
     monkeypatch.setattr(multivariate_gd, "study", lambda *a, **k: pytest.fail("must not recompute"))
     for label, original in (("regular", a), ("cancellation", canceled)):
@@ -915,7 +915,7 @@ def test_multivariate_input_support_and_fixed_composite(tmp_path):
 
 def test_multivariate_numeric_range_and_archive_identity():
     from copy import deepcopy
-    from mfrm_app import project
+    from mfrmpy._core import project
     data = multivariate_ratings((5,4))
     cfg = multivariate_settings(data)
     huge = dict(cfg, composite_weights={s: 1e308 for s in cfg["score_cols"]})
@@ -939,7 +939,7 @@ def test_multivariate_numeric_range_and_archive_identity():
 @pytest.mark.parametrize("changed", [dict(model="GPCM"), dict(estimate_population_sd=True),
                                      dict(rating_min=0.5), dict(facet_cols=["Unknown"])])
 def test_unsupported_or_invalid_requests_are_rejected_before_estimation(changed, monkeypatch):
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     def forbidden(*args, **kwargs):
         pytest.fail("Invalid request reached estimation")
     monkeypatch.setattr(engine, "mfrm_estimate", forbidden)
@@ -1053,7 +1053,7 @@ def test_screening_only_se_intervals_and_four_series_reliability(fitted, tmp_pat
 
 def test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated(tmp_path, monkeypatch):
     from copy import deepcopy
-    from mfrm_app import basic_analysis, engine, output_qualification, project
+    from mfrmpy._core import basic_analysis, engine, output_qualification, project
 
     # 1) Connected JMLE where dense SVD hit audit_size_limit: unverified dense rank,
     #    yet screening_only conditional SEs remain visible with SupportsFormalInference=False.
@@ -1120,7 +1120,7 @@ def test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated(tmp_
 @pytest.mark.figures
 def test_boundary_exclusion_counts_low_df_fit_guards_and_legacy_reload(tmp_path, monkeypatch):
     from copy import deepcopy
-    from mfrm_app import project
+    from mfrmpy._core import project
 
     data = varied_ratings()
     data.loc[data["Person"].eq("P00"), "Score"] = 0
@@ -1725,7 +1725,7 @@ def test_api_consolidation_check_design_summary_table_kinds_and_aliases(monkeypa
 
 def test_cross_engine_parity_with_mfrmr_030_and_tam_4325():
     """Pin numerical agreement with mfrmr 0.3.0 and TAM 4.3.25 across JMLE, MML, intervals and G/D."""
-    from mfrm_app import engine
+    from mfrmpy._core import engine
 
     rng = np.random.default_rng(20261118)
     persons = [f"P{i:02d}" for i in range(1, 31)]
@@ -1802,7 +1802,7 @@ def test_cross_engine_parity_with_mfrmr_030_and_tam_4325():
 
 def test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening(tmp_path, monkeypatch):
     """Verify Plan A refinements: MML default quad_points=31, Step Thresholds, noncenter/positive_facets, and Bias screening."""
-    from mfrm_app import engine
+    from mfrmpy._core import engine
 
     rng = np.random.default_rng(20261118)
     persons = [f"P{i:02d}" for i in range(1, 31)]
@@ -2279,7 +2279,7 @@ def test_zero_object_variance_by_coefficient(scores, expected):
 
 @pytest.mark.parametrize("model,method", [("RSM", "JMLE"), ("PCM", "JMLE"), ("RSM", "MML")])
 def test_fit_saved_before_selected_diagnostics(model, method, tmp_path, monkeypatch):
-    from mfrm_app import engine, project, desktop_analysis
+    from mfrmpy._core import engine, project, desktop_analysis
     kwargs = settings(model, method)
     full = mfrmpy.analyze(ratings(), **kwargs)
     original = engine.mfrm_diagnostics
@@ -2317,7 +2317,7 @@ def test_fit_saved_before_selected_diagnostics(model, method, tmp_path, monkeypa
 
 def test_selected_outputs_reuse_observations_and_probabilities(monkeypatch):
     from unittest.mock import Mock
-    from mfrm_app import engine, project
+    from mfrmpy._core import engine, project
     obs = Mock(wraps=engine.compute_obs_table)
     probs = Mock(wraps=engine.compute_prob_matrix)
     monkeypatch.setattr(engine, "compute_obs_table", obs)
@@ -2332,7 +2332,7 @@ def test_selected_outputs_reuse_observations_and_probabilities(monkeypatch):
 
 
 def test_reduced_row_space_matches_dense_constraints():
-    from mfrm_app.design_rank import RowSpace
+    from mfrmpy._core.design_rank import RowSpace
     rng = np.random.default_rng(492)
     for _ in range(30):
         n_person, n_facet = 8, 5
@@ -2357,7 +2357,7 @@ def test_reduced_row_space_matches_dense_constraints():
 
 @pytest.mark.parametrize("anchoring", ["none", "person_fixed", "person_mean", "facet_mean", "centered_person"])
 def test_large_audit_matches_dense_with_anchors(anchoring):
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     kwargs = settings()
     if anchoring == "person_fixed":
         kwargs["anchors"] = [dict(Facet="Person", Level="000", Anchor=.2)]
@@ -2391,7 +2391,7 @@ def test_large_connected_design_audits_without_person_dense_matrix():
 
 def test_streamed_project_keeps_encoding_fingerprint_and_limits(monkeypatch):
     import hashlib
-    from mfrm_app import project
+    from mfrmpy._core import project
     fit = mfrmpy.fit(ratings(), **settings())
     full_encoding = project._json_bytes(project._encode(fit))
     assert b"".join(project._encoded_chunks(fit)) == full_encoding
@@ -2409,7 +2409,7 @@ def test_streamed_project_keeps_encoding_fingerprint_and_limits(monkeypatch):
 
 @pytest.mark.figures
 def test_partial_outputs_summary_exports_and_pca(tmp_path, monkeypatch):
-    from mfrm_app import engine, desktop_analysis
+    from mfrmpy._core import engine, desktop_analysis
     fit = mfrmpy.fit(ratings(), **settings())
     with monkeypatch.context() as patch:
         def fail(*args, **kwargs):
@@ -2460,7 +2460,7 @@ def test_partial_anchor_links_only_estimable_levels(tmp_path):
 
 
 def test_export_switches_complete_sets_and_preserves_user_files(tmp_path, monkeypatch):
-    from mfrm_app import project
+    from mfrmpy._core import project
     opts = dict(facet_a="Rater", facet_b="Task", omit_extreme=False)
     a = mfrmpy.analyze(ratings(), **settings(), bias_requests=[opts])
     b = mfrmpy.analyze(ratings(), **settings())

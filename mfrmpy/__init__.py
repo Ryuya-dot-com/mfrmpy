@@ -16,12 +16,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from mfrm_app import anchor_sensitivity, basic_analysis, desktop_analysis, exports, project, rater_dff
-from mfrm_app.anchor_sensitivity import with_anchor_sensitivity
-from mfrm_app.desktop_analysis import check_design, run_analysis as analyze
-from mfrm_app.project import ProjectError, load_project, save_project
-from mfrm_app.rater_contrast import check_rater_contrast
-from mfrm_app.rater_dff import prepare_rater_dff_data, with_rater_dff
+from mfrmpy._core import anchor_sensitivity, basic_analysis, desktop_analysis, exports, project, rater_dff
+from mfrmpy._core.anchor_sensitivity import with_anchor_sensitivity
+from mfrmpy._core.desktop_analysis import check_design, run_analysis as analyze
+from mfrmpy._core.project import ProjectError, load_project, save_project
+from mfrmpy._core.rater_contrast import check_rater_contrast
+from mfrmpy._core.rater_dff import prepare_rater_dff_data, with_rater_dff
 
 from ._category_design import category_design
 
@@ -471,7 +471,7 @@ def plot(analysis, kind="wright", *, level=None, index=0, facet=None,
     for a labelled normal approximation, or ``levels=[...]`` for other levels.
     No estimator is rerun to draw results.
     """
-    from mfrm_app.desktop_outputs import analysis_figure
+    from mfrmpy._core.desktop_outputs import analysis_figure
     return analysis_figure(analysis, kind, level=level, index=index, facet=facet,
                            statistic=statistic, presentation=presentation,
                            gd_swap=gd_swap, top_n=top_n, view=view, style=style, levels=levels)
@@ -485,7 +485,7 @@ def report_html(analysis, *, pathway_facet=None, pathway_statistic="Infit",
     and ``pathway_statistic`` to match :func:`plot`. Reports and .mfrm archives
     can contain the original ratings and identifiers; handle them as research data.
     """
-    from mfrm_app.desktop_outputs import report_html as render
+    from mfrmpy._core.desktop_outputs import report_html as render
     return render(analysis, pathway_facet=pathway_facet,
                   pathway_statistic=pathway_statistic, facet=facet, statistic=statistic,
                   presentation=presentation, language=language, gd_swap=gd_swap)

@@ -54,7 +54,7 @@ def test_fair_average_matches_independent_category_probabilities(analysis):
 
 
 def test_reports_roundtrip_without_refitting_or_optional_dependencies(analysis, tmp_path, monkeypatch):
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     path = tmp_path / "saved.mfrm"
     mfrmpy.save_project(path, analysis)
     def forbidden(*args, **kwargs):
@@ -149,7 +149,7 @@ def test_zip_figures_have_explicit_scope_and_match_fair_table(analysis, tmp_path
     np.testing.assert_allclose(fig._mfrm_hover_points[0][0].get_offsets()[:, 1], frame.FairZ)
     fig.clear()
     if analysis["result"]["config"]["model"] == "PCM":
-        from mfrm_app.desktop_outputs import figure_choices
+        from mfrmpy._core.desktop_outputs import figure_choices
         mfrmpy.export_bundle(analysis, path, kind="fair_average")
         with zipfile.ZipFile(path) as archive:
             manifest = json.loads(archive.read("manifest.json"))

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import softmax
 
-from mfrm_app import desktop_analysis, engine, joint_interaction, output_qualification, project, reporting_facts
+from mfrmpy._core import desktop_analysis, engine, joint_interaction, output_qualification, project, reporting_facts
 
 
 def _baseline_values(analysis, profile, step_facet):

@@ -9,7 +9,7 @@ import zipfile
 
 import pandas as pd
 
-from mfrm_app import basic_analysis, exports
+from mfrmpy._core import basic_analysis, exports
 
 
 def _plain(value):
@@ -75,7 +75,7 @@ def write_bundle(analysis, path, *, kind, plots):
 
     qualified_tables = tables(analysis, kind)
     if plots is None:
-        from mfrm_app.desktop_outputs import figure_choices
+        from mfrmpy._core.desktop_outputs import figure_choices
         requests = [options for _, options in figure_choices(analysis)]
     else:
         if isinstance(plots, (str, dict)):

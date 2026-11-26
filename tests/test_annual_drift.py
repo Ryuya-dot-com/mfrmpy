@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 import mfrmpy
-from mfrm_app import project
+from mfrmpy._core import project
 
 
 @pytest.fixture(scope="module")
@@ -53,7 +53,7 @@ def test_annual_contrast_matches_independent_saved_calculation(annual, tmp_path,
     reverse = mfrmpy.tables(inverted, "Anchor sensitivity intervals")[0][1]
     np.testing.assert_allclose(reverse.Estimate, -table.Estimate, atol=1e-10)
     np.testing.assert_allclose(reverse.SE, table.SE, atol=1e-10)
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     monkeypatch.setattr(engine, "mfrm_estimate", lambda *a, **k: pytest.fail("Refit on export"))
     path = tmp_path / "annual.mfrm"
     mfrmpy.save_project(path, linked)
@@ -67,7 +67,7 @@ def test_annual_contrast_matches_independent_saved_calculation(annual, tmp_path,
 
 def test_annual_mapping_and_event_validation_precede_fitting(annual, monkeypatch):
     base, source, scenario, args, _, _ = annual
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     monkeypatch.setattr(engine, "mfrm_estimate", lambda *a, **k: pytest.fail("Validation should precede fitting"))
     for mapping in ({"A-R1": "R1"}, {key: "absent" for key in scenario["calibration"]["level_map"]}):
         with pytest.raises(ValueError, match="level_map"):
@@ -139,7 +139,7 @@ def test_native_levels_recover_contrast_and_fixed_anchor_uncertainty(annual):
 
 
 def test_native_level_anchor_derivative_matches_refits(annual):
-    from mfrm_app import anchor_intervals
+    from mfrmpy._core import anchor_intervals
     base, _, scenario, _, linked, _ = annual
     info = linked["anchor_sensitivity"]["scenarios"][1]["level_estimates"]
     audit = dict(rater="RaterYear", anchors=scenario["anchors"])
@@ -157,7 +157,7 @@ def test_native_level_anchor_derivative_matches_refits(annual):
 
 
 def test_level_evidence_validation_and_legacy_reopen(annual, tmp_path, monkeypatch):
-    from mfrm_app import engine, anchor_intervals
+    from mfrmpy._core import engine, anchor_intervals
     linked = annual[4]
     for field in ("estimate", "covariance", "sensitivity", "scores"):
         changed = deepcopy(linked)
@@ -193,7 +193,7 @@ def test_level_evidence_validation_and_legacy_reopen(annual, tmp_path, monkeypat
 @pytest.mark.figures
 def test_annual_figure_and_bundle_use_retained_intervals(annual, tmp_path, monkeypatch):
     linked = annual[4]
-    from mfrm_app import engine
+    from mfrmpy._core import engine
     monkeypatch.setattr(engine, "mfrm_estimate", lambda *a, **k: pytest.fail("Refit on drawing"))
     fig = mfrmpy.plot(linked, "anchor_sensitivity", view="difference")
     table = mfrmpy.tables(linked, "Anchor sensitivity intervals")[0][1]
@@ -215,7 +215,7 @@ def test_annual_figure_and_bundle_use_retained_intervals(annual, tmp_path, monke
 
 @pytest.mark.figures
 def test_colored_forest_default_and_explicit_choices(annual, monkeypatch):
-    from mfrm_app import engine, anchor_intervals
+    from mfrmpy._core import engine, anchor_intervals
     monkeypatch.setattr(engine, "mfrm_estimate", lambda *a, **k: pytest.fail("Refit on drawing"))
     monkeypatch.setattr(anchor_intervals, "intervals", lambda *a, **k: pytest.fail("Recalculation on drawing"))
     linked = annual[4]

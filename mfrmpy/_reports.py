@@ -130,7 +130,8 @@ def write_bundle(analysis, path, *, kind, plots):
                 Scope="Qualified reporting outputs; no .mfrm project. Plot options and captions describe each figure's scope.",
             )
             archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
-        with archive_path.open("rb") as stream:
+        # Windows requires a writable descriptor for fsync.
+        with archive_path.open("r+b") as stream:
             os.fsync(stream.fileno())
         os.replace(archive_path, path)
     return path

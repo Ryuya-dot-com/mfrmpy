@@ -242,7 +242,7 @@ R照合後の変更は階数許容差の記録、表・保留説明、数値範�
 - wheel SHA-256: `bb4fcaa6a34fbc1009a69f55d6eb02a59df9936dc65ceced56a63dfd37821dd4`
 - sdist SHA-256: `51ae2a224409b6446ae3db56acc720b28faa85a0fc2fe162c5c2fced3343537e`
 
-GitHub Actions自体は今回起動していない。Linux・Windows、共有Web・デスクトップの実行経路、TestPyPI/PyPIへの公開とそこからの新規導入・更新は未完了である。ローカルでCIと同じテスト区分に合格したことを、公開環境の完了として扱わない。
+この `0.2.3.dev1` のローカル統合時点ではGitHub Actionsを起動していなかった。後続の `0.2.3.dev3` のCI・導入検証は[年度ドリフトの候補検証](#年度ドリフトの公開判断)に記録する。共有Web・デスクトップの実行経路、TestPyPI/PyPIへの公開とそこからの新規導入・更新は別の工程であり、ローカルやCIの成功を公開完了として扱わない。
 
 ## M0　出発点を固定する（0.2.1）
 
@@ -378,6 +378,8 @@ GitHub Actions自体は今回起動していない。Linux・Windows、共有Web
 独立計算の既存記録に対し、3反復×2再採点配置×3変化条件の18件を通常APIで照合した。固定後推定値の最大差は1.13×10⁻⁶、共有校正SEは1.08×10⁻⁷で、校正・本番・共分散の各項も一致した。これは新しい被覆率実験ではなく、既存3,000件の年度差実験の条件別結論を維持する。`CoverageQualified`・`SupportsFormalInference` は `False` のまま。[18件の差と参照データのハッシュ](validation/evidence/annual_api/comparison.json)
 
 インストールした候補では、年度差・共有校正・DFF・出力の関連テスト30件が成功し、旧版を含む12保存例の再読込・再保存・表生成を再推定なしで確認した。DFFの480評定では +0.593 logit、95%区間 [−0.036, +1.222] を保存済みMMLと照合し、CMLの保存値 +0.984、[+0.177, +1.792] を別の推定法として併記した。432評定では実測のB校共通採点0、識別を回復しうる未取得セル40件と保留理由を保持した。[候補のDFFテキスト](validation/evidence/dff_candidate_dev3/m5a_dff_sd_difference/report.out)・[欠測例のテキスト](validation/evidence/dff_candidate_dev3/m5a_dff_missing_shared_works/report.out)
+
+**配布CIと候補の修正。** [ドラフトPR #3](https://github.com/Ryuya-dot-com/mfrmpy/pull/3) で7構成の検証を実行した。初回のWindows 3.11／3.12では、ZIPを読み取り専用で開いて `fsync` する処理が `Bad file descriptor` で失敗した。推定値・区間の数値照合は通過しており、修正は同期するZIPを `r+b` で開く処理に限る。数値実験は再利用し、出力テストと既存の配布CIで修正を検証する。初回成果物と修正版はSHA-256で区別する。[候補・導入・互換性の記録](validation/evidence/annual_candidate.json)
 
 両場面とも、返却率と保留理由を示し、公開例ではモデル近似と、その割付で検証できた被覆率・誤り率を明記する。検出力は設定した効果量ごとに示す。差の解釈には区間の幅と利用者が事前指定した実務上の差を使い、採点の公平性を調べるために確認すべき作品・採点基準までたどれるようにする。
 

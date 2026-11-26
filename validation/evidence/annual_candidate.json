@@ -13,8 +13,8 @@
     "pytest": "9.2.0"
   },
   "artifacts": {
-    "mfrmpy-0.2.3.dev3.tar.gz": "5fff1c53e58c02b72bf3dbe0f31ff1f4039effa62466bd79d26485f978a58406",
-    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "340c0da7493fbaee0fa9513e9c4ca19ccb2388ded31ed5e76ece967969a1212c"
+    "mfrmpy-0.2.3.dev3.tar.gz": "1fa1a39768997330bea16a0fa1f128bd882e20587c72913be2149092ff8b1a7e",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "00e6974563c6920e7907376023ec64bd6150cbab310fdc425b5ffa98076ea064"
   },
   "tests": [
     {
@@ -104,5 +104,137 @@
   "annual_comparison": "annual_api/comparison.json",
   "dff_examples": "dff_candidate_dev3",
   "scope": "Installed-wheel verification. 18 annual API comparisons reuse independent saved calculations; no new coverage experiment. DFF CML reuses its saved result. All 12 legacy archives reopened without fitting. Publication remains incomplete.",
-  "identical_installed_python_files": 107
+  "identical_installed_python_files": 107,
+  "upgrade": {
+    "from_version": "0.2.2",
+    "to_version": "0.2.3.dev3",
+    "previous_wheel_sha256": "f2430c6a8bdaf5e3c98876081e2fbb3041df2081d8c49fdbfd8999a016d89bed",
+    "preserved_fingerprints": {
+      "mfrm": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+      "gd": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1"
+    },
+    "matplotlib_installed": false,
+    "pip_check": "passed",
+    "reopen_and_export": "MFRM and G/D projects retained; resave, text and CSV ZIP succeeded with refitting disabled"
+  },
+  "initial_artifacts": {
+    "mfrmpy-0.2.3.dev3.tar.gz": "5fff1c53e58c02b72bf3dbe0f31ff1f4039effa62466bd79d26485f978a58406",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "340c0da7493fbaee0fa9513e9c4ca19ccb2388ded31ed5e76ece967969a1212c"
+  },
+  "initial_ci": {
+    "run_id": 45792177486,
+    "commit": "bc101e821e86984bc9f17cde36015195df4667d8",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45792177486",
+    "jobs": [
+      {
+        "id": 139813681610,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "results": []
+      },
+      {
+        "id": 139813834255,
+        "name": "test (macos-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:29:44.3563730Z 102 passed, 21 deselected in 84.01s (0:01:24)",
+          "2026-11-26T09:31:00.1880990Z 21 passed, 102 deselected in 72.23s (0:01:12)"
+        ]
+      },
+      {
+        "id": 139813834276,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:30:11.8381578Z 102 passed, 21 deselected in 111.38s (0:01:51)",
+          "2026-11-26T09:31:22.3220389Z 21 passed, 102 deselected, 3 warnings in 66.51s (0:01:06)"
+        ]
+      },
+      {
+        "id": 139813834367,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:31:47.0922974Z 102 passed, 21 deselected in 203.30s (0:03:23)",
+          "2026-11-26T09:33:49.4570636Z 21 passed, 102 deselected, 3 warnings in 117.74s (0:01:57)"
+        ]
+      },
+      {
+        "id": 139813834412,
+        "name": "test (macos-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:30:14.2812470Z 102 passed, 21 deselected in 111.50s (0:01:51)",
+          "2026-11-26T09:32:12.7476720Z 21 passed, 102 deselected in 114.75s (0:01:54)"
+        ]
+      },
+      {
+        "id": 139813834422,
+        "name": "test (windows-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:31:14.6926035Z FAILED test_annual_drift.py::test_annual_contrast_matches_independent_saved_calculation - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6926690Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[observed] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6927308Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[no_shared_works] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6927967Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6928660Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6929340Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6930262Z FAILED test_reports.py::test_pending_diagnostics_and_gd_report - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6930656Z 7 failed, 95 passed, 21 deselected in 142.24s (0:02:22)\r"
+        ]
+      },
+      {
+        "id": 139813834450,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:32:04.6399920Z 102 passed, 21 deselected in 220.53s (0:03:40)",
+          "2026-11-26T09:34:22.1932087Z 21 passed, 102 deselected, 16 warnings in 133.11s (0:02:13)"
+        ]
+      },
+      {
+        "id": 139813834557,
+        "name": "test (windows-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:32:43.2531499Z FAILED test_annual_drift.py::test_annual_contrast_matches_independent_saved_calculation - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2532773Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[observed] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2534009Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[no_shared_works] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2535681Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2537116Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2538513Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2539970Z FAILED test_reports.py::test_pending_diagnostics_and_gd_report - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2540715Z 7 failed, 95 passed, 21 deselected in 223.24s (0:03:43)\r"
+        ]
+      },
+      {
+        "id": 139817205515,
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "skipped",
+        "results": []
+      }
+    ]
+  },
+  "zip_sync_fix": {
+    "reason": "Windows fsync failed with a read-only descriptor. Open the completed ZIP as r+b before synchronizing; retain atomic replacement and failure cleanup.",
+    "unchanged": "All numerical code, tests, metadata and retained examples match the first candidate. Wheel differences are only mfrmpy/_reports.py and its RECORD checksum.",
+    "test": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "17",
+      "time": "20.939",
+      "timestamp": "2026-11-26T18:34:34.880520+09:00"
+    }
+  }
 }

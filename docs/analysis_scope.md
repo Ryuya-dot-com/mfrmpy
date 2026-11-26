@@ -3,11 +3,10 @@
 [Start here](../README.md) · [Windows guide](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/docs/desktop_user_guide.en.md) · [日本語の操作・結果の読み方](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/docs/desktop_user_guide.ja.md#分析を選ぶ)
 
 Use this page to choose an analysis and understand what its results can support.
-It describes the Web application and the desktop preview documented in this
-source branch. The desktop preview includes RSM/PCM, bias diagnostics, selected
-intervals, joint interactions and G/D studies; it is not yet a general desktop
-release. The published Web release and this desktop preview do not have
-identical controls or export formats.
+The current Python package supports RSM/PCM, bias diagnostics, selected
+intervals, joint interactions and G/D studies. Linked Web/desktop applications
+have their own release state, controls and validation; package verification
+does not certify those applications.
 
 ## Choose the analysis for your question
 
@@ -16,7 +15,7 @@ identical controls or export formats.
 | How do person measures, rater severity and task difficulty compare? | Many-facet RSM or PCM | RSM shares category steps. PCM allows separate steps for levels of the chosen step facet. A main rater effect is not a rater-by-task interaction. |
 | Does a particular combination of facet levels differ from the main-effects pattern? | Conditional bias diagnostics | These hold the original calibration fixed. They identify patterns to investigate, without confirming the presence or absence of bias. |
 | What is the uncertainty in a facet level or a planned difference? | Specified structural intervals for fixed-SD MML | Only targets passing the checks receive intervals. A difference uses the full covariance, not the sum of marginal SEs. |
-| What happens when an interaction is fitted together with main effects and steps? | Desktop joint interaction analysis | This refits a separate model. It does not turn the fixed-calibration diagnostic into a joint test. |
+| What happens when an interaction is fitted together with main effects and steps? | Joint interaction analysis | This refits a separate model. It does not turn the fixed-calibration diagnostic into a joint test. |
 | How would numbers of raters or tasks affect score reliability? | G study and D study | These use observed scores and a declared random-facet design, not the MFRM logit scale. |
 
 The Web interface also provides advanced workflows such as bounded GPCM,
@@ -26,8 +25,12 @@ statistic can support inference. Read the explanation for the selected output.
 
 ## Estimation and standard errors
 
-JMLE jointly estimates person and facet parameters. Desktop MML uses EM with
-a fixed normal population SD; the SD is a setting, not an estimated result.
+JMLE jointly estimates person and facet parameters. Package MML uses a fixed
+normal population SD; the SD is a setting, not an estimated result. Unanchored
+MML defaults to EM and population mean zero. With structural anchors, auto
+estimates the mean using Direct optimization; `population_mean="fixed_zero"`
+explicitly retains the former anchored model. Calibration metadata changes
+uncertainty propagation, not the fitted model.
 The Web interface offers additional MML controls, including optional population
 SD estimation, whose uncertainty and model-ranking uses remain unavailable.
 
@@ -43,6 +46,23 @@ Person-score uncertainty, estimated population-SD uncertainty or automatic
 equivalence conclusions. Selected structural intervals have the separate,
 limited scope below. An available selected interval does not remove the
 restrictions on other outputs.
+
+General MML SEs and reliability summaries additionally require retained
+analytic information, stationarity, doubled-order quadrature and posterior
+score-stability evidence. Failed or missing evidence withholds SEs and
+uncertainty bars; no regularized or conditional-SE fallback is displayed.
+The review runs when diagnostics are requested, not when a fit is merely
+saved, loaded or displayed. Existing archives lacking it retain point estimates
+where structurally reportable and explain the uncertainty hold. General
+anchored-model covariance is currently outside this review's supported scope.
+Anchor-sensitivity intervals use their own estimated-mean calculation.
+
+Shared-calibration propagated uncertainty also requires saved doubled-order
+checks of individual influences, the cross term and final covariance. Older
+shared archives retain their points and conditional results, but propagated
+intervals without that evidence are withheld across tables and figures.
+Neither two-order agreement at the same fitted coordinates nor a successful
+optimizer proves continuous-integral accuracy or finite-sample coverage.
 
 ## Assignment support for a rater comparison
 
@@ -245,9 +265,9 @@ limitations. Preserve captions and notes with exported figures and tables.
 Software citation does not replace citations for the statistical methods.
 
 Implementation references for technical readers:
-[output rules](../mfrm_app/output_qualification.py),
-[structural intervals](../mfrm_app/structural_intervals.py),
-[joint interactions](../mfrm_app/joint_interaction.py),
-[G/D calculations](../mfrm_app/generalizability.py).
+[output rules](../mfrmpy/_core/output_qualification.py),
+[structural intervals](../mfrmpy/_core/structural_intervals.py),
+[joint interactions](../mfrmpy/_core/joint_interaction.py),
+[G/D calculations](../mfrmpy/_core/generalizability.py).
 The [FACETS comparison](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/validation/FACETS_WINDOWS_DESKTOP_REVIEW_20261029.md)
 states the conditions and limits of its numerical checks.

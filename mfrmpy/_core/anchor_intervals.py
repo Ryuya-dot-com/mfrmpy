@@ -48,7 +48,7 @@ def calibration_settings(spec, fixed, means, rater, receiving):
 def fit_with_anchor_origin(data, settings, audit):
     """Use the existing engine with the anchors setting the population origin."""
     options = {k: v for k, v in settings.items() if k not in {
-        "anchors", "group_anchors", "umean", "uscale", "compute_pca", "mml_engine",
+        "anchors", "group_anchors", "umean", "uscale", "compute_pca", "mml_engine", "population_mean",
     }}
     return engine.mfrm_estimate(data, **(options | dict(
         noncenter_facet=audit["rater"], population_formula="~ 1", mml_engine="direct",
@@ -65,9 +65,12 @@ def anchored_information(result, audit, *, include_levels=False):
     facets = cfg["facet_names"]
     dimension = sum(len(cfg["facet_levels"][f]) - (f != rater) for f in facets) + cfg["n_cat"] - 2
     cells = len(prep["data"][facets].drop_duplicates())
-    if (not 3 <= q <= 121 or not .05 <= sigma <= 10 or not 1 <= dimension <= 64
+    if (not 3 <= q <= 121 or not .05 <= sigma <= 10 or dimension < 1
             or (2*q-1)*cells*cfg["n_cat"]*(dimension+1) > 8_000_000
-            or cfg["n_person"]*cells*cfg["n_cat"] > 2_000_000):
+            or cfg["n_person"]*cells*cfg["n_cat"] > 2_000_000
+            or len(prep["data"])*cfg["n_cat"]*(dimension+1) > 8_000_000
+            or cfg["n_person"]*(2*q-1)*(dimension+1) > 8_000_000
+            or (dimension+1)**2 > 8_000_000):
         raise ValueError("Anchored information exceeds the fixed-SD numerical scope")
     fitted_raters = cfg["facet_levels"][rater]
     # The intercept can be absorbed into every rater coefficient without changing
@@ -160,7 +163,23 @@ def intervals(result, audit, calibration, source=None):
             target = shared_calibration.person_influence(problem, point, q, directions)
             calibrated = shared_calibration.calibration_scores(source, audit["rater"], calibration["levels"],
                          np.asarray(levels["sensitivity"]), mapping=calibration.get("source"))
+            fine_calibrated, fine_target = calibrated.attrs["fine"], target.attrs["fine"]
+            fine_joint = fine_calibrated.add(fine_target, fill_value=0.)
             joint = calibrated.add(target, fill_value=0.)
+            covariance = (joint.T @ joint).to_numpy()
+            fine_covariance = (fine_joint.T @ fine_joint).to_numpy()
+            common = calibrated.index.intersection(target.index)
+            cross = (calibrated.loc[common].T @ target.loc[common]).to_numpy()
+            fine_cross = (fine_calibrated.loc[common].T @ fine_target.loc[common]).to_numpy()
+            scale = max(np.linalg.norm(calibrated)**2 + np.linalg.norm(target)**2, np.finfo(float).tiny)
+            change = float(np.linalg.norm(fine_covariance-covariance, 2)/scale)
+            cross_change = float(np.linalg.norm(fine_cross-cross, 2)/scale)
+            if not np.isfinite([change, cross_change]).all() or max(change, cross_change) > .01:
+                raise ValueError("Shared calibration covariance or cross term changes with quadrature")
+            evidence["quadrature"] = dict(calibration_points=calibrated.attrs["points"],
+                receiving_points=target.attrs["points"], covariance_change=change, cross_change=cross_change,
+                calibration_influence_change=calibrated.attrs["relative_change"],
+                receiving_influence_change=target.attrs["relative_change"], continuous_reference_checked=False)
             levels["propagated_covariance"] = (joint.T @ joint).to_numpy().tolist()
             levels["shared"] = {key: dict(zip(frame.index, frame.to_numpy().tolist(), strict=True))
                                 for key, frame in (("calibration", calibrated), ("receiving", target))}

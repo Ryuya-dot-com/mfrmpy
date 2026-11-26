@@ -33,6 +33,26 @@ def annual():
     return base, source, scenario, args, linked, settings
 
 
+def test_old_shared_quadrature_evidence_is_held_without_refitting(annual, tmp_path, monkeypatch):
+    linked = deepcopy(annual[4])
+    for scenario in linked['anchor_sensitivity']['scenarios']:
+        scenario.get('interval', {}).pop('quadrature', None)
+    linked['content_fingerprint'] = project.content_fingerprint(linked)
+    import scipy.optimize
+    monkeypatch.setattr(scipy.optimize, 'minimize', lambda *a, **k: pytest.fail('Unexpected refit'))
+    path = tmp_path/'legacy-shared.mfrm'
+    mfrmpy.save_project(path, linked)
+    restored = mfrmpy.load_project(path)
+    contrast = mfrmpy.tables(restored, 'Anchor sensitivity intervals')[0][1]
+    shared = contrast.loc[contrast.Basis.eq('shared_calibration')].iloc[0]
+    assert shared.Status == 'withheld' and pd.isna(shared.SE)
+    assert pd.notna(shared.Estimate) and 'quadrature evidence' in shared.Reason
+    levels = mfrmpy.tables(restored, 'Anchor sensitivity levels')[0][1]
+    shared_levels = levels.loc[levels.Basis.eq('shared_calibration')]
+    assert shared_levels.SE.isna().all() and shared_levels.JointCovariance.isna().all()
+    assert shared_levels.Estimate.notna().all()
+
+
 def test_annual_contrast_matches_independent_saved_calculation(annual, tmp_path, monkeypatch):
     base, source, scenario, args, linked, _ = annual
     _, table, _ = mfrmpy.tables(linked, "Anchor sensitivity intervals")[0]

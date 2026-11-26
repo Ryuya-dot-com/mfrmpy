@@ -73,7 +73,9 @@ def category_design(analysis, *, levels, theta=0.0, joint=False):
     terms = [dict(Kind="facet", Facet=f, Level=profile[f]) for f in facets]
     entry = analysis.get("joint_analysis")
     state = output_qualification.run_qualification_state(result)
-    hold = state["screening_block_reason"]
+    # Conditional point probabilities do not claim SE accuracy. Numerical
+    # uncertainty holds remain in the returned qualification state.
+    hold = output_qualification.calibration_screening_block_reason(result)
     joint_interval_reason = None
     values = []
     if joint:
@@ -117,7 +119,9 @@ def category_design(analysis, *, levels, theta=0.0, joint=False):
     population = None
     if cfg["method"] == "MML":
         origins["Person"] = "normal_population"
-        population = dict(mean=0.0, sd=engine.get_population_prior_sd(cfg))
+        population = dict(mean=float(result["params"].get("population", [0.0])[0])
+                          if cfg.get("population_formula") else 0.0,
+                          sd=engine.get_population_prior_sd(cfg))
     settings = analysis["fit_settings"]
     return dict(A=A, categories=categories, terms=terms, theta=float(theta), analysis_id=analysis["analysis_id"],
                 model=cfg["model"], method=cfg["method"], calibration="joint" if joint else "baseline",

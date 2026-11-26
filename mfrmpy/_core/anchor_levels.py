@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from . import project
+from . import project, shared_calibration
 
 TITLE = "Anchor sensitivity levels"
 NOTE = (
@@ -130,14 +130,16 @@ def table(analysis):
         if calibration.get("kind") in ("independent", "shared"):
             bases.append(("shared_calibration" if calibration.get("source") else "calibration_propagated",
                           "propagated_covariance", "propagation_reason"))
-        origin = ("Anchor values; estimated person mean" if calibration else
+        estimated_mean = scenario.get("population_mean", "estimate" if calibration else "fixed_zero") == "estimate"
+        origin = ("Anchor values; estimated person mean" if estimated_mean else
                   f"Fixed person mean = 0; noncenter facet = {scenario['noncenter_facet']}")
         for basis, key, reason_key in bases:
-            covariance = info.get(key)
+            hold = shared_calibration.retained_quadrature_hold(scenario) if basis == "shared_calibration" else ""
+            covariance = None if hold else info.get(key)
             for i, label in enumerate(labels):
                 estimate = info["estimates"][i] if info["estimates"] is not None else None
                 se = float(np.sqrt(max(0., covariance[i][i]))) if covariance is not None else None
-                reason = (info.get(reason_key) or info.get("reason", "")) if se is None else ""
+                reason = (hold or info.get(reason_key) or info.get("reason", "")) if se is None else ""
                 fixed = (key == "covariance" and estimate is not None and any(
                     a["Facet"] == entry["rater"] and a["Level"] == label for a in scenario["anchors"]))
                 status = "fixed" if fixed else ("model_approximation" if se is not None else

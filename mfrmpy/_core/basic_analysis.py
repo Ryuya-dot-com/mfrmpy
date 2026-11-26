@@ -250,6 +250,11 @@ def complete_analysis(analysis, *, outputs=("measures", "agreement", "scorefile"
         return analysis
     progress = progress or (lambda phase: None)
     out = dict(analysis, result=dict(analysis["result"]), scope=dict(analysis["scope"]))
+    if out["result"]["config"].get("method") == "MML":
+        from . import numerical_qualification
+        if numerical_qualification.valid_record(out["result"]) is None:
+            progress("numerical_review")
+            out["result"]["numerical_review"] = numerical_qualification.compute(out["result"])
     diagnostics = dict(analysis.get("diagnostics", {}))
     obs = diagnostics.get("obs")
     # Reuse probabilities within this operation, but do not retain an N x K
@@ -264,6 +269,9 @@ def complete_analysis(analysis, *, outputs=("measures", "agreement", "scorefile"
             out["result"], compute_pca="pca" in needed, compute_measures="measures" in needed,
             compute_agreement="agreement" in needed, obs_df=obs, probs=probs,
         )
+        steps = calculated.pop("step_uncertainty", None)
+        if isinstance(steps, pd.DataFrame):
+            out["result"]["steps"] = steps
         # Unrequested sections must not erase previously computed diagnostics.
         for name, value in calculated.items():
             if name not in diagnostics or not (
@@ -291,6 +299,7 @@ def complete_analysis(analysis, *, outputs=("measures", "agreement", "scorefile"
     if "computed_outputs" in analysis:
         out["computed_outputs"] = sorted(done | needed)
         out["output_source"] = _source_versions()
+    out["qualification_at_save"] = qualification_snapshot(out["result"])
     out["content_fingerprint"] = project.content_fingerprint(out)
     project.validate_analysis(out)
     return out
@@ -303,7 +312,7 @@ def _is_int(value) -> bool:
 def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, rating_max,
                        maxit=400, reltol=1e-6, model="RSM", method="JMLE", step_facet=None,
                        quad_points=None, population_prior_sd=1.0, keep_original=True,
-                       estimate_population_sd=False, mml_engine="EM",
+                       estimate_population_sd=False, mml_engine=None, population_mean="auto",
                        noncenter_facet="Person", positive_facets=None,
                        anchors=None, group_anchors=None,
                        compute_pca=False, umean=0.0, uscale=1.0, progress=None, outputs=None):
@@ -328,8 +337,12 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
     maxit, reltol = int(maxit), float(reltol)
     if model not in {"RSM", "PCM"} or method not in {"JMLE", "MML"}:
         raise ValueError("Desktop analysis supports RSM/PCM with JMLE or fixed-SD MML")
-    if not isinstance(keep_original, (bool, np.bool_)) or not bool(keep_original) or not isinstance(estimate_population_sd, (bool, np.bool_)) or bool(estimate_population_sd) or mml_engine != "EM":
-        raise ValueError("Desktop requests retain original scores and use fixed-SD EM for MML")
+    if not isinstance(keep_original, (bool, np.bool_)) or not bool(keep_original) or not isinstance(estimate_population_sd, (bool, np.bool_)) or bool(estimate_population_sd):
+        raise ValueError("Requests retain original scores and use fixed population SD")
+    if mml_engine not in (None, "EM", "Direct", "Hybrid") or population_mean not in ("auto", "fixed_zero", "estimate"):
+        raise ValueError("Choose mml_engine EM/Direct/Hybrid and population_mean auto/fixed_zero/estimate")
+    if method != "MML" and (mml_engine is not None or population_mean != "auto"):
+        raise ValueError("Population and MML engine options require method='MML'")
     keep_original, estimate_population_sd = True, False
     if model == "PCM" and step_facet not in facet_cols:
         raise ValueError("PCM requires an explicitly selected step facet")
@@ -388,6 +401,20 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
         fixed_pairs={(r["Facet"], r["Level"]) for r in norm_anchors},
     )
 
+    anchored_facets = {r["Facet"] for r in [*norm_anchors, *norm_groups]} - {"Person"}
+    mean_mode = population_mean
+    if method == "MML":
+        if mean_mode == "auto":
+            mean_mode = "estimate" if anchored_facets else "fixed_zero"
+        if mean_mode == "estimate":
+            if norm_noncenter == "Person" and len(anchored_facets) == 1:
+                norm_noncenter = next(iter(anchored_facets))
+            if norm_noncenter not in anchored_facets:
+                raise ValueError("Estimating the population mean requires an anchored noncenter_facet to fix the origin")
+            if mml_engine == "EM":
+                raise ValueError("An estimated population mean requires mml_engine='Direct' or 'Hybrid'")
+        mml_engine = mml_engine or ("Direct" if mean_mode == "estimate" else "EM")
+
     settings = dict(person_col=person_col, facet_cols=facet_cols, score_col=score_col,
                     rating_min=rating_min, rating_max=rating_max, maxit=maxit, reltol=reltol,
                     model=model, method=method, keep_original=True)
@@ -395,7 +422,7 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
         settings["step_facet"] = step_facet
     if method == "MML":
         settings.update(quad_points=quad_points, population_prior_sd=float(population_prior_sd),
-                        estimate_population_sd=False, mml_engine="EM")
+                        estimate_population_sd=False, mml_engine=mml_engine, population_mean=mean_mode)
     if norm_noncenter != "Person":
         settings["noncenter_facet"] = norm_noncenter
     if norm_positive:
@@ -412,8 +439,10 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
 
     estimate_kwargs = {
         k: v for k, v in settings.items()
-        if k not in {"anchors", "group_anchors", "compute_pca", "umean", "uscale"}
+        if k not in {"anchors", "group_anchors", "compute_pca", "umean", "uscale", "population_mean"}
     }
+    if method == "MML" and mean_mode == "estimate":
+        estimate_kwargs["population_formula"] = "~ 1"
     if norm_anchors:
         estimate_kwargs["anchor_df"] = pd.DataFrame(norm_anchors)
     if norm_groups:
@@ -524,14 +553,14 @@ def basic_report_html(analysis, *, pathway_statistic="Infit", pathway_facet=None
     for title, table, note in tables:
         parts.extend(['<h2>' + escape(title) + '</h2><section>', table.to_html(index=False, escape=True),
                       '</section><p>' + escape(note) + '</p>'])
-    from mfrmpy._core.visual_maps import MAP_GUIDES
+    from mfrmpy._core.visual_maps import MAP_GUIDES_EN as MAP_GUIDES
     from mfrmpy._core.desktop_guidance import WEB_APP_URL
     for kind, (title, guide) in MAP_GUIDES.items():
         options = {"statistic": pathway_statistic, "facet": pathway_facet} if kind == "pathway" else {}
         svg = figure_bytes(analysis, kind, **options).decode("utf-8")
-        parts.extend(['<h2>' + escape(title) + '</h2>', '<p lang="ja">' + escape(guide) + '</p>', svg[svg.index('<svg'):]])
-    parts.append('<p><a href="' + escape(WEB_APP_URL, quote=True) + '">Web版の理論・ヘルプ</a>：'
-                 '入口からHelp／Tutorialを選択してください。リンクに入力データ・結果は含まれません。</p>')
+        parts.extend(['<h2>' + escape(title) + '</h2>', '<p>' + escape(guide) + '</p>', svg[svg.index('<svg'):]])
+    parts.append('<p><a href="' + escape(WEB_APP_URL, quote=True) + '">Web application theory and help</a>: '
+                 'Select Help or Tutorial. The link contains no input data or results.</p>')
     parts.append('<p>These curves describe the fitted rating scale, conditional on its assumptions; '
                  'they do not certify model fit or uncertainty coverage.</p></html>')
     return '\n'.join(parts)

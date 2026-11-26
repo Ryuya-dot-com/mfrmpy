@@ -44,6 +44,7 @@ def test_agreement_distinguishes_context_ids_containing_separator():
         pd.testing.assert_frame_equal(before, after)
 
 
+@pytest.mark.installed
 def test_import_keeps_ui_and_plotting_optional(tmp_path):
     # Isolated Python cannot accidentally import modules from the checkout.
     script = """
@@ -957,7 +958,15 @@ def test_corrupt_project_is_not_accepted(tmp_path):
 @pytest.mark.parametrize("storage", ["python", "pyarrow"])
 @pytest.mark.parametrize("missing", [pd.NA, np.nan], ids=["NA", "NaN"])
 def test_project_retains_string_storage_missing_values_and_fingerprints(storage, missing, tmp_path, monkeypatch):
-    dtype = pd.StringDtype(storage=storage, na_value=missing)
+    try:
+        dtype = pd.StringDtype(storage=storage, na_value=missing)
+    except TypeError:
+        if missing is not pd.NA:
+            from mfrmpy._core import project
+            with pytest.raises(mfrmpy.ProjectError, match="pandas >= 3.0"):
+                project._dtype_decode(["string", storage, project._encode(missing)])
+            return
+        dtype = pd.StringDtype(storage=storage)
     data = ratings().astype({name: dtype for name in ("Person", "Rater", "Task")})
     data["Label"] = pd.Series(["001", None, "nan"] * (len(data) // 3), dtype=dtype)
     data.columns = data.columns.astype(dtype)
@@ -1387,7 +1396,9 @@ def test_boundary_scenarios_all_ones_category_gaps_disconnected_mml_and_zero_df(
     )
     mb_mf = table_map(ep_mml_case_b)["Measures and Fit"][0].set_index(["Facet", "Level"])
     assert mb_mf.loc[("Rater", "R_all1"), "Estimate"] != ""
-    assert mb_mf.loc[("Rater", "R_all1"), "SEUse"] == "screening_only"
+    # Finiteness alone does not establish numerical accuracy at GH15.
+    assert not ep_mml_case_b["result"]["numerical_review"]["passed"]
+    assert mb_mf.loc[("Rater", "R_all1"), "SEUse"] == "withheld"
 
     # Opposite-endpoint free raters in centered MML (S8) diverge along a sum-preserving recession ray; must hold with zero RuntimeWarning.
     opp_rows = [
@@ -1860,7 +1871,16 @@ def test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screen
         mfrmpy.analyze(df, person="Person", facets=["Rater", "Task"], score="Score", rating_min=0, rating_max=3, method="JMLE", quad_points=31)
 
     # A2: Step Thresholds table (RSM & PCM × JMLE & MML + disordered steps + category hold)
-    st_mml = mfrmpy.tables(mml_default, "steps")[0][1]
+    # GH31 passes the structural check here but posterior SDs are unstable.
+    held_steps = mfrmpy.tables(mml_default, "steps")[0][1]
+    assert held_steps.SEUse.eq("withheld").all()
+    assert held_steps.Estimate.notna().all()
+    mml_checked = mfrmpy.analyze(
+        df, person="Person", facets=["Rater", "Task"], score="Score",
+        rating_min=0, rating_max=3, method="MML", quad_points=61, reltol=1e-12,
+        bias_requests=[{"facet_a": "Rater", "facet_b": "Task"}],
+    )
+    st_mml = mfrmpy.tables(mml_checked, "steps")[0][1]
     assert mfrmpy.tables(mml_default, "thresholds")[0][0] == "Step Thresholds"
     assert list(st_mml["Step"]) == ["Step_1", "Step_2", "Step_3"]
     assert list(st_mml["Transition"]) == ["0->1", "1->2", "2->3"]
@@ -1945,10 +1965,11 @@ def test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screen
     assert "steps" in sum_cases["AvailableTables"]
 
     # A4: Conditional Bias screening table + withholding under calibration block + .mfrm zero-refit reload
-    bias_tbl = mfrmpy.tables(mml_default, "bias")[0][1]
+    assert mfrmpy.tables(mml_default, "bias")[0][1]["Use"].isin(["withheld", "Unavailable"]).all()
+    bias_tbl = mfrmpy.tables(mml_checked, "bias")[0][1]
     assert bias_tbl["Use"].eq("screening_only").all()
     assert bias_tbl["SupportsFormalInference"].eq(False).all()
-    raw_b = mml_default["bias_analyses"][0]["result"]["table"]
+    raw_b = mml_checked["bias_analyses"][0]["result"]["table"]
     np.testing.assert_allclose(pd.to_numeric(bias_tbl["BiasSize"]), raw_b["Bias Size"].round(3))
     np.testing.assert_allclose(pd.to_numeric(bias_tbl["SE"]), raw_b["S.E."].round(3))
     np.testing.assert_allclose(pd.to_numeric(bias_tbl["Z"]), raw_b["Standardized Bias"].round(3))
@@ -2450,7 +2471,10 @@ def test_partial_anchor_links_only_estimable_levels(tmp_path):
     for record in [fit, mfrmpy.load_project(path)]:
         table = mfrmpy.tables(record, "measures")[0][1].set_index(["Facet", "Level"])
         assert table.loc[("Rater", "R2"), "SEUse"] == "withheld"
-        assert table.loc[("Rater", "R1"), "SEUse"] == "screening_only"
+        # Assignment support does not supply a numerical covariance review for
+        # the anchored population-mean model. Keep its point, withhold its SE.
+        assert table.loc[("Rater", "R1"), "SEUse"] == "withheld"
+        assert pd.notna(table.loc[("Rater", "R1"), "Estimate"])
     # A mean across both cohorts supplies a single equation for two independent shifts.
     group = [dict(Facet="Rater", Level=level, Group="reference", GroupValue=0)
              for level in ("R0", "R2")]

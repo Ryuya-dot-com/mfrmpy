@@ -39,15 +39,29 @@ TEMPLATES = [
 
 
 def text(message, language='en'):
-    if language not in ('en', 'ja'): raise ValueError('Unsupported desktop language')
-    source = EN if language == 'en' else {v:k for k,v in EN.items()}
-    if message in source: return source[message]
-    for ja, en in TEMPLATES:
-        old, new = (ja, en) if language == 'en' else (en, ja)
-        pattern = re.sub(r'\\\{(\w+)\\\}', lambda m: '(?P<'+m[1]+'>.*?)', re.escape(old))
-        match = re.fullmatch(pattern, message, re.S)
-        if match: return new.format(**match.groupdict())
+    """Translate legacy internal labels into the package's English output."""
+    if language not in ('en', 'ja'):
+        raise ValueError('Unsupported language')
+    if message in EN:
+        return EN[message]
+    for pattern, replacement in _compiled_templates():
+        match = pattern.fullmatch(message)
+        if match:
+            return replacement.format(**match.groupdict())
     return message
+
+
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _compiled_templates():
+    compiled = []
+    for old, new in TEMPLATES:
+        pattern = re.sub(r'\\\{(\w+)\\\}', lambda m: '(?P<'+m[1]+'>.*?)', re.escape(old))
+        compiled.append((re.compile(pattern, re.S), new))
+    return tuple(compiled)
+
 
 TEMPLATES += [
 ('サンプルデータを保存しました：{path}', 'Sample CSV saved: {path}'),
@@ -215,9 +229,9 @@ Open CSV, Sample (3-facet) or G/D 2-facet sample, select columns and the rubric,
 
 English is the default interface language; 日本語 switches to Japanese without changing data or calculations. Figure labels remain in English for manuscript use. Explanatory figures include titles and notes. Manuscript mode moves overall titles and explanatory notes outside the graphic while retaining axes, legends, panel identities, data labels and unavailable-result messages. Title and note opens copyable text; manuscript PNG/SVG saves an accompanying .caption.txt file. Place the figure number/title above the image and necessary notes below it according to the journal's requirements; this switch is not a complete APA-compliance certification.
 
-Projects include input data, identifiers, settings and results, and reopen without refitting. HTML reports contain all requested figures and tables. Tables also save as CSV with notes. New schema 2 projects cannot be opened by older applications; preserve originals when needed. Returning to Data or Settings keeps results, and changed settings are marked as belonging to a new request.
+Projects include input data, identifiers, settings and results, and reopen without refitting. HTML reports contain all requested figures and tables. Tables also save as CSV with notes. Partial analyses use schema 3; older applications may not open newer projects. Preserve original files. Returning to Data or Settings keeps results, and changed settings are marked as belonging to a new request.
 
-RSM/PCM, main effects, conditional bias, joint interaction and observed-score G/D-Study address different quantities. A drawn figure does not override an inference hold. G/D-Study intervals and multivariate G/D-Study are not available in this version.
+RSM/PCM, main effects, conditional bias, joint interaction and observed-score G/D-Study address different quantities. A drawn figure does not override an inference hold. Balanced normal-model G/Phi intervals, multivariate point estimates and specified MINQUE(0) designs are available with separate assumptions and limitations; numerical availability does not establish coverage.
 
 The Web theory/help link opens the public Web entrypoint; it does not upload desktop data or results. Internet access is required and the public Web version may differ.
 

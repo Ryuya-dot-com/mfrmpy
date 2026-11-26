@@ -6,6 +6,15 @@ from scipy.special import softmax
 from . import engine, mml_joint, project, structural_intervals
 
 
+def retained_quadrature_hold(scenario):
+    """Old shared archives keep their points, not unreviewed propagated SEs."""
+    interval = scenario.get("interval") or {}
+    if ((scenario.get("calibration") or {}).get("source")
+            and interval.get("propagated_se") is not None and "quadrature" not in interval):
+        return "Shared calibration influence and cross-term quadrature evidence was not saved."
+    return ""
+
+
 def _rating_rows(analysis, column, facets):
     raw = analysis["input_data"]
     prep = analysis["result"]["prep"]
@@ -87,7 +96,7 @@ def source_settings(source, target, fixed, rater, rating_id, *, facet=None, leve
     return record
 
 
-def person_influence(problem, point, order, direction):
+def person_influence(problem, point, order, direction, *, check=True):
     """Marginal scores by person for one direction or a matrix of columns."""
     direction = np.asarray(direction)
     scalar = direction.ndim == 1
@@ -104,8 +113,17 @@ def person_influence(problem, point, order, direction):
     if not np.isfinite(score).all() or not np.allclose(score.sum(axis=0), -evaluated["gradient"][:-1] @ direction,
                                                        atol=1e-9, rtol=1e-9):
         raise ValueError("Person contributions disagree with the marginal likelihood gradient")
-    return (pd.Series(score[:, 0], index=problem.person_labels) if scalar else
-            pd.DataFrame(score, index=problem.person_labels))
+    output = (pd.Series(score[:, 0], index=problem.person_labels) if scalar else
+              pd.DataFrame(score, index=problem.person_labels))
+    if check:
+        fine = person_influence(problem, point, 2*order-1, direction, check=False)
+        scale = np.maximum(np.linalg.norm(score, axis=0), np.finfo(float).tiny)
+        fine_values = fine.to_numpy().reshape(score.shape)
+        change = float(np.max(np.linalg.norm(fine_values-score, axis=0)/scale))
+        if not np.isfinite(change) or change > .01:
+            raise ValueError("Shared calibration person contributions change with quadrature")
+        output.attrs.update(fine=fine, points=[order, 2*order-1], relative_change=change)
+    return output
 
 
 def calibration_scores(source, rater, levels, sensitivity, mapping=None):

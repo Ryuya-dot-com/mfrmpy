@@ -25,7 +25,7 @@ from mfrmpy._core.rater_dff import prepare_rater_dff_data, with_rater_dff
 
 from ._category_design import category_design
 
-__version__ = "0.2.3.dev4"
+__version__ = "0.2.3.dev5"
 
 __all__ = [
     "__version__", "analyze", "fit", "diagnose", "check_design", "check_rater_contrast", "category_design", "summary", "tables", "export_csv",
@@ -41,17 +41,21 @@ def fit(data, **settings):
     Accepts the MFRM fit settings of analyze(), including column aliases.
     Use diagnose() to add selected outputs without refitting.
     """
-    return basic_analysis.run_basic_analysis(
-        data, **desktop_analysis._resolve_column_aliases(settings), outputs=[])
+    return desktop_analysis.run_analysis(data, **settings, outputs=[])
 
 
-def diagnose(analysis, *, outputs=("measures", "agreement", "scorefile"), progress=None):
+def diagnose(analysis, *, outputs=("measures", "agreement", "scorefile"),
+             interval_requests=None, bias_requests=None, joint_settings=None,
+             gd_settings=None, progress=None):
     """Return an analysis with selected outputs added; keep the source intact.
 
     outputs: measures (fit, reliability and fair averages), agreement,
     scorefile, or pca. Already computed sections are reused.
     """
-    return basic_analysis.complete_analysis(analysis, outputs=outputs, progress=progress)
+    completed = basic_analysis.complete_analysis(analysis, outputs=outputs, progress=progress)
+    return desktop_analysis.complete_requests(
+        completed, interval_requests=interval_requests, bias_requests=bias_requests,
+        joint_settings=joint_settings, gd_settings=gd_settings, progress=progress)
 
 _TABLE_ALIASES = {
     "estimates": "measures",
@@ -228,6 +232,10 @@ def summary(analysis) -> pd.DataFrame:
             ("gd" if k.startswith("gd_") else ("agreement" if k in {"agreement_summary", "pairwise_agreement"} else k))
             for k in (_canonical_table_kind(t) for t, _, _ in all_tables)
         ))
+    order = ("design", "measures", "fair_average", "categories", "steps", "connectivity", "reliability",
+             "agreement", "rescaled", "bias", "intervals", "joint", "rater_dff", "anchor_sensitivity", "gd", "pca")
+    names = set(avail_tables.split(", ")) - {""}
+    avail_tables = ", ".join([k for k in order if k in names] + sorted(names-set(order)))
     avail_plots = ", ".join(_available_plot_kinds(analysis))
 
     if analysis.get("kind") == "gd-analysis-v2":
@@ -247,8 +255,10 @@ def summary(analysis) -> pd.DataFrame:
             ("Observations", str((gd_res.get("design") or {}).get("n_observations", 0))),
             ("ObservedG", f"{float(obs_c['G']):.3f}" if avail and pd.notna(obs_c.get("G")) else ""),
             ("ObservedPhi", f"{float(obs_c['Phi']):.3f}" if avail and pd.notna(obs_c.get("Phi")) else ""),
-            ("SupportsFormalInference", str(any(ci.get("observed", {}).get(f"{k}_interval_status")
-                                                == "approximate_normal_delta" for k in ("G", "Phi")))),
+            ("SupportsFormalInference", "False"),
+            ("CoverageQualified", "False"),
+            ("CIEligible", str(any(ci.get("observed", {}).get(f"{k}_interval_status")
+                                   == "approximate_normal_delta" for k in ("G", "Phi")))),
             ("IntervalMethod", ci.get("method", "not_requested")),
             ("IntervalAssumption", ci.get("assumption", "none")),
             ("IntervalScope", "pointwise_normal_random_effects_approximation" if ci else "none"),
@@ -363,14 +373,14 @@ def _previous_export(manifest):
     return managed
 
 
-def export_csv(analysis, directory) -> list[Path]:
+def export_csv(analysis, directory, *, kind=None) -> list[Path]:
     """Write qualified CSV tables and a provenance manifest without refitting.
 
     Applies the same shared qualification rules as :func:`tables`, :func:`plot`
     and :func:`report_html`, while recording both current and save-time
     qualification reasons in ``00_manifest.csv``.
     """
-    qualified_tables = tables(analysis)
+    qualified_tables = tables(analysis, kind=kind)
     return _export_csv(analysis, directory, qualified_tables)
 
 
@@ -408,7 +418,9 @@ def _export_csv(analysis, directory, qualified_tables):
                 "PackageVersion": __version__,
                 "Title": title,
                 "Rows": int(len(frame)),
-                "SupportsFormalInference": bool(title.startswith("G/D: ") and any(
+                "SupportsFormalInference": False,
+                "CoverageQualified": False,
+                "CIEligible": bool(title.startswith("G/D: ") and any(
                     frame[column].eq("approximate_normal_delta").any()
                     for column in ("G_interval_status", "Phi_interval_status") if column in frame)),
                 "IntervalBasis": (analysis.get("gd_analysis", {}).get("result", {}).get(

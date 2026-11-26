@@ -27,11 +27,22 @@ python -m pip install mfrmpy
 To use this local development candidate, install its built wheel explicitly:
 
 ```bash
-python -m pip install dist/development-forest-20261126/mfrmpy-0.2.3.dev4-py3-none-any.whl
+python -m pip install dist/development-review-20261126/mfrmpy-0.2.3.dev5-py3-none-any.whl
 ```
 
 The development version has not been uploaded. A plain PyPI installation does
 not install this local candidate. Use `mfrmpy.__version__` to identify your version.
+
+Python 3.11 or newer and pandas 2.2.3 or newer are required. Archives that use
+pandas 3's NaN-string dtype semantics require pandas 3 to reopen without changing
+those semantics; other supported pandas 2 string dtypes round-trip normally.
+Package captions and report notes are English. `language="ja"` is retained as
+an alias for English output; input labels are preserved verbatim. Save/export
+functions create missing parent directories.
+
+For a source checkout, run `pytest`. After installing a candidate wheel, run
+`pytest --installed` to include subprocess tests that deliberately ignore the
+source directory. Figure tests additionally require the `figures` extra.
 
 For Matplotlib figures and offline HTML reports:
 
@@ -129,7 +140,7 @@ print(mfrmpy.tables(analysis, "measures")[0][1])
 mfrmpy.save_project("measures.mfrm", analysis)
 ```
 
-`diagnose()` returns a new analysis envelope and never refits the model.
+`diagnose()` returns a new analysis envelope and never refits the base model.
 If an output fails, the supplied fit remains available for saving or retrying.
 Already computed sections are reused. Choose any combination of:
 
@@ -147,6 +158,35 @@ figure requiring a pending section explains which calculation is needed.
 `tables(analysis, "measures")` builds that table without constructing step,
 agreement or supplementary tables. Neither output selection nor completing
 diagnostics changes the model's inference qualification.
+
+`fit()` accepts the same supplementary `interval_requests`, `bias_requests`,
+`joint_settings`, and G/D workflow settings as `analyze()`. Add or replace a
+request later with `diagnose(fitted, outputs=[], interval_requests=[...])`.
+Only explicitly requested bias-cell or joint-model analyses perform their
+documented separate fits. An MFRM `fit()` with no requests saves the estimate
+before ordinary numerical review or report diagnostics.
+
+MML diagnostics retain a same-point check at fitted GH order `q` and `2*q-1`:
+analytic observed information without regularization, positive definiteness,
+inverse residuals, scaled gradients, covariance/score changes, and posterior
+mean/SD stability. General SEs, interval bars, separation, reliability and strata
+are withheld when this evidence is absent or fails. Retained point estimates
+remain visible where structurally reportable. Inspect
+`analysis["result"]["numerical_review"]["reason"]` for the failed checks.
+Displaying or reopening an analysis never refits it or manufactures missing
+evidence. An explicit refit may use a tighter `reltol`, more `quad_points`, or
+`mml_engine="Direct"`; no setting guarantees passage. These checks are not a
+continuous-integral error bound or a coverage certificate. Fixed-grid GH
+remains the integration method; adaptive GH is not implemented.
+
+For MML with structural anchors, `population_mean="auto"` estimates the
+population mean and defaults to the Direct optimizer. Unanchored auto fixes
+the mean at zero. Use `population_mean="fixed_zero"` explicitly to reproduce
+the former anchored model, or `"estimate"` with an anchored origin facet.
+Calibration metadata affects uncertainty propagation, not this model choice.
+General anchored-model uncertainty remains withheld where the ordinary
+numerical review does not support it; anchor-sensitivity intervals use their
+dedicated mean-estimating information calculation.
 
 Partial analyses use schema 3 `.mfrm` archives. This development version reads
 schemas 1, 2 and 3. Existing complete `analyze()` results continue to save as
@@ -1253,8 +1293,11 @@ in mfrmr 0.3.2 was consulted, not imported as a Python capability.
 DFF already has a [prespecified two-group contrast workflow](#estimate-a-prespecified-two-school-rater-contrast),
 including observed shared works, score-category use, a plot and retained holds.
 Use `tables(analysis, "rater_dff")` or select that kind in the exports. It currently
-requires an unanchored five-category 1–5 RSM/MML with fixed population SD 1,
-a common task facet and a composite group-by-rater facet. Its model-based Wald
+requires an unanchored RSM/MML with fixed positive population SD,
+and a negative composite group-by-rater facet. Other rubric endpoints,
+category counts and additional facets are computable subject to assignment
+and numerical checks; the original coverage experiments used five-category
+1–5 responses, SD 1 and a common task facet. Its model-based Wald
 interval is distinct from validated coverage: `CoverageQualified=False` and
 `SupportsFormalInference=False` remain explicit. Conditional `bias_requests`
 cell diagnostics are not a substitute for this ordered difference of rater
@@ -1263,9 +1306,11 @@ differences. Missing observed overlap cannot be supplied by a planned roster.
 ### Public output API
 
 The stable public surface is the names in `mfrmpy.__all__`. The bundled
-`mfrm_app` modules are implementation details, including experimental methods
-outside the supported scope. Do not rely on their private functions or treat
-their presence as a supported public API.
+`mfrmpy._core` modules are implementation details. The distribution excludes
+the legacy `mfrm_app` namespace and unused application/research modules.
+Use the documented API; retained research scripts in the checkout can use
+source-only compatibility bridges. `mfrmpy.types` provides request/envelope
+types and the distribution includes `py.typed` and public function stubs.
 
 | Function | Result |
 |---|---|
@@ -1273,7 +1318,7 @@ their presence as a supported public API.
 | `analyze(data, **settings)` | Retained analysis dictionary, including inputs, settings, identities and qualification |
 | `summary(analysis)` | One-screen DataFrame of design counts, qualification state, hold reasons and available table/plot kinds |
 | `tables(analysis, kind=None)` | List of `(title, pandas.DataFrame, note)` tuples (optionally filtered by `kind`, e.g. `"measures"`, `"steps"`/`"thresholds"`, `"reliability"`, `"agreement"`, `"bias"`, `"intervals"`, `"joint"`, `"anchor_sensitivity"`, `"gd"`) |
-| `export_csv(analysis, directory)` | Atomically write qualified CSV tables and `00_manifest.csv` (with current and saved reasons) |
+| `export_csv(analysis, directory, kind=None)` | Atomically write selected qualified CSV tables and `00_manifest.csv` (with current and saved reasons) |
 | `report_text(analysis, kind=None)` | Plain-text string of selected qualified tables, notes and availability states; no optional dependency |
 | `export_out(analysis, path, kind=None)` | Atomically write the plain-text report, typically `.out` or `.out.txt` |
 | `export_bundle(analysis, path, kind=None, plots=None)` | ZIP of the text report, CSVs, PNG/SVG figures and provenance manifest; `plots=[]` needs no plotting extra |
@@ -1407,7 +1452,7 @@ Python I/O errors.
 Within **0.2.x**, patch releases preserve these public names, documented
 arguments and return types. Additive options and bug fixes are allowed. Before
 1.0, an incompatible public API change requires a new minor release, such as
-0.3.0, with migration instructions in the changelog. Private `mfrm_app` helpers,
+0.3.0, with migration instructions in the changelog. Private `mfrmpy._core` helpers,
 nested raw-result fields, table display order and exact wording are outside
 this compatibility promise. Keep interpretation notes with exported results.
 

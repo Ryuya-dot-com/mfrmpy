@@ -55,13 +55,16 @@ def prepare_fixed_sd_check(result):
     point = np.asarray(result['opt'].x, dtype=float).copy()
     if point.shape != (sum(sizes.values()),) or not np.isfinite(point).all():
         raise ValueError('Structural coordinates are nonfinite or inconsistent')
-    if not 0 < len(point) <= 64:
-        raise ValueError('The synchronous review requires 1–64 structural coordinates')
+    if not len(point):
+        raise ValueError('The numerical review requires free structural coordinates')
     # Bound arrays BEFORE constructing the grouped counts/design. Distinct
     # observed facet combinations bound the number of grouped cells from above.
     cells = len(data[cfg['facet_names']].drop_duplicates())
     if (max(121, 2*q-1) * cells * cfg['n_cat'] * (len(point)+1) > 8_000_000
-            or cfg['n_person'] * cells * cfg['n_cat'] > 2_000_000):
+            or cfg['n_person'] * cells * cfg['n_cat'] > 2_000_000
+            or len(data)*cfg['n_cat']*(len(point)+1) > 8_000_000
+            or cfg['n_person']*max(121, 2*q-1)*(len(point)+1) > 8_000_000
+            or (len(point)+1)**2 > 8_000_000):
         raise ValueError('Information calculation exceeds the synchronous memory scope')
     # This constructor checks unit weights, simple centering, anchors, dummy
     # facets, regression and penalties. It evaluates no likelihood or optimizer.

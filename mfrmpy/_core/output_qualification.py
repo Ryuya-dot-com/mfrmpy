@@ -510,6 +510,15 @@ def calibration_screening_block_message(result) -> str:
     return HOLD_MESSAGE
 
 
+def general_uncertainty_block_reason(result) -> str:
+    """General tables need numerical evidence independently of coverage."""
+    reason = calibration_screening_block_reason(result)
+    if reason:
+        return reason
+    from .numerical_qualification import block_reason
+    return block_reason(result or {})
+
+
 def run_qualification_state(result) -> dict[str, object]:
     """Shared run-level diagnostic state across tables, figures, HTML, CSV, and reloaded archives."""
     result = result or {}
@@ -517,8 +526,14 @@ def run_qualification_state(result) -> dict[str, object]:
     ident_state = identifiability_audit_state(result)
     formal_reason = calibration_inference_hold_reason(result)
     formal_message = calibration_inference_hold_message(result)
-    block_reason = calibration_screening_block_reason(result)
+    block_reason = general_uncertainty_block_reason(result)
     block_message = calibration_screening_block_message(result)
+    if block_reason == "stat.mml.general_numerical_review_unavailable":
+        block_message = ("General MML uncertainty requires a retained successful quadrature, stationarity "
+                         "and posterior-score check. No conditional-SE fallback is reported. "
+                         "Inspect numerical_review; explicitly refit with tighter reltol / more quad_points "
+                         "or mml_engine='Direct', then repeat the check. Numerical checks do not establish coverage. "
+                         + str(result.get("numerical_review", {}).get("reason", "No numerical evidence was saved.")))
     config = result.get("config", {}) if isinstance(result.get("config"), dict) else {}
     method = str(config.get("method", "")).upper()
     if block_reason == OPTIMIZER_TERMINATION_HOLD_REASON:
@@ -535,6 +550,8 @@ def run_qualification_state(result) -> dict[str, object]:
         state = "unsupported_category_structure"
     elif block_reason == MML_DISCONNECTED_HOLD_REASON or formal_reason == MML_DISCONNECTED_HOLD_REASON:
         state = "disconnected_mml_cohorts"
+    elif block_reason == "stat.mml.general_numerical_review_unavailable":
+        state = "mml_numerical_review_withheld"
     elif block_reason:
         state = "facet_score_boundary"
     elif ident_state == "audit_size_limit":

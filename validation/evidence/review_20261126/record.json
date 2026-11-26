@@ -1,0 +1,187 @@
+{
+  "date": "2026-11-26",
+  "version": "0.2.3.dev5",
+  "artifacts": {
+    "mfrmpy-0.2.3.dev5.tar.gz": {
+      "sha256": "5b07657e9f658339ef596fe86a98f7df0893828c7eba584a23c22e097127146a",
+      "bytes": 511982
+    },
+    "mfrmpy-0.2.3.dev5-py3-none-any.whl": {
+      "sha256": "824e86f62872363d2f840800c53fae86d5e490ab8a86f5397dc8f53b4dedea56",
+      "bytes": 415826
+    }
+  },
+  "source_sdist_wheel_identical": true,
+  "test_evidence": "141 installed tests before legacy shared-evidence holds; 24 affected installed tests after those changes; source Python 3.13/3.14 114 core tests each; see logs for environment-specific checks and earlier failures corrected by focused reruns. Final numerical-review warning handling checked on the final installed wheel (2 affected tests).",
+  "source_sha256": {
+    "mfrmpy/__init__.pyi": "61dc3be2abdd23052e04e989a87b41783dbc890356667dab8ca1c0841ab57d9f",
+    "mfrmpy/__init__.py": "b8c8eee5f15ed7a7aad94f9b5154862b9c3870790f15da20dfc692fcfad6942d",
+    "mfrmpy/types.py": "32a8b60aeb179f12a04b85b81058be49a08497f10a085bb06f6f31bc3e822dd9",
+    "mfrmpy/_category_design.py": "9e4eb14c152f103b021cba534d74567ade9b743373e1daa335d619a5439d2634",
+    "mfrmpy/_reports.py": "490681238bbee18cf3f212935e005475134a14d3d878e26dc2d828aed79e4d91",
+    "mfrmpy/_core/desktop_outputs.py": "6fc81a94d63d5bab1680ee8615a70160e80257b0e55aeec04841adb14294bc66",
+    "mfrmpy/_core/exports.py": "15b140ebbae7dd07844e00fc64eaa1f5cdd2d75f8bad144f0dfc2b671e4efb21",
+    "mfrmpy/_core/desktop_guidance.py": "edb3159c6a69f8884971e39032e0d5d6625d57909b098f2463b85ad1e3ea7462",
+    "mfrmpy/_core/diagnostic_sums.py": "d5abd8107c4d9ae1838fcc4b7389a7438e459b96951f9d26d16a8c59f1589f95",
+    "mfrmpy/_core/reporting_facts.py": "6b83ce7847ea2880887e082a9580b84ae487e281811ba6b520c14478a53598b9",
+    "mfrmpy/_core/reliability.py": "7da07f22b228ebe5faf4322bc7f4ee4bb6bca35642e05ca2c6fab4e3af6d09a3",
+    "mfrmpy/_core/io_tables.py": "988edbf0950d6049941a7084875ba30dbd80ac4af520daf3d50f986bc45dc43c",
+    "mfrmpy/_core/mml_joint.py": "5995cf68b01cc7e6ec0494b05e118dfef4ec59321ce77dba7f22a6ed660a9339",
+    "mfrmpy/_core/anchor_sensitivity.py": "44653c19748f743060e8cbd3952ea424d827f34a35b0c070628088143d5d1075",
+    "mfrmpy/_core/__init__.py": "456fb0f153ff88b6146223ec249dce2f02296dfa859d7a78e5ecd1d44d266023",
+    "mfrmpy/_core/anchor_intervals.py": "0b07569522e5885a2506f2109ab3c8d6f0357eb91f6dca9745717e845d0d7c92",
+    "mfrmpy/_core/basic_analysis.py": "903e95f1ab9b2cffc76e991ede466ce979f4a0804d9acdd0c2043cc5589cade8",
+    "mfrmpy/_core/unbalanced_gd.py": "6bbe7f27c51560e0903094dcc8d8f7967117903e028d14f86ea5571b8cb14b6e",
+    "mfrmpy/_core/rater_dff.py": "67ee99f9662b452bd95d99e1908966f10496bc0d201c073c5f085a148b0c4e6c",
+    "mfrmpy/_core/output_qualification.py": "711b8d2ead648a356f129f8f3b0e78a205de650f2391d7f90426169f93d1d465",
+    "mfrmpy/_core/jmle_boundary.py": "6cb4c649d3d5eae5c713eb1e2979972fa161965d7bbaa51824abcd7ab5fcccad",
+    "mfrmpy/_core/gd_intervals.py": "4cf9c5b9483687cede06c3b893bed3b38d81a5f7ffecd64a4cdf46fab0d20478",
+    "mfrmpy/_core/engine.py": "1ecc12ad8fec8bd12b492a54f84bcb5930429590ef77890dcc11c91702ba8fae",
+    "mfrmpy/_core/decision_stability.py": "fac0d702590d3ba9f18124fc15403491d79b10649702dfbbc0dae5116c512d68",
+    "mfrmpy/_core/joint_interaction.py": "c11229e72aa3c81f2bb25dc579d91807fdb41ab3036cc0f6d9751da23691b5c6",
+    "mfrmpy/_core/anchor_levels.py": "885c00bb3534725a7f1ff33af569244a06ffb215b2bc994a9d8ef4db8296e1d8",
+    "mfrmpy/_core/desktop_i18n.py": "282e2fbd9d468522d7f544dae4aec404c0d9320a776df20ebb9c97f39e8456d5",
+    "mfrmpy/_core/figure_presentation.py": "8f19a448984f7fa21d7028fd940e3d3c35251cdaa821c330a353abc02090c68f",
+    "mfrmpy/_core/visual_maps.py": "36726c29c1fe1b056e882c4f0a14e69e303a9b16c0e1d58d0401cc9dc21bb9c9",
+    "mfrmpy/_core/design_rank.py": "321dde057d86aed25e6dc5d3b4994bfe6d8684b483cdb33ff55f312ffac19158",
+    "mfrmpy/_core/design_assignment.py": "a898f9dd7ecefab300d97b2f43c65f83f215ce619870e2c32cc104c3ecc81883",
+    "mfrmpy/_core/mml_fixed_sd_review.py": "2371b51864db6b43023292d3677ad23e1dcce88a0951ec79e4c09735d8b1d61c",
+    "mfrmpy/_core/desktop_analysis.py": "a598894b55a1fe827c21b6d4a4bb16dc25a23b189b080a9a399d2c2c446c0c91",
+    "mfrmpy/_core/multivariate_gd.py": "b5808d67f31e71e94bae64d648900b1922dc1a0f7f8f140d358a1ad5768181c7",
+    "mfrmpy/_core/bias_analysis.py": "bb35113d6d0db90e9e7a75a9e2f1b03c87cf4101f02f52c787b89888aeb51d47",
+    "mfrmpy/_core/rater_contrast.py": "e12258ef5f36d770616b212102a34a2c6cae0d83e2428e75841bb88d61b632fc",
+    "mfrmpy/_core/generalizability.py": "45e6b7d9ae21ac5a93985aa5c9882743448df00ca05c94494edef45b0110c15f",
+    "mfrmpy/_core/evidence.py": "e7e8cf021d9f7c6e4cc850987eda591f1abdce0dca4eb700fb0c257a9b8e866c",
+    "mfrmpy/_core/_resources.py": "5d326b4a64a42660b7d34b372c9897e7a2df5274bd84c433a7a50d48e2fffc5f",
+    "mfrmpy/_core/project.py": "070f40afae4ed8f48a995dadc9068acf3975cec71ca9a0777acc8f0333fdda78",
+    "mfrmpy/_core/numerical_qualification.py": "5fc6f3e29b73e2cc789656a146e43a0c1097e3e2d855c0e96ed534bb8868607d",
+    "mfrmpy/_core/structural_intervals.py": "9b0fb26cfb3b7d8b8670d3f5abe7ada322700ade6b07dd49c8c1d058589158a3",
+    "mfrmpy/_core/shared_calibration.py": "b7e91698b02af50ed3f460952b7eb934655abf29b8d0a81584b01514590c1727",
+    "mfrmpy/_core/data/en.json": "9edbbf94a2a8bc228dc0c9aa0c265a51953afec0d12240758395b01356d1c75f"
+  },
+  "benchmark": {
+    "scope": "One 20,000-rating binary JMLE run per candidate on the same Python 3.12 environment, with tracemalloc. Exploratory elapsed times, not a general speed guarantee. Non-benchmark test processes were active for part of the runs.",
+    "runs": {
+      "dev4": {
+        "persons": 10000,
+        "ratings": 20000,
+        "fit_archive_bytes": 416735,
+        "optimizer_success": true,
+        "audit_status": "eta_identified",
+        "contrast_status": "observed",
+        "dense_design_cells": 200020000,
+        "reduced_cells": 4,
+        "phases": [
+          {
+            "phase": "fit",
+            "seconds": 12.439864125102758,
+            "traced_peak_mib": 23.58458137512207,
+            "process_peak_mib": 217.703125
+          },
+          {
+            "phase": "contrast_audit",
+            "seconds": 0.4572786670178175,
+            "traced_peak_mib": 9.583366394042969,
+            "process_peak_mib": 217.703125
+          },
+          {
+            "phase": "save_fit",
+            "seconds": 4.49328466609586,
+            "traced_peak_mib": 11.400223731994629,
+            "process_peak_mib": 217.703125
+          },
+          {
+            "phase": "load_fit",
+            "seconds": 4.3467814170289785,
+            "traced_peak_mib": 72.70589351654053,
+            "process_peak_mib": 359.234375
+          },
+          {
+            "phase": "measures",
+            "seconds": 41.51331308390945,
+            "traced_peak_mib": 33.12639236450195,
+            "process_peak_mib": 359.234375
+          },
+          {
+            "phase": "one_table",
+            "seconds": 14.178855666075833,
+            "traced_peak_mib": 25.190462112426758,
+            "process_peak_mib": 359.234375
+          },
+          {
+            "phase": "agreement",
+            "seconds": 33.38348254200537,
+            "traced_peak_mib": 12.596877098083496,
+            "process_peak_mib": 359.234375
+          },
+          {
+            "phase": "scorefile",
+            "seconds": 23.184025750029832,
+            "traced_peak_mib": 13.095540046691895,
+            "process_peak_mib": 359.234375
+          }
+        ]
+      },
+      "dev5": {
+        "persons": 10000,
+        "ratings": 20000,
+        "fit_archive_bytes": 416372,
+        "optimizer_success": true,
+        "audit_status": "eta_identified",
+        "contrast_status": "observed",
+        "dense_design_cells": 200020000,
+        "reduced_cells": 4,
+        "phases": [
+          {
+            "phase": "fit",
+            "seconds": 12.404818915994838,
+            "traced_peak_mib": 23.584540367126465,
+            "process_peak_mib": 236.703125
+          },
+          {
+            "phase": "contrast_audit",
+            "seconds": 0.4241873749997467,
+            "traced_peak_mib": 9.583597183227539,
+            "process_peak_mib": 236.703125
+          },
+          {
+            "phase": "save_fit",
+            "seconds": 4.38106174999848,
+            "traced_peak_mib": 11.407906532287598,
+            "process_peak_mib": 236.703125
+          },
+          {
+            "phase": "load_fit",
+            "seconds": 4.236753041041084,
+            "traced_peak_mib": 72.70600032806396,
+            "process_peak_mib": 393.09375
+          },
+          {
+            "phase": "measures",
+            "seconds": 28.257177459076047,
+            "traced_peak_mib": 33.17034912109375,
+            "process_peak_mib": 393.09375
+          },
+          {
+            "phase": "one_table",
+            "seconds": 13.404906417010352,
+            "traced_peak_mib": 25.190702438354492,
+            "process_peak_mib": 393.09375
+          },
+          {
+            "phase": "agreement",
+            "seconds": 24.624985207919963,
+            "traced_peak_mib": 12.771467208862305,
+            "process_peak_mib": 393.09375
+          },
+          {
+            "phase": "scorefile",
+            "seconds": 25.520581708056852,
+            "traced_peak_mib": 13.160308837890625,
+            "process_peak_mib": 393.09375
+          }
+        ]
+      }
+    }
+  }
+}

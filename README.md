@@ -2,7 +2,7 @@
 
 Many-facet Rasch analysis (RSM / PCM with JMLE or fixed-population-SD MML) and observed-score generalizability / decision (G/D) studies in Python. The development version adds explicit MINQUE(0) for supported missing, unbalanced and nested designs; see the [scope and example](docs/python_library.md#missing-unbalanced-and-nested-designs-development-version).
 
-This checkout is the unpublished **0.2.3.dev4** development candidate. Its version
+This checkout is the unpublished **0.2.3.dev5** development candidate. Its version
 distinguishes the new features from the earlier 0.2.1 development snapshots and
 the 0.2.2 release recorded in [the release history](validation/m1_release_candidate.md).
 See the [local installation instructions](docs/python_library.md#installation).

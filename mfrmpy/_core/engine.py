@@ -3232,7 +3232,7 @@ def qualify_measure_uncertainty(measures, result):
         out["UncertaintyReasonCode"] = reason
         if "SupportsFormalInference" in out:
             out["SupportsFormalInference"] = False
-        if _output_qualification.calibration_screening_block_reason(result):
+        if _output_qualification.general_uncertainty_block_reason(result):
             if "SEUse" in out:
                 out["SEUse"] = "withheld"
             if "CIUse" in out:
@@ -3531,7 +3531,7 @@ def qualify_measures_for_reporting(
 
     ci_level = pd.to_numeric(out.get("CI_Level", pd.Series(0.95, index=out.index)), errors="coerce").fillna(0.95)
     est_num = pd.to_numeric(out.get("Estimate", pd.Series(np.nan, index=out.index)), errors="coerce")
-    z_arr = np.array([float(_norm.ppf((1.0 + float(lv)) / 2.0)) if 0 < float(lv) < 1 else 1.959963984540054 for lv in ci_level])
+    z_arr = _norm.ppf((1. + ci_level.where((ci_level > 0) & (ci_level < 1), .95).to_numpy()) / 2.)
     raw_ci_lo = pd.to_numeric(out.get("CI_Lower", pd.Series(np.nan, index=out.index)), errors="coerce")
     raw_ci_hi = pd.to_numeric(out.get("CI_Upper", pd.Series(np.nan, index=out.index)), errors="coerce")
     calc_lo = est_num - z_arr * model_se
@@ -6373,12 +6373,8 @@ def calc_facet_fit(
     zstd_transform=None,
 ):
     """Per-facet/-level Infit / Outfit mean-square with low-df and boundary safeguards."""
-    rows = []
-    for facet in facet_cols:
-        grp = obs_df.groupby(facet, observed=False)
-        for level, df in grp:
-            row = _summarize_fit_scope_row(df, whexact=whexact, zstd_transform=zstd_transform)
-            rows.append({"Facet": facet, "Level": level, **row})
+    from .diagnostic_sums import facet_fit_rows
+    rows = facet_fit_rows(obs_df, facet_cols, whexact=whexact, zstd_transform=zstd_transform)
     tbl = _apply_fit_df_method(
         pd.DataFrame(rows),
         fit_df_method=fit_df_method,
@@ -6390,67 +6386,13 @@ def calc_facet_fit(
 
 
 def calc_facet_se(obs_df, facet_cols):
-    rows = []
-    for facet in facet_cols:
-        grp = obs_df.groupby(facet, observed=False)
-        for level, df in grp:
-            w = get_weights(df)
-            # GPCM location information is a^2 Var(K); Rasch has a = 1.
-            info = np.nansum(df.get("ScoreInformation", df["Var"]) * w)
-            se = 1 / np.sqrt(info) if info > 0 else np.nan
-            rows.append({
-                "Facet": facet,
-                "Level": level,
-                "N": np.nansum(w),
-                "SE": se,
-            })
-    return pd.DataFrame(rows)
+    from .diagnostic_sums import facet_se
+    return facet_se(obs_df, facet_cols)
 
 
 def calc_bias_facet(obs_df, facet_cols):
-    rows = []
-    for facet in facet_cols:
-        grp = obs_df.groupby(facet, observed=False)
-        for level, df in grp:
-            w = get_weights(df)
-            n = np.nansum(w)
-            observed_avg = weighted_mean(df["Observed"].to_numpy(), w)
-            expected_avg = weighted_mean(df["Expected"].to_numpy(), w)
-            mean_resid = weighted_mean(df["Residual"].to_numpy(), w)
-            mean_std_resid = weighted_mean(df["StdResidual"].to_numpy(), w)
-            mean_abs_std = weighted_mean(np.abs(df["StdResidual"]).to_numpy(), w)
-            chi_sq = np.nansum((df["StdResidual"] ** 2) * w)
-            se_resid = np.sqrt(np.nansum(df["Var"] * w)) / n if n > 0 else np.nan
-            se_std = 1 / np.sqrt(n) if n > 0 else np.nan
-            df_chi = n - 1 if n > 1 else np.nan
-            t_resid = mean_resid / se_resid if np.isfinite(se_resid) and se_resid > 0 else np.nan
-            t_std = mean_std_resid / se_std if np.isfinite(se_std) and se_std > 0 else np.nan
-            p_resid = 2 * t_dist.cdf(-abs(t_resid), df=df_chi) if np.isfinite(df_chi) and np.isfinite(t_resid) else np.nan
-            p_std = 2 * t_dist.cdf(-abs(t_std), df=df_chi) if np.isfinite(df_chi) and np.isfinite(t_std) else np.nan
-            chi_p = 1 - chi2.cdf(chi_sq, df=df_chi) if np.isfinite(chi_sq) and np.isfinite(df_chi) and df_chi > 0 else np.nan
-
-            rows.append({
-                "Facet": facet,
-                "Level": level,
-                "N": n,
-                "ObservedAverage": observed_avg,
-                "ExpectedAverage": expected_avg,
-                "Bias": mean_resid,
-                "MeanResidual": mean_resid,
-                "MeanStdResidual": mean_std_resid,
-                "MeanAbsStdResidual": mean_abs_std,
-                "ChiSq": chi_sq,
-                "ChiDf": df_chi,
-                "ChiP": chi_p,
-                "SE_Residual": se_resid,
-                "t_Residual": t_resid,
-                "p_Residual": p_resid,
-                "SE_StdResidual": se_std,
-                "t_StdResidual": t_std,
-                "p_StdResidual": p_std,
-                "DF": df_chi,
-            })
-    return pd.DataFrame(rows)
+    from .diagnostic_sums import facet_bias
+    return facet_bias(obs_df, facet_cols)
 
 
 def calc_bias_interactions(obs_df, facet_cols, pairs=None, top_n=20):
@@ -7105,27 +7047,24 @@ def calc_interrater_agreement(
     if df_obs.empty:
         return {"summary": pd.DataFrame(), "pairs": pd.DataFrame()}
 
-    prob_map = {}
+    probability_means = None
     if res is not None:
         probs = _precomputed_probs if _precomputed_probs is not None else compute_prob_matrix(res)
         if probs is not None and probs.shape[0] == len(obs_df):
             prob_cols = [f"_p{i}" for i in range(probs.shape[1])]
-            df_probs = df[["_context", rater_facet]].copy()
-            for i, col in enumerate(prob_cols):
-                df_probs[col] = probs[:, i]
-            if "Weight" in df.columns:
-                df_probs["Weight"] = df["Weight"].to_numpy()
-            for (ctx, r), g in df_probs.groupby(["_context", rater_facet], observed=True):
-                if "Weight" in g.columns:
-                    w = g["Weight"].to_numpy(dtype=float)
-                    ok = np.isfinite(w) & (w > 0)
-                    if not np.any(ok):
-                        avg = np.full(len(prob_cols), np.nan)
-                    else:
-                        avg = np.average(g.loc[ok, prob_cols].to_numpy(), axis=0, weights=w[ok])
-                else:
-                    avg = np.nanmean(g[prob_cols].to_numpy(), axis=0)
-                prob_map[(ctx, r)] = avg
+            keys = pd.MultiIndex.from_frame(df[["_context", rater_facet]])
+            values = pd.DataFrame(probs, index=keys, columns=prob_cols)
+            if "Weight" in df:
+                w = df.Weight.to_numpy(dtype=float)
+                w = np.where(np.isfinite(w) & (w > 0), w, 0.)
+                denominator = pd.Series(w, index=keys).groupby(level=[0, 1], observed=True).sum()
+                bad = values.isna().mul(w > 0, axis=0).groupby(level=[0, 1], observed=True).any()
+                probability_means = values.mul(w, axis=0).groupby(level=[0, 1], observed=True).sum()
+                probability_means = probability_means.div(denominator.where(denominator > 0), axis=0).mask(bad)
+            else:
+                grouped = values.groupby(level=[0, 1], observed=True)
+                bad = values.isna().groupby(level=[0, 1], observed=True).any()
+                probability_means = grouped.mean().mask(bad)
 
     wide = df_obs.pivot(index="_context", columns=rater_facet, values="Score")
     if wide is None or wide.empty:
@@ -7167,19 +7106,15 @@ def calc_interrater_agreement(
         diff = v1 - v2
         exact_count = int(np.sum(np.isclose(diff, 0)))
 
-        exp_vals = []
-        if prob_map:
-            for ctx in sub.index:
-                p1 = prob_map.get((ctx, r1))
-                p2 = prob_map.get((ctx, r2))
-                if p1 is None or p2 is None:
-                    continue
-                if np.any(np.isnan(p1)) or np.any(np.isnan(p2)):
-                    continue
-                exp_vals.append(float(np.sum(p1 * p2)))
-        exp_mean = float(np.mean(exp_vals)) if exp_vals else np.nan
-        exp_sum = float(np.sum(exp_vals)) if exp_vals else 0.0
-        if exp_vals:
+        exp_vals = np.array([], dtype=float)
+        if probability_means is not None:
+            p1 = probability_means.xs(r1, level=1).reindex(sub.index).to_numpy()
+            p2 = probability_means.xs(r2, level=1).reindex(sub.index).to_numpy()
+            valid = ~np.isnan(p1).any(axis=1) & ~np.isnan(p2).any(axis=1)
+            exp_vals = np.einsum("ij,ij->i", p1[valid], p2[valid])
+        exp_mean = float(np.mean(exp_vals)) if exp_vals.size else np.nan
+        exp_sum = float(np.sum(exp_vals)) if exp_vals.size else 0.0
+        if exp_vals.size:
             expected_available = True
 
         pair_rows.append({
@@ -8157,12 +8092,10 @@ def _finite_difference_gradient(fn, par, rel_step=1e-5):
 
 
 def _mml_covariance_for_diagnostics(res, max_params=MML_COVARIANCE_AUTO_MAX_PARAMS):
-    """Observed-information covariance with an automatic size gate for diagnostics.
+    """Use retained analytic numerical evidence; never regularize or fall back.
 
-    ``compute_mml_parameter_covariance`` remains the public helper. This
-    wrapper is used during normal diagnostics so large MML runs do not silently
-    become much slower; when skipped, downstream tables keep conditional SEs and
-    carry an explicit ``skipped_large_parameter_count`` status.
+    The review bounds its working arrays before evaluation. The legacy
+    max_params argument is accepted for source-checkout callers only.
     """
     config = (res or {}).get("config", {}) or {}
     try:
@@ -8190,24 +8123,14 @@ def _mml_covariance_for_diagnostics(res, max_params=MML_COVARIANCE_AUTO_MAX_PARA
             "not_applicable",
             "MML observed-information covariance is only computed for MML fits.",
         )
-    scope_issue = _mml_covariance_scope_issue(config)
-    if scope_issue:
-        return envelope("unsupported_covariance_scope", scope_issue)
-    par = _get_opt_par(res)
-    if par is not None and max_params is not None and int(par.size) > int(max_params):
-        return envelope(
-            "skipped_large_parameter_count",
-            (
-                f"MML observed-information covariance was skipped for routine "
-                f"diagnostics because the parameter vector has {int(par.size)} "
-                f"parameters (auto limit {int(max_params)}). The measure table "
-                "keeps conditional information SEs. Reduce the supported design "
-                "or rerun within the covariance limit when structural SEs are "
-                "required; otherwise report the conditional-SE scope and mark "
-                "structural covariance as not assessable."
-            ),
-        )
-    return compute_mml_parameter_covariance(res)
+    from .numerical_qualification import valid_record
+    record = valid_record(res)
+    if not record or record.get("passed") is not True:
+        return envelope("numerical_review_withheld", (record or {}).get("reason", "No retained numerical review"))
+    out = envelope("ok", "Analytic Louis information; same-point quadrature, stationarity and posterior-score checks passed")
+    out.update(cov=np.asarray(record["covariance"]), hessian=np.asarray(record["information"]), rank=len(record["covariance"]))
+    out["audit"] = build_mml_covariance_audit(out, res)
+    return out
 
 
 def _compute_measure_value_from_par(res, par, facet, level):
@@ -9475,29 +9398,14 @@ def mfrm_diagnostics(
             ci_level=0.95,
         )
 
-        # Attach MML observed-information delta-method SEs / CIs to the fitted step
-        # thresholds, reusing the covariance already computed for the facet
-        # measures. MML only; a no-op for JMLE fits and when the steps table
-        # already carries an SE column.
-        try:
-            steps_tbl = res.get("steps") if isinstance(res, dict) else None
-            if (
-                isinstance(steps_tbl, pd.DataFrame)
-                and not steps_tbl.empty
-                and "Estimate" in steps_tbl.columns
-                and "SE" not in steps_tbl.columns
-            ):
-                step_se_tbl = compute_mml_step_se_table(
-                    res,
-                    covariance=uncertainty_bundle.get("covariance") if isinstance(uncertainty_bundle, dict) else None,
-                    ci_level=0.95,
-                )
-                if isinstance(step_se_tbl, pd.DataFrame) and not step_se_tbl.empty:
-                    key_cols = [c for c in ("StepFacet", "Step") if c in steps_tbl.columns and c in step_se_tbl.columns]
-                    if key_cols:
-                        res["steps"] = steps_tbl.merge(step_se_tbl, on=key_cols, how="left")
-        except Exception:
-            pass
+        steps_tbl = res.get("steps")
+        if isinstance(steps_tbl, pd.DataFrame) and not steps_tbl.empty and "Estimate" in steps_tbl:
+            step_se_tbl = compute_mml_step_se_table(res, covariance=uncertainty_bundle.get("covariance"), ci_level=0.95)
+            if isinstance(step_se_tbl, pd.DataFrame) and not step_se_tbl.empty:
+                key_cols = [c for c in ("StepFacet", "Step") if c in steps_tbl and c in step_se_tbl]
+                if key_cols:
+                    value_cols = [c for c in step_se_tbl if c not in key_cols]
+                    steps_tbl = steps_tbl.drop(columns=value_cols, errors="ignore").merge(step_se_tbl, on=key_cols, how="left")
 
         reliability_tbl = calc_reliability(measures)
     all_diag_facets = ["Person"] + list(res["config"]["facet_names"])
@@ -9594,6 +9502,7 @@ def mfrm_diagnostics(
 
     return {
         "obs": obs_df,
+        "step_uncertainty": steps_tbl if compute_measures else None,
         "overall_fit": overall_fit,
         "measures": measures,
         "fit": fit_tbl,

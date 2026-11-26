@@ -113,10 +113,8 @@ def figure_choices(analysis, *, language=None):
         choices.append(('残差PCA · 固有値スクリー', dict(kind='pca')))
         choices.append(('残差PCA · 第1コントラスト負荷量', dict(kind='pca_loadings')))
     choices = [(title, opts) for title, opts in choices if not _pending_output(analysis, opts['kind'])]
-    if language is not None:
-        from mfrmpy._core.desktop_i18n import text
-        return [(text(title, language), opts) for title, opts in choices]
-    return choices
+    from mfrmpy._core.desktop_i18n import text
+    return [(text(title, 'en'), opts) for title, opts in choices]
 
 
 def _pending_output(analysis, kind):
@@ -1177,7 +1175,9 @@ def report_html(analysis, *, pathway_facet=None, pathway_statistic='Infit', face
     pathway_statistic = statistic if statistic is not None else pathway_statistic
     view = analysis.get('view_settings', {})
     presentation = presentation or view.get('presentation', 'explained')
-    language = language or view.get('language', 'en')
+    if language not in (None, 'en', 'ja'):
+        raise ValueError('Reports use English (language must be en or the legacy ja alias)')
+    language = 'en'
     gd_swap = (view.get('gd_swap') == '1') if gd_swap is None else bool(gd_swap)
     tables = current_tables(analysis)
     escape = html.escape

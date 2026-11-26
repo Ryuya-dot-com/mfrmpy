@@ -89,6 +89,7 @@ def write_bundle(analysis, path, *, kind, plots):
 
     path = Path(path)
     # Stage alongside the target for atomic replacement; retain the old ZIP on any failure.
+    path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=path.parent, prefix=".mfrmpy-report-") as temporary:
         staging = Path(temporary)
         report = staging / "report.out"

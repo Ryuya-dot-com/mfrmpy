@@ -12,7 +12,6 @@ from mfrmpy._core import engine
 from mfrmpy._core.io_tables import TABLE_FILE_HARD_LIMIT_BYTES
 
 WEB_APP_URL = "https://mfrmpythonapplication-xodghmcghngx8cz5zmhfeg.streamlit.app"
-EXAMPLE_PATH = Path(__file__).resolve().parents[1] / "examples" / "desktop_writing.csv"
 
 CSV_GUIDE = """1行 = 1人を、1人の評価者が、1つの課題・観点について採点した記録です。
 同じ人に複数の評定があれば、複数行に分けます（長形式）。
@@ -112,7 +111,8 @@ Tutorial（チュートリアル）で、MFRM、推定方法、適合度、各�
 
 
 def writing_example():
-    return read_desktop_csv(EXAMPLE_PATH)
+    from mfrmpy import load_example
+    return load_example()
 
 
 def gd_two_facet_example():

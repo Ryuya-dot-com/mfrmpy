@@ -53,6 +53,7 @@ def test_fair_average_matches_independent_category_probabilities(analysis):
     assert (frame.loc[frame.Facet.eq("Rater"), "FairM"] != frame.loc[frame.Facet.eq("Rater"), "FairZ"]).any()
 
 
+@pytest.mark.installed
 def test_reports_roundtrip_without_refitting_or_optional_dependencies(analysis, tmp_path, monkeypatch):
     from mfrmpy._core import engine
     path = tmp_path / "saved.mfrm"

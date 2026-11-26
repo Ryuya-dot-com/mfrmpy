@@ -409,7 +409,7 @@ def qualified_reliability_table(result: dict, diagnostics: dict) -> pd.DataFrame
 
     result = result or {}
     diagnostics = diagnostics or {}
-    reason = output_qualification.calibration_screening_block_reason(result)
+    reason = output_qualification.general_uncertainty_block_reason(result)
     measures = diagnostics.get("measures")
     if isinstance(measures, pd.DataFrame) and not measures.empty:
         if reason or "SE_Method" not in measures.columns:
@@ -445,7 +445,7 @@ def publication_reliability_table(
         columns = [c for c in ("Facet", "Levels", "SD", "RMSE", "Separation", "Strata", "Reliability")
                    if c in reliability]
         out = reliability[columns].copy().round(3)
-        block_reason = output_qualification.calibration_screening_block_reason(result)
+        block_reason = output_qualification.general_uncertainty_block_reason(result)
         held = reliability["ReliabilityStatus"].ne("diagnostic") | bool(block_reason)
         out["Use"] = np.where(held, "Withheld", "Diagnostic")
         caption = "Reliability and separation by facet (Use = screening_only / Diagnostic; SupportsFormalInference = FALSE). "

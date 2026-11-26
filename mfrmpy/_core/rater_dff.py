@@ -50,6 +50,7 @@ def with_rater_dff(analysis, *, rater, group, difference, group_difference, cell
     Creating or displaying this record never refits the model.
     """
     project.validate_analysis(analysis)
+    _validate_model(analysis, cell_facet)
     fit = analysis.get("fit_settings", {})
     facets = fit.get("facet_cols", [])
     raw = analysis["input_data"]
@@ -104,14 +105,19 @@ def validate_entry(analysis, entry):
         raise project.ProjectError("Group DFF category evidence does not match the rubric")
 
 
+def _validate_model(analysis, cell):
+    result = analysis.get("result", {})
+    cfg = result.get("config", {})
+    if (cfg.get("model") != "RSM" or cfg.get("method") != "MML" or cfg.get("estimate_population_sd")
+            or cell not in cfg.get("facet_names", []) or cfg["facet_signs"].get(cell) != -1
+            or analysis["fit_settings"].get("anchors") or analysis["fit_settings"].get("group_anchors")):
+        raise ValueError("Group DFF requires an unanchored fixed-SD MML RSM and a negative composite facet")
+
+
 def _model_point(analysis, cell, settings, audit, weights):
+    _validate_model(analysis, cell)
     result = analysis["result"]
     cfg = result["config"]
-    if (cfg["model"] != "RSM" or cfg["method"] != "MML" or cfg["population_prior_sd"] != 1.
-            or (cfg["rating_min"], cfg["n_cat"]) != (1, 5) or len(cfg["facet_names"]) != 2
-            or cfg["noncenter_facet"] != cell or cfg["facet_signs"][cell] != -1
-            or analysis["fit_settings"].get("anchors") or analysis["fit_settings"].get("group_anchors")):
-        raise ValueError("Group DFF requires an unanchored five-category fixed-SD RSM with one shared task facet")
     prep = result["prep"]
     fitted = prep["data"]
     row_audit = prep.get("row_audit")

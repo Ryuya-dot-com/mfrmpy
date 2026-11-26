@@ -54,7 +54,13 @@ def _dtype_decode(spec):
     if kind == "category":
         return pd.CategoricalDtype(_decode(spec[1]), ordered=spec[2])
     if kind == "string" and spec[1] in {"python", "pyarrow"}:
-        return pd.StringDtype(storage=spec[1], na_value=_decode(spec[2]))
+        missing = _decode(spec[2])
+        try:
+            return pd.StringDtype(storage=spec[1], na_value=missing)
+        except TypeError:
+            if missing is not pd.NA:
+                raise ProjectError("This archive uses NaN-string semantics requiring pandas >= 3.0") from None
+            return pd.StringDtype(storage=spec[1])
     if kind == "nullable" and spec[1] in {"boolean", "Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64", "Float32", "Float64"}:
         return pd.api.types.pandas_dtype(spec[1])
     if kind == "numpy" and isinstance(spec[1], str):
@@ -446,6 +452,10 @@ def validate_analysis(analysis, *, _computed_fingerprint=None):
         if expected_pos != actual_pos:
             raise ProjectError("Stored positive_facets disagree with the fitted result")
         if cfg["method"] == "MML":
+            if "population_mean" in settings:
+                mode = settings["population_mean"]
+                if mode not in ("fixed_zero", "estimate") or bool(cfg.get("population_formula")) != (mode == "estimate"):
+                    raise ProjectError("Stored population mean setting disagrees with the fitted model")
             s_eng = settings.get("mml_engine")
             c_eng = cfg.get("mml_engine")
             if (settings.get("quad_points") != cfg.get("quad_points")
@@ -657,6 +667,7 @@ def write_bytes_atomic(path, data):
     """Write a completed project/report, retaining any old file if replacement fails."""
     path = Path(path)
     temporary = None
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp", delete=False) as stream:
             temporary = Path(stream.name)

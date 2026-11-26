@@ -339,6 +339,10 @@ def estimate_bias_interaction(
                 or _jmle_boundary.HOLD_MESSAGE
             )
         }
+    if res.get("config", {}).get("method") == "MML":
+        from .numerical_qualification import block_reason
+        if block_reason(res):
+            return {"_skip_reason": "Conditional bias requires a successful retained MML numerical and posterior-score review"}
     b_audit = _output_qualification.audit_boundary_and_support(res)
     if (
         b_audit["active"]

@@ -1,0 +1,39 @@
+..................s......................................FFFF..F........ [ 63%]
+........................s..s..s...........                               [100%]
+=================================== FAILURES ===================================
+_ test_project_retains_string_storage_missing_values_and_fingerprints[NA-python] _
+tests/test_python_library.py:961: in test_project_retains_string_storage_missing_values_and_fingerprints
+    dtype = pd.StringDtype(storage=storage, na_value=missing)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: StringDtype.__init__() got an unexpected keyword argument 'na_value'
+_ test_project_retains_string_storage_missing_values_and_fingerprints[NA-pyarrow] _
+tests/test_python_library.py:961: in test_project_retains_string_storage_missing_values_and_fingerprints
+    dtype = pd.StringDtype(storage=storage, na_value=missing)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: StringDtype.__init__() got an unexpected keyword argument 'na_value'
+_ test_project_retains_string_storage_missing_values_and_fingerprints[NaN-python] _
+tests/test_python_library.py:961: in test_project_retains_string_storage_missing_values_and_fingerprints
+    dtype = pd.StringDtype(storage=storage, na_value=missing)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: StringDtype.__init__() got an unexpected keyword argument 'na_value'
+_ test_project_retains_string_storage_missing_values_and_fingerprints[NaN-pyarrow] _
+tests/test_python_library.py:961: in test_project_retains_string_storage_missing_values_and_fingerprints
+    dtype = pd.StringDtype(storage=storage, na_value=missing)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: StringDtype.__init__() got an unexpected keyword argument 'na_value'
+_ test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening _
+tests/test_python_library.py:1958: in test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening
+    assert mfrmpy.tables(mml_default, "bias")[0][1]["Use"].isin(["withheld", "Unavailable"]).all()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert False
+E    +  where False = all()
+E    +    where all = 0    False\nName: Use, dtype: bool.all
+E    +      where 0    False\nName: Use, dtype: bool = eq('withheld')
+E    +        where eq = 0    Unavailable\nName: Use, dtype: object.eq
+=========================== short test summary info ============================
+FAILED tests/test_python_library.py::test_project_retains_string_storage_missing_values_and_fingerprints[NA-python]
+FAILED tests/test_python_library.py::test_project_retains_string_storage_missing_values_and_fingerprints[NA-pyarrow]
+FAILED tests/test_python_library.py::test_project_retains_string_storage_missing_values_and_fingerprints[NaN-python]
+FAILED tests/test_python_library.py::test_project_retains_string_storage_missing_values_and_fingerprints[NaN-pyarrow]
+FAILED tests/test_python_library.py::test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening
+5 failed, 105 passed, 4 skipped, 22 deselected in 96.47s (0:01:36)

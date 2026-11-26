@@ -10,9 +10,18 @@ methods and validation findings belong in their dedicated technical records.
 
 ## Unreleased
 
-The integrated local development candidate is `0.2.3.dev4`; it has not been
+The integrated local development candidate is `0.2.3.dev5`; it has not been
 published. Earlier development snapshots retained the `0.2.1` label and should
 be distinguished by their recorded artifact hashes.
+
+- Review corrections: separate G/D numerical interval availability from formal inference and coverage, and use the reduced system's tolerance for both rank and contrast membership. Retain a roundoff allowance independent of repeated observations.
+- Ordinary MML uncertainty now requires saved analytic observed information, stationarity, doubled-order quadrature and posterior-score checks. Failed or missing checks withhold general SEs, uncertainty bars and separation/reliability; no regularized or conditional-SE fallback is displayed. These same-point checks do not certify continuous integration or coverage. Shared-calibration influence and cross terms also receive doubled-order checks.
+- Connect `fit()` / `diagnose()` to interval, bias and joint requests. Defer the general numerical review until diagnostics are requested. Bias cells and joint models retain their separate documented fits; the base model is never silently refitted. Numerical review limits now use working-array sizes instead of a 64-coordinate cutoff.
+- Add `population_mean="auto" | "fixed_zero" | "estimate"` and explicit `mml_engine`. Auto estimates the mean for structural anchors with a Direct fit; calibration metadata no longer switches the model. General anchored-model SEs remain withheld without supported numerical evidence; specified anchor intervals retain their own checks.
+- Distribute the public implementation under `mfrmpy._core`, excluding the legacy `mfrm_app` namespace and research/UI modules. Keep source-checkout bridges for research scripts. Add `py.typed`, request types and public stubs; nested estimator dictionaries remain private.
+- Use English package reports and figure choices, including the legacy `language="ja"` alias. Preserve user-provided labels. Add `export_csv(..., kind=...)` and consistent destination-directory creation. Vectorize grouped diagnostic sums and expected-agreement aggregation.
+- Support pandas 2.2.3 and separate source tests from installed-candidate tests (`pytest --installed`). Archives using pandas 3 NaN-string semantics still require pandas 3 for lossless reopening; unsupported dtypes raise an explicit error.
+- Broaden computable group DFF beyond the original 1–5 / SD=1 / two-facet validation design, while retaining fixed-SD unanchored MML RSM requirements and `CoverageQualified=False`. Reject incompatible models at request creation.
 
 - Default anchor-sensitivity figures to color-coded individual-level forests in the Python API, HTML and ZIP. Retain native level estimates and full joint covariance, including estimated-origin and shared-calibration terms. Keep differences and labelled normal-approximation half-eyes as explicit choices; allow selecting three or more retained levels. Old archives show recoverable baseline points and explicit holds without refitting. Individual interval coverage is not inferred from contrast validation.
 
@@ -180,7 +189,7 @@ desktop tag identifies this distribution separately from the earlier Web release
   rows are excluded, including gapped, permuted, duplicate and text indices.
 - Correct FACETS score-file parsing: keep `PtMea`, `PtBis` and `PtBisI` distinct.
   The application's existing PTMEA definition remains different from FACETS
-  PtMea; see the [bounded comparison](validation/FACETS_WINDOWS_DESKTOP_REVIEW_20261029.md).
+  PtMea; see the [bounded comparison](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/validation/FACETS_WINDOWS_DESKTOP_REVIEW_20261029.md).
 - Correct pandas reporting compatibility without changing numeric values or
   unavailable-output handling. Isolate Streamlit AppTest state so later spawned
   desktop workers use the correct process entrypoint.

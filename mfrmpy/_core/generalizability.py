@@ -1114,8 +1114,10 @@ def g_d_study_export_frame(bundle: dict) -> pd.DataFrame:
         "error_variance_units": "score_squared",
         "sem_units": "score_units",
         "population_status": "declaration_not_verified",
-        "interval_inference_allowed": any(intervals.get("observed", {}).get(f"{k}_interval_status")
-                                           == "approximate_normal_delta" for k in ("G", "Phi")),
+        "interval_inference_allowed": False,
+        "coverage_qualified": False,
+        "interval_numerically_available": any(intervals.get("observed", {}).get(f"{k}_interval_status")
+                                              == "approximate_normal_delta" for k in ("G", "Phi")),
         "interval_hold_reason": "See coefficient-specific status" if intervals else _GD_CI_REASON,
         "interval_method": intervals.get("method", "not_requested"),
         "interval_assumption": intervals.get("assumption", "none"),

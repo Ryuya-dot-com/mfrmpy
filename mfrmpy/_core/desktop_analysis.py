@@ -539,7 +539,7 @@ def _fair_average_table(analysis):
     audit = output_qualification.audit_boundary_and_support(result)
     unbounded = set(audit["unbounded_facet_levels"]) | set(audit["unbounded_step_owners"])
     boundary_persons = engine._boundary_person_set(result)
-    block = output_qualification.calibration_screening_block_reason(result)
+    block = output_qualification.general_uncertainty_block_reason(result)
     hold = output_qualification.calibration_inference_hold_reason(result)
     frames = []
     for facet, retained_frame in retained.items():
@@ -712,7 +712,7 @@ def _step_thresholds_table(analysis) -> tuple[str, pd.DataFrame, str] | None:
         mat = np.asarray(raw_mat, dtype=float)
         ladders = [(sf, mat[i]) for i, sf in enumerate(sf_levels) if i < mat.shape[0]]
 
-    block_reason = output_qualification.calibration_screening_block_reason(result)
+    block_reason = output_qualification.general_uncertainty_block_reason(result)
     formal_reason = output_qualification.calibration_inference_hold_reason(result)
     cat_hold = block_reason in {
         output_qualification.CATEGORY_UNSUPPORTED_HOLD_REASON,
@@ -1299,7 +1299,7 @@ def check_design(
 
 
 def run_analysis(data, *, workflow="mfrm", bias_requests=None, interval_requests=None,
-                 gd_settings=None, joint_settings=None, progress=None, **fit_settings):
+                 gd_settings=None, joint_settings=None, progress=None, outputs=None, **fit_settings):
     """Compute once in a worker and archive settings, failure states and provenance.
 
     An unsupported G/D design is a retained unavailable result. Interval review
@@ -1328,43 +1328,80 @@ def run_analysis(data, *, workflow="mfrm", bias_requests=None, interval_requests
         joint_settings = joint.settings(joint_settings, facets, fit_settings.get("method", "JMLE"))
         if joint_settings is not None and fit_settings.get('population_prior_sd', 1.) != 1.:
             raise ValueError('Joint interactions require a fixed N(0,1) population')
-        analysis = basic.run_basic_analysis(data, **fit_settings, progress=progress)
-        if analysis["kind"] != "mfrm-analysis-v2" and (
-            biases or requested_intervals or gd_settings is not None or joint_settings is not None
-            or fit_settings.get("anchors") or fit_settings.get("group_anchors")
-            or fit_settings.get("noncenter_facet", "Person") != "Person"
-            or fit_settings.get("positive_facets")
-        ):
-            analysis["kind"] = "mfrm-analysis-v2"
-        analysis["bias_analyses"], analysis["interval_analyses"] = [], []
-        for settings in biases:
-            progress("bias")
-            output = bias.estimate_bias_interaction(analysis["result"], analysis["diagnostics"], **settings)
-            analysis["bias_analyses"].append(dict(analysis_id=analysis["analysis_id"], settings=settings, result=output))
-        analysis["scope"]["bias_refits"] = bool(biases)
-        for settings in requested_intervals:
-            progress("intervals")
-            try:
-                record = intervals.compute_structural_intervals(analysis["result"], **settings)
-                entry = dict(record=record, status="computed", reason="")
-            except ValueError as exc:
-                entry = dict(record=None, status="unavailable", reason=str(exc))
-            except Exception as exc:
-                entry = dict(record=None, status="failed", reason=f"{type(exc).__name__}: {exc}")
-            analysis["interval_analyses"].append(dict(analysis_id=analysis["analysis_id"], settings=settings, **entry))
-        if joint_settings is not None:
-            progress('joint_interaction')
-            try:
-                record = joint.fit_joint_interaction(analysis['result'], **joint_settings)
-                entry = dict(record=record, status='computed', reason='')
-            except ValueError as exc:
-                entry = dict(record=None, status='unavailable', reason=str(exc))
-            except Exception as exc:
-                entry = dict(record=None, status='failed', reason=f'{type(exc).__name__}: {exc}')
-            analysis['joint_analysis'] = dict(analysis_id=analysis['analysis_id'], settings=joint_settings, **entry)
-        if gd_settings is not None:
-            progress("generalizability")
-            analysis["gd_analysis"] = _run_gd(data, gd_settings)
+        analysis = basic.run_basic_analysis(data, **fit_settings, progress=progress, outputs=outputs)
+        return complete_requests(analysis, bias_requests=biases, interval_requests=requested_intervals,
+                                 gd_settings=gd_settings, joint_settings=joint_settings, progress=progress)
+    analysis["content_fingerprint"] = project.content_fingerprint(analysis)
+    project.validate_analysis(analysis)
+    return analysis
+
+
+def complete_requests(analysis, *, bias_requests=None, interval_requests=None,
+                      gd_settings=None, joint_settings=None, progress=None):
+    """Add explicit supplementary requests without refitting the base model.
+
+    Bias cells and joint models perform their documented separate fits.
+    The source envelope and its previously saved sections remain unchanged.
+    """
+    if not any((bias_requests, interval_requests, gd_settings is not None, joint_settings is not None)):
+        return analysis
+    project.validate_analysis(analysis)
+    project.require_reportable_input(analysis)
+    if "result" not in analysis:
+        raise ValueError("Supplementary MFRM requests require an MFRM fit")
+    cfg = analysis["result"]["config"]
+    facets = cfg["facet_names"]
+    biases = _bias_requests(bias_requests, ["Person", *facets])
+    requested_intervals = _interval_requests(interval_requests, facets, cfg["method"])
+    joint_settings = joint.settings(joint_settings, facets, cfg["method"])
+    if joint_settings is not None and cfg.get("population_prior_sd", 1.) != 1.:
+        raise ValueError("Joint interactions require a fixed N(0,1) population")
+    gd_settings = _gd_settings(gd_settings) if gd_settings is not None else None
+    progress = progress or (lambda phase: None)
+    analysis = dict(analysis, scope=dict(analysis["scope"]),
+                    bias_analyses=list(analysis.get("bias_analyses", [])),
+                    interval_analyses=list(analysis.get("interval_analyses", [])))
+    if analysis["kind"] == "basic-rsm-jmle-v1":
+        analysis["kind"] = "mfrm-analysis-v2"
+    diagnostics = dict(analysis.get("diagnostics", {}))
+    if biases and cfg["method"] == "MML":
+        from . import numerical_qualification
+        if numerical_qualification.valid_record(analysis["result"]) is None:
+            progress("numerical_review")
+            analysis["result"] = dict(analysis["result"], numerical_review=numerical_qualification.compute(analysis["result"]))
+    if biases and "obs" not in diagnostics:
+        diagnostics["obs"] = engine.compute_obs_table(analysis["result"])
+    for settings in biases:
+        progress("bias")
+        output = bias.estimate_bias_interaction(analysis["result"], diagnostics, **settings)
+        analysis["bias_analyses"] = [e for e in analysis["bias_analyses"] if e["settings"] != settings]
+        analysis["bias_analyses"].append(dict(analysis_id=analysis["analysis_id"], settings=settings, result=output))
+    analysis["scope"]["bias_refits"] = bool(analysis["bias_analyses"])
+    for settings in requested_intervals:
+        progress("intervals")
+        try:
+            record = intervals.compute_structural_intervals(analysis["result"], **settings)
+            entry = dict(record=record, status="computed", reason="")
+        except ValueError as exc:
+            entry = dict(record=None, status="unavailable", reason=str(exc))
+        except Exception as exc:
+            entry = dict(record=None, status="failed", reason=f"{type(exc).__name__}: {exc}")
+        analysis["interval_analyses"] = [e for e in analysis["interval_analyses"] if e["settings"] != settings]
+        analysis["interval_analyses"].append(dict(analysis_id=analysis["analysis_id"], settings=settings, **entry))
+    if joint_settings is not None:
+        progress('joint_interaction')
+        try:
+            record = joint.fit_joint_interaction(analysis['result'], **joint_settings)
+            entry = dict(record=record, status='computed', reason='')
+        except ValueError as exc:
+            entry = dict(record=None, status='unavailable', reason=str(exc))
+        except Exception as exc:
+            entry = dict(record=None, status='failed', reason=f'{type(exc).__name__}: {exc}')
+        analysis['joint_analysis'] = dict(analysis_id=analysis['analysis_id'], settings=joint_settings, **entry)
+    if gd_settings is not None:
+        progress("generalizability")
+        analysis["gd_analysis"] = _run_gd(analysis["input_data"], gd_settings)
+    analysis["qualification_at_save"] = basic.qualification_snapshot(analysis["result"])
     analysis["content_fingerprint"] = project.content_fingerprint(analysis)
     project.validate_analysis(analysis)
     return analysis

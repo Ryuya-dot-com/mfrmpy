@@ -19,7 +19,6 @@ class RowSpace:
         matrix.sum_duplicates()
         matrix.eliminate_zeros()
         self.shape = matrix.shape
-        self.tolerance = max(1, *matrix.shape) * np.finfo(float).eps
         personal = matrix[:, :n_person]
         candidates = np.flatnonzero(np.diff(personal.indptr) == 1)
         columns = personal.indices[personal.indptr[candidates]]
@@ -42,6 +41,11 @@ class RowSpace:
         self.inactive = np.setdiff1d(np.arange(len(self.remaining)), self.active)
         reduced = reduced[:, self.active]
         self.reduced_shape = reduced.shape
+        # Both decisions concern the reduced row space. Repeating identical
+        # observations must not loosen the tolerance for estimability.
+        # Leave a small roundoff allowance for SVD and the two projections in
+        # residual(); this depends on the reduced system, never the row count.
+        self.tolerance = 8 * max(1, *reduced.shape) * np.finfo(float).eps
         self.available = (int(reduced.shape[0]) * int(reduced.shape[1]) <= max_dense_cells)
         self.rank = None
         self.basis = None
@@ -49,7 +53,7 @@ class RowSpace:
             return
         dense = reduced.toarray()
         _, singular, vh = np.linalg.svd(dense, full_matrices=False)
-        tol = max(1, *dense.shape) * np.finfo(float).eps
+        tol = self.tolerance
         self.basis = vh[singular > tol * singular[0]] if len(singular) else vh
         self.rank = len(self.pivots) + len(self.basis)
 

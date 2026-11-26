@@ -4,7 +4,6 @@ Numerical availability is separate from finite-sample coverage qualification.
 These objects do not change the eligibility of Person scores or other tests.
 """
 import hashlib
-import html
 import json
 from pathlib import Path
 
@@ -202,26 +201,6 @@ def read_structural_intervals(result, record):
 
 def interval_json(record):
     return json.dumps(record, ensure_ascii=False, allow_nan=False, indent=2)
-
-
-def interval_figure(table):
-    """A common figure for screen and HTML; never draw a withheld interval."""
-    import plotly.graph_objects as go
-    available = table[table.CIEligible.eq(True)]
-    return go.Figure(go.Scatter(x=available.Estimate, y=available.Target, mode='markers',
-        error_x=dict(type='data', symmetric=False, array=available.Upper-available.Estimate,
-                     arrayminus=available.Estimate-available.Lower))).update_layout(
-        xaxis_title='Logits', yaxis_title=str(table.Facet.iloc[0]), template='plotly_white')
-
-
-def interval_html(result, record):
-    table = read_structural_intervals(result, record)
-    columns = ['Target', 'Estimate', 'SE', 'Lower', 'Upper', 'CIEligible', 'CoverageQualified', 'Reason']
-    return ('<!doctype html><meta charset="utf-8"><title>Structural intervals</title>'
-            '<h1>Specified structural intervals</h1><p>'+str(100*record['level'])+'%: '+html.escape(METHOD)+'</p><p>'+html.escape(CAUTION)+'</p>'
-            +table[columns].to_html(index=False, na_rep='Unavailable', escape=True)
-            +interval_figure(table).to_html(full_html=False, include_plotlyjs=True)
-            +'<p>Source: '+html.escape(record['source_input_id'])+'</p>')
 
 
 def publication_table(result, record):

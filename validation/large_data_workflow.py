@@ -85,7 +85,7 @@ if __name__ == "__main__":
                                        check=True, capture_output=True, text=True)
             runs.append(json.loads(completed.stdout))
             print(json.dumps(runs[-1]), flush=True)
-        paths = [Path("mfrm_app") / name for name in (
+        paths = [Path("mfrmpy/_core") / name for name in (
             "basic_analysis.py", "engine.py", "design_rank.py", "rater_contrast.py",
             "output_qualification.py", "project.py", "desktop_analysis.py")]
         paths += [Path("mfrmpy/__init__.py"), Path(__file__)]

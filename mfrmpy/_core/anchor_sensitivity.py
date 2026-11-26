@@ -127,7 +127,7 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
     occasion_info = _occasion_info(analysis, rater, difference, occasion) if occasion is not None else None
     receiving = set(analysis["result"]["prep"]["levels"]["Person"])
     names = {REFERENCE}
-    prepared = [(REFERENCE, reference, [], [], reference_sd, None)]
+    prepared = [(REFERENCE, reference, [], [], reference_sd, None, origin)]
     sources = {}
     for name, scenario in scenarios.items():
         if (not isinstance(name, str) or not name.strip() or name.strip() in names
@@ -143,9 +143,12 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
         calibration = scenario.get("calibration")
         if calibration is not None and (not intervals or scenario.get("noncenter_facet", rater) != rater):
             raise ValueError("Calibration intervals require intervals=True and the rater as noncenter_facet")
-        scenario_origin = rater if calibration is not None else scenario.get("noncenter_facet", origin)
+        scenario_origin = scenario.get("noncenter_facet", rater if fixed or means else origin)
+        # Anchored MML estimates the population mean. A person sum-to-zero
+        # equation must not manufacture assignment support for that fit. The
+        # anchored facet already has its centering replaced by the anchors.
         audit = check_rater_contrast(
-            data, **args, noncenter_facet=scenario_origin,
+            data, **args, noncenter_facet="Person" if fixed or means else scenario_origin,
             anchors=_without_sources(fixed), group_anchors=_without_sources(means),
         )
         sourced_fixed = _attach_sources(fixed, audit["anchors"], args["person"])
@@ -165,12 +168,13 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
             calibration = anchor_intervals.calibration_settings(calibration, sourced_fixed, sourced_means, rater, receiving)
             if source_record is not None:
                 calibration["source"] = source_record
-        prepared.append((name, audit, sourced_fixed, sourced_means, sd, calibration))
+        prepared.append((name, audit, sourced_fixed, sourced_means, sd, calibration, scenario_origin))
 
     rows = []
-    for name, audit, fixed, means, sd, calibration in prepared:
+    for name, audit, fixed, means, sd, calibration, scenario_origin in prepared:
         status = audit["status"]
-        row = dict(name=name, anchors=fixed, group_anchors=means, noncenter_facet=audit["noncenter_facet"],
+        row = dict(name=name, anchors=fixed, group_anchors=means, noncenter_facet=scenario_origin,
+                   population_mean="estimate" if fixed or means else fit.get("population_mean", "fixed_zero"),
                    support=status, observation_estimable=audit["observation_estimable"],
                    population_prior_sd=sd, calibration=calibration,
                    estimate=None, reason=_HOLD.get(status, ""), fit_id=None)
@@ -182,14 +186,13 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
             try:
                 if name == REFERENCE:
                     result, fit_id = analysis["result"], analysis["analysis_id"]
-                elif calibration is not None:
-                    result = anchor_intervals.fit_with_anchor_origin(data, fit | dict(population_prior_sd=sd), audit)
-                    fit_id = engine.build_result_analysis_identity(result).analysis_id
                 else:
                     candidate = basic_analysis.run_basic_analysis(data, **(fit | dict(
                         anchors=audit["anchors"], group_anchors=audit["group_anchors"],
-                        noncenter_facet=audit["noncenter_facet"], population_prior_sd=sd, compute_pca=False,
-                    )))
+                        noncenter_facet=scenario_origin, population_prior_sd=sd, compute_pca=False,
+                        population_mean="auto", mml_engine=None,
+                    )), outputs=[])
+                    row["noncenter_facet"] = candidate["fit_settings"].get("noncenter_facet", "Person")
                     result, fit_id = candidate["result"], candidate["analysis_id"]
                 row["estimate"], row["reason"] = _point(result, audit)
                 row["fit_id"] = fit_id
@@ -269,6 +272,8 @@ def validate_entry(analysis, entry):
                 or "observation_estimable" not in row or row["observation_estimable"] not in (True, False, None)):
             raise project.ProjectError("Invalid anchor sensitivity scenario")
         names.add(row["name"])
+        if row.get("population_mean", "fixed_zero") not in ("fixed_zero", "estimate"):
+            raise project.ProjectError("Invalid anchor population-mean specification")
         fixed = _without_sources(row.get("anchors"))
         means = _without_sources(row.get("group_anchors"))
         baseline_sd = fit["population_prior_sd"]
@@ -299,8 +304,18 @@ def _validate_intervals(analysis, entry, row):
         return
     if threshold is not None:
         _finite(threshold, "important_difference")
-    if not isinstance(interval, dict) or set(interval) - {"shared"} != {"se", "propagated_se", "sensitivity", "reason", "propagation_reason"}:
+    if not isinstance(interval, dict) or set(interval) - {"shared", "quadrature"} != {"se", "propagated_se", "sensitivity", "reason", "propagation_reason"}:
         raise project.ProjectError("Invalid anchor interval evidence")
+    if "quadrature" in interval:
+        evidence = interval["quadrature"]
+        if (not isinstance(evidence, dict) or evidence.get("continuous_reference_checked") is not False
+                or any(not 0 <= _finite(evidence.get(key), key) <= .01 for key in
+                       ("covariance_change", "cross_change", "calibration_influence_change", "receiving_influence_change"))
+                or any(not isinstance(evidence.get(key), list) or len(evidence[key]) != 2
+                       or type(evidence[key][0]) is not int or evidence[key][0] < 3
+                       or evidence[key][1] != 2*evidence[key][0]-1
+                       for key in ("calibration_points", "receiving_points"))):
+            raise project.ProjectError("Invalid shared-calibration quadrature evidence")
     shared = interval.get("shared")
     if "shared" in interval and (not isinstance(shared, dict) or not calibration or not calibration.get("source")):
         raise project.ProjectError("Shared score evidence needs its calibration source")
@@ -467,7 +482,8 @@ def _interval_rows(row, sd, threshold):
     bases = [("conditional" if row["anchors"] or row["group_anchors"] else "no_anchors", info["se"], info["reason"])]
     if kind in ("independent", "shared"):
         basis = "shared_calibration" if calibration.get("source") else "calibration_propagated"
-        bases.append((basis, info["propagated_se"], info["propagation_reason"] or info["reason"]))
+        hold = shared_calibration.retained_quadrature_hold(row)
+        bases.append((basis, None if hold else info["propagated_se"], hold or info["propagation_reason"] or info["reason"]))
     critical = norm.ppf(.975)
     rows = []
     for basis, se, reason in bases:
@@ -476,7 +492,7 @@ def _interval_rows(row, sd, threshold):
         high = estimate+width/2 if width is not None else None
         uses_covariance = basis == "calibration_propagated" and calibration["covariance"] is not None
         source = calibration.get("source") or {}
-        shared = info.get("shared", {}) if basis == "shared_calibration" else {}
+        shared = info.get("shared", {}) if basis == "shared_calibration" and se is not None else {}
         rows.append(dict(Scenario=row["name"], PersonSD=sd, Basis=basis, CalibrationKind=kind,
                          CalibrationWorks=len(calibration["work_ids"]) if kind in ("independent", "shared") else None,
                          OverlapWorks=len(calibration["overlap"]) if kind in ("independent", "shared") else None,

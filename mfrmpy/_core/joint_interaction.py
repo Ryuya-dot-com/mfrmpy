@@ -71,9 +71,10 @@ def _design(prepared, request):
     rows = expansion[cell_index]
     base_d = len(prepared['coordinates'])
     dimension = base_d + rows.shape[1]
-    if dimension > 64:
-        raise ValueError('Joint information calculation exceeds the 64-coordinate synchronous scope')
-    if max(121, 2*cfg['quad_points']-1)*len(data[cfg['facet_names']].drop_duplicates())*cfg['n_cat']*(dimension+1) > 8_000_000:
+    if (max(121, 2*cfg['quad_points']-1)*len(data[cfg['facet_names']].drop_duplicates())*cfg['n_cat']*(dimension+1) > 8_000_000
+            or len(data)*cfg['n_cat']*(dimension+1) > 8_000_000
+            or cfg['n_person']*max(121, 2*cfg['quad_points']-1)*(dimension+1) > 8_000_000
+            or (dimension+1)**2 > 8_000_000):
         raise ValueError('Joint information calculation exceeds the synchronous memory scope')
     # Reuse the existing grouped kernel without changing its default path or
     # invalidating unrelated saved structural-interval source fingerprints.

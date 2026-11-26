@@ -1015,6 +1015,36 @@ def build_jmle_eta_identifiability_audit(
     largest_expansion = max((len(spec["levels"]) * spec["n_params"] for spec in specs), default=0)
     connectivity = _person_facet_connectivity_summary(prep)
     if max(int(n_rows) * int(n_columns), largest_expansion) > int(max_dense_cells):
+        from .design_rank import RowSpace, constraint_indices, incidence_design
+        facets = ["Person", *config["facet_names"]]
+        levels = {f: spec["levels"] for f, spec in zip(facets, specs)}
+        constraints = constraint_indices(specs)
+        dimension = sum(map(len, levels.values()))
+        if len(constraints) != dimension - n_columns:
+            raise RuntimeError("Constraint audit disagrees with free parameter count")
+        signs = dict(config.get("facet_signs", {}), Person=1.)
+        design = incidence_design(prep["data"], facets, levels, signs, constraints)
+        space = RowSpace(design, len(levels["Person"]), max_dense_cells=int(max_dense_cells))
+        if space.available:
+            nullity = dimension - space.rank
+            identified = nullity == 0
+            status = "eta_identified" if identified else "eta_rank_deficient"
+            summary = pd.DataFrame([{
+                "Available": True, "Scope": scope, "Status": status,
+                "EtaDesignRows": n_rows, "EtaDesignColumns": n_columns,
+                "EtaDesignRank": n_columns - nullity, "EtaStructuralNullity": nullity,
+                "EtaStructurallyIdentified": identified, "InferenceReady": identified,
+                "AuditMethod": "person_elimination_svd", "NullSpaceBasisComplete": False,
+                "ReducedRows": space.reduced_shape[0], "ReducedColumns": space.reduced_shape[1],
+                "Action": ("Person columns were eliminated exactly before the reduced rank audit. "
+                           "Coordinate-level null projections are not computed on this path. "
+                           + ("Retain numerical and model-fit checks." if identified else
+                              "Do not use this fit for inference; add linking observations or identifying anchors.")),
+            }])
+            return dict(available=True, scope=scope, status=status,
+                        eta_structurally_identified=identified, inference_ready=identified,
+                        summary=summary, coordinate_null_weight=pd.DataFrame(),
+                        null_space_block_energy=pd.DataFrame(), connectivity=connectivity)
         summary = pd.DataFrame([{
             "Available": False,
             "Scope": scope,
@@ -1026,7 +1056,7 @@ def build_jmle_eta_identifiability_audit(
             "EtaStructurallyIdentified": pd.NA,
             "InferenceReady": False,
             "Action": (
-                "The exact dense rank audit exceeded its technical size limit. "
+                "The rank audit exceeded its technical size limit even after person elimination. "
                 "Do not interpret optimizer convergence as identification; use a "
                 "validated large-design audit before inference."
             ),
@@ -2492,14 +2522,9 @@ def _zstd_value(mnsq, df, transform):
 def zstd_from_mnsq(mnsq, df, whexact=False, *, zstd_transform=None):
     """Wilson-Hilferty (1931) standardised MnSq, engine convention.
 
-    The engine convention guards against ``df < 1``: in that regime the
-    ``1 - 2/(9 df)`` centring term becomes dominant and the resulting
-    ZSTD can flip sign relative to the underlying MnSq, producing
-    spurious large values. This legacy convention returns NaN there. The
-    FACETS-convention helper ``zstd_from_mnsq_facets`` relaxes this to
-    ``df > 0`` (the Wright-Masters Welch-Satterthwaite d.f. can be
-    fractional by design) and applies an explicit cap for the
-    pathological cells.
+    Both fit conventions withhold ZSTD for ``df < 1`` because the
+    Wilson-Hilferty approximation is unstable at very low d.f.
+    ``zstd_from_mnsq_facets`` also caps the reported value.
 
     Prefer ``zstd_transform``: ``wilson_hilferty`` includes the offset,
     ``wilson_hilferty_no_offset`` omits it, and ``linear_normal`` uses
@@ -6055,7 +6080,7 @@ def mfrm_estimate(
     return result
 
 
-def compute_obs_table(res):
+def compute_obs_table(res, *, probs=None):
     prep = res["prep"]
     config = res["config"]
     idx = build_indices(prep, step_facet=config["step_facet"], slope_facet=config.get("slope_facet"))
@@ -6066,26 +6091,26 @@ def compute_obs_table(res):
     person_measure_by_row = person_measure[idx["person"]] if person_measure.size else np.zeros_like(idx["score_k"], dtype=float)
 
     eta = compute_eta(idx, params, config, theta_override=theta_hat if theta_hat.size else None)
-    if config["model"] == "RSM":
-        step_cum = np.concatenate([[0.0], np.cumsum(params["steps"])])
-        probs = category_prob_rsm(eta, step_cum)
-    elif config["model"] == "PCM":
-        step_cum_mat = np.vstack([
-            np.concatenate([[0.0], np.cumsum(row)]) for row in params["steps_mat"]
-        ])
-        probs = category_prob_pcm(eta, step_cum_mat, idx["step_idx"])
-    else:
-        step_cum_mat = np.vstack([
-            np.concatenate([[0.0], np.cumsum(row)]) for row in params["steps_mat"]
-        ])
-        probs = category_prob_gpcm(
-            eta,
-            step_cum_mat,
-            idx["step_idx"],
-            params["slopes"],
-            idx.get("slope_idx"),
-        )
-
+    if probs is None:
+        if config["model"] == "RSM":
+            step_cum = np.concatenate([[0.0], np.cumsum(params["steps"])])
+            probs = category_prob_rsm(eta, step_cum)
+        elif config["model"] == "PCM":
+            step_cum_mat = np.vstack([
+                np.concatenate([[0.0], np.cumsum(row)]) for row in params["steps_mat"]
+            ])
+            probs = category_prob_pcm(eta, step_cum_mat, idx["step_idx"])
+        else:
+            step_cum_mat = np.vstack([
+                np.concatenate([[0.0], np.cumsum(row)]) for row in params["steps_mat"]
+            ])
+            probs = category_prob_gpcm(
+                eta,
+                step_cum_mat,
+                idx["step_idx"],
+                params["slopes"],
+                idx.get("slope_idx"),
+            )
     k_vals = np.arange(probs.shape[1])
     expected_k = probs.dot(k_vals)
     var_k = probs.dot(k_vals ** 2) - expected_k ** 2
@@ -6196,11 +6221,13 @@ def compute_prob_matrix(res):
     )
 
 
-def compute_scorefile(res):
-    obs = compute_obs_table(res)
+def compute_scorefile(res, *, obs=None, probs=None):
+    if probs is None:
+        probs = compute_prob_matrix(res)
+    if obs is None:
+        obs = compute_obs_table(res, probs=probs)
     if obs.empty:
         return pd.DataFrame()
-    probs = compute_prob_matrix(res)
     if probs is None or probs.shape[0] != len(obs):
         return obs
     cat_vals = np.arange(res["prep"]["rating_min"], res["prep"]["rating_max"] + 1)
@@ -6753,11 +6780,9 @@ def _agreement_score_wide(
 
     if "Observed" not in obs_df.columns:
         return pd.DataFrame(), meta
-    ctx_series = obs_df[context_cols[0]].astype(str)
-    for col in context_cols[1:]:
-        ctx_series = ctx_series.str.cat(obs_df[col].astype(str), sep="|")
+    context_keys = pd.MultiIndex.from_frame(obs_df[context_cols].astype(str)).to_flat_index()
     df = pd.DataFrame({
-        "_context": ctx_series,
+        "_context": context_keys,
         target_facet: obs_df[target_facet],
         "_score_for_agreement": pd.to_numeric(obs_df["Observed"], errors="coerce"),
     })
@@ -7058,7 +7083,7 @@ def calc_interrater_agreement(
         return {"summary": pd.DataFrame(), "pairs": pd.DataFrame()}
 
     df = obs_df.copy()
-    df["_context"] = df[context_cols].astype(str).agg("|".join, axis=1)
+    df["_context"] = pd.MultiIndex.from_frame(df[context_cols].astype(str)).to_flat_index()
     base_cols = ["_context", rater_facet, "Observed"]
     if "Weight" in df.columns:
         base_cols.append("Weight")
@@ -7202,6 +7227,7 @@ def calc_interrater_agreement_by_facet(
     res=None,
     *,
     max_levels: int = 80,
+    probs=None,
 ) -> dict[str, object]:
     """Compute retained inter-rater agreement summaries for each non-person facet."""
     if obs_df is None or obs_df.empty:
@@ -7209,7 +7235,8 @@ def calc_interrater_agreement_by_facet(
     target_facets = [f for f in facet_cols if f != "Person" and f in obs_df.columns]
     if not target_facets:
         return {"summary": pd.DataFrame(), "pairs_by_facet": {}}
-    probs = compute_prob_matrix(res) if res is not None else None
+    if probs is None and res is not None:
+        probs = compute_prob_matrix(res)
     summaries: list[pd.DataFrame] = []
     pairs_by_facet: dict[str, pd.DataFrame] = {}
     for facet in target_facets:
@@ -9334,6 +9361,11 @@ def diagnose_pca_skip_reason(obs_df, facet_names, *, mode="overall", facet=None)
     return _make_reason("dimensionality.skip_reason_unknown")
 
 
+MEASURE_DIAGNOSTIC_KEYS = frozenset({
+    "overall_fit", "measures", "fit", "reliability", "bias", "interactions", "uncertainty",
+})
+
+
 def mfrm_diagnostics(
     res,
     interaction_pairs=None,
@@ -9348,127 +9380,140 @@ def mfrm_diagnostics(
     facets_zstd_cap: float = DEFAULT_FACETS_ZSTD_CAP,
     *,
     zstd_transform=None,
+    compute_measures=True,
+    compute_agreement=True,
+    obs_df=None,
+    probs=None,
 ):
     zstd_transform = _resolve_zstd_transform(whexact, zstd_transform)
     fit_df_method = _resolve_fit_df_method(fit_df_method)
     model_family = str(res.get("config", {}).get("model", "RSM")).upper()
     fit_df_metadata = fit_df_model_metadata(model_family, fit_df_method)
-    obs_df = compute_obs_table(res)
+    if obs_df is None:
+        obs_df = compute_obs_table(res, probs=probs)
     facet_cols = ["Person"] + res["config"]["facet_names"]
-    overall_fit = calc_overall_fit(
-        obs_df,
-        whexact=whexact,
-        zstd_transform=zstd_transform,
-        fit_df_method=fit_df_method,
-        facets_zstd_cap=facets_zstd_cap,
-    )
-    fit_tbl = calc_facet_fit(
-        obs_df,
-        facet_cols,
-        whexact=whexact,
-        zstd_transform=zstd_transform,
-        fit_df_method=fit_df_method,
-        facets_zstd_cap=facets_zstd_cap,
-    )
-    if fit_df_method != "engine":
-        overall_fit["FitDfApplicability"] = fit_df_metadata["applicability"]
-        fit_tbl["FitDfApplicability"] = fit_df_metadata["applicability"]
-        if fit_df_metadata["warning"]:
-            overall_fit["FitDfWarning"] = fit_df_metadata["warning"]
-            fit_tbl["FitDfWarning"] = fit_df_metadata["warning"]
-    se_tbl = calc_facet_se(obs_df, facet_cols)
-    bias_tbl = calc_bias_facet(obs_df, facet_cols)
-    interaction_tbl = calc_bias_interactions(obs_df, facet_cols, pairs=interaction_pairs, top_n=top_n_interactions)
-    ptmea_tbl = calc_ptmea(obs_df, facet_cols)
-
-    person_tbl = res["facets"]["person"].copy()
-    person_tbl["Facet"] = "Person"
-    person_tbl["Level"] = person_tbl["Person"].astype(str)
-    person_tbl["SE"] = person_tbl["SD"] if "SD" in person_tbl.columns else np.nan
-
-    facet_tbl = res["facets"]["others"].copy()
-    facet_tbl["Level"] = facet_tbl["Level"].astype(str)
-    facet_tbl["SE"] = np.nan
-
-    measures = pd.concat([
-        person_tbl[["Facet", "Level", "Estimate", "SE"]],
-        facet_tbl[["Facet", "Level", "Estimate", "SE"]],
-    ], ignore_index=True)
-    person_boundary_columns = [
-        column for column in (
-            "ExtremeScorePattern",
-            "ExtremeScoreDirection",
-            "FiniteJMLEEstimate",
-            "PersonInferenceReady",
-            "ReportableEstimate",
-            "EstimateRole",
+    overall_fit = fit_tbl = se_tbl = bias_tbl = interaction_tbl = ptmea_tbl = pd.DataFrame()
+    measures = reliability_tbl = pd.DataFrame()
+    uncertainty_bundle = {}
+    if compute_measures:
+        overall_fit = calc_overall_fit(
+            obs_df,
+            whexact=whexact,
+            zstd_transform=zstd_transform,
+            fit_df_method=fit_df_method,
+            facets_zstd_cap=facets_zstd_cap,
         )
-        if column in person_tbl.columns
-    ]
-    if person_boundary_columns:
-        measures = measures.merge(
-            person_tbl[["Facet", "Level", *person_boundary_columns]],
-            on=["Facet", "Level"],
-            how="left",
-            validate="one_to_one",
+        fit_tbl = calc_facet_fit(
+            obs_df,
+            facet_cols,
+            whexact=whexact,
+            zstd_transform=zstd_transform,
+            fit_df_method=fit_df_method,
+            facets_zstd_cap=facets_zstd_cap,
         )
+        if fit_df_method != "engine":
+            overall_fit["FitDfApplicability"] = fit_df_metadata["applicability"]
+            fit_tbl["FitDfApplicability"] = fit_df_metadata["applicability"]
+            if fit_df_metadata["warning"]:
+                overall_fit["FitDfWarning"] = fit_df_metadata["warning"]
+                fit_tbl["FitDfWarning"] = fit_df_metadata["warning"]
+        se_tbl = calc_facet_se(obs_df, facet_cols)
+        bias_tbl = calc_bias_facet(obs_df, facet_cols)
+        interaction_tbl = calc_bias_interactions(obs_df, facet_cols, pairs=interaction_pairs, top_n=top_n_interactions)
+        ptmea_tbl = calc_ptmea(obs_df, facet_cols)
 
-    measures = measures.merge(se_tbl, on=["Facet", "Level"], how="left", suffixes=("", "_calc"))
-    measures["SE"] = measures["SE"].fillna(measures["SE_calc"])
-    measures = measures.drop(columns=["SE_calc"])
-    if "N" in measures.columns:
-        measures = measures.rename(columns={"N": "N_SE"})
-    fit_tbl = fit_tbl.rename(columns={"N": "N_Fit"}) if "N" in fit_tbl.columns else fit_tbl
-    bias_tbl = bias_tbl.rename(columns={"N": "N_Bias"}) if "N" in bias_tbl.columns else bias_tbl
-    ptmea_tbl = ptmea_tbl.rename(columns={"N": "N_PTMEA"}) if "N" in ptmea_tbl.columns else ptmea_tbl
-    measures = measures.merge(fit_tbl, on=["Facet", "Level"], how="left")
-    measures = measures.merge(bias_tbl, on=["Facet", "Level"], how="left")
-    measures = measures.merge(ptmea_tbl, on=["Facet", "Level"], how="left")
-    ci_z = float(_norm.ppf(0.975))
-    measures["CI_Lower"] = measures["Estimate"] - ci_z * measures["SE"]
-    measures["CI_Upper"] = measures["Estimate"] + ci_z * measures["SE"]
-    measures, uncertainty_bundle = annotate_measure_uncertainty(
-        measures,
-        res,
-        obs_df=obs_df,
-        ci_level=0.95,
-    )
+        person_tbl = res["facets"]["person"].copy()
+        person_tbl["Facet"] = "Person"
+        person_tbl["Level"] = person_tbl["Person"].astype(str)
+        person_tbl["SE"] = person_tbl["SD"] if "SD" in person_tbl.columns else np.nan
 
-    # Attach MML observed-information delta-method SEs / CIs to the fitted step
-    # thresholds, reusing the covariance already computed for the facet
-    # measures. MML only; a no-op for JMLE fits and when the steps table
-    # already carries an SE column.
-    try:
-        steps_tbl = res.get("steps") if isinstance(res, dict) else None
-        if (
-            isinstance(steps_tbl, pd.DataFrame)
-            and not steps_tbl.empty
-            and "Estimate" in steps_tbl.columns
-            and "SE" not in steps_tbl.columns
-        ):
-            step_se_tbl = compute_mml_step_se_table(
-                res,
-                covariance=uncertainty_bundle.get("covariance") if isinstance(uncertainty_bundle, dict) else None,
-                ci_level=0.95,
+        facet_tbl = res["facets"]["others"].copy()
+        facet_tbl["Level"] = facet_tbl["Level"].astype(str)
+        facet_tbl["SE"] = np.nan
+
+        measures = pd.concat([
+            person_tbl[["Facet", "Level", "Estimate", "SE"]],
+            facet_tbl[["Facet", "Level", "Estimate", "SE"]],
+        ], ignore_index=True)
+        person_boundary_columns = [
+            column for column in (
+                "ExtremeScorePattern",
+                "ExtremeScoreDirection",
+                "FiniteJMLEEstimate",
+                "PersonInferenceReady",
+                "ReportableEstimate",
+                "EstimateRole",
             )
-            if isinstance(step_se_tbl, pd.DataFrame) and not step_se_tbl.empty:
-                key_cols = [c for c in ("StepFacet", "Step") if c in steps_tbl.columns and c in step_se_tbl.columns]
-                if key_cols:
-                    res["steps"] = steps_tbl.merge(step_se_tbl, on=key_cols, how="left")
-    except Exception:
-        pass
+            if column in person_tbl.columns
+        ]
+        if person_boundary_columns:
+            measures = measures.merge(
+                person_tbl[["Facet", "Level", *person_boundary_columns]],
+                on=["Facet", "Level"],
+                how="left",
+                validate="one_to_one",
+            )
 
-    reliability_tbl = calc_reliability(measures)
+        measures = measures.merge(se_tbl, on=["Facet", "Level"], how="left", suffixes=("", "_calc"))
+        measures["SE"] = measures["SE"].fillna(measures["SE_calc"])
+        measures = measures.drop(columns=["SE_calc"])
+        if "N" in measures.columns:
+            measures = measures.rename(columns={"N": "N_SE"})
+        fit_tbl = fit_tbl.rename(columns={"N": "N_Fit"}) if "N" in fit_tbl.columns else fit_tbl
+        bias_tbl = bias_tbl.rename(columns={"N": "N_Bias"}) if "N" in bias_tbl.columns else bias_tbl
+        ptmea_tbl = ptmea_tbl.rename(columns={"N": "N_PTMEA"}) if "N" in ptmea_tbl.columns else ptmea_tbl
+        measures = measures.merge(fit_tbl, on=["Facet", "Level"], how="left")
+        measures = measures.merge(bias_tbl, on=["Facet", "Level"], how="left")
+        measures = measures.merge(ptmea_tbl, on=["Facet", "Level"], how="left")
+        ci_z = float(_norm.ppf(0.975))
+        measures["CI_Lower"] = measures["Estimate"] - ci_z * measures["SE"]
+        measures["CI_Upper"] = measures["Estimate"] + ci_z * measures["SE"]
+        measures, uncertainty_bundle = annotate_measure_uncertainty(
+            measures,
+            res,
+            obs_df=obs_df,
+            ci_level=0.95,
+        )
+
+        # Attach MML observed-information delta-method SEs / CIs to the fitted step
+        # thresholds, reusing the covariance already computed for the facet
+        # measures. MML only; a no-op for JMLE fits and when the steps table
+        # already carries an SE column.
+        try:
+            steps_tbl = res.get("steps") if isinstance(res, dict) else None
+            if (
+                isinstance(steps_tbl, pd.DataFrame)
+                and not steps_tbl.empty
+                and "Estimate" in steps_tbl.columns
+                and "SE" not in steps_tbl.columns
+            ):
+                step_se_tbl = compute_mml_step_se_table(
+                    res,
+                    covariance=uncertainty_bundle.get("covariance") if isinstance(uncertainty_bundle, dict) else None,
+                    ci_level=0.95,
+                )
+                if isinstance(step_se_tbl, pd.DataFrame) and not step_se_tbl.empty:
+                    key_cols = [c for c in ("StepFacet", "Step") if c in steps_tbl.columns and c in step_se_tbl.columns]
+                    if key_cols:
+                        res["steps"] = steps_tbl.merge(step_se_tbl, on=key_cols, how="left")
+        except Exception:
+            pass
+
+        reliability_tbl = calc_reliability(measures)
     all_diag_facets = ["Person"] + list(res["config"]["facet_names"])
-    krippendorff_alpha_tbl = calc_krippendorff_alpha_by_facet(
-        obs_df,
-        all_diag_facets,
-    )
-    interrater_agreement_bundle = calc_interrater_agreement_by_facet(
-        obs_df,
-        all_diag_facets,
-        res=res,
-    )
+    krippendorff_alpha_tbl = pd.DataFrame()
+    interrater_agreement_bundle = {}
+    if compute_agreement:
+        krippendorff_alpha_tbl = calc_krippendorff_alpha_by_facet(
+            obs_df,
+            all_diag_facets,
+        )
+        interrater_agreement_bundle = calc_interrater_agreement_by_facet(
+            obs_df,
+            all_diag_facets,
+            res=res,
+            probs=probs,
+        )
 
     # PCA of standardised residuals
     facet_names = res["config"]["facet_names"]

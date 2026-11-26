@@ -1,0 +1,4 @@
+case,ratings,status,public_reason,overlap_B,overlap_A,estimate,school_A,school_B,se,lower,upper,p,reason
+both_schools_linked,480,observed,Joint interaction requires connected person-facet observations without population-assumption-only cohort linking,direct,direct,-0.23047614450080325,-0.36126883573540636,0.4711487991589358,0.3744858074404992,-0.9644548398055834,0.503502550803977,0.5382595997145327,
+only_A_shared_works,480,common_location_only,,none,direct,,,,,,,,Assignment audit: common_location_only
+disjoint_panels,480,unsupported,,none,direct,,,,,,,,Assignment audit: unsupported

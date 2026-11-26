@@ -55,7 +55,24 @@ unit-weight ratings. Conditional likelihood information, finite estimates,
 interval precision and coverage require separate checks. An anchor-dependent
 result assumes the supplied fixed values. A size-limited result leaves
 estimability unknown.
-[Examples and returned statuses](python_library.md#which-ratings-support-a-rater-comparison)
+Large designs use person-column elimination and a bounded SVD of the reduced
+system. This preserves the distinction between confounding and an unverified
+rank. It does not establish finite estimates or interval coverage. Saving a fit
+before diagnostics and selecting outputs do not relax inference holds.
+[Examples and returned statuses](python_library.md#which-ratings-support-a-rater-comparison-development-version)
+
+## Annual rater comparisons in the development Python API
+
+An explicit calibration facet and level map can reuse a previous rater estimate
+across years while retaining its covariance. Keep work IDs, rating-event IDs,
+and rating occasions distinct. The report separates overlap with calibration
+from works rescored across years, and compares the recording-linked estimate
+with conditional and shared-calibration intervals. Shared calibration does
+not correct bias from raters whose severity actually changed. These intervals
+remain model approximations with `CoverageQualified=False`; annual coverage
+findings cannot be borrowed from single-year calibration. If occasion and
+rating mode are confounded, common works alone do not identify a mode-adjusted
+annual contrast. [API, assumptions and examples](python_library.md#compare-a-returning-rater-across-years)
 
 ## Specified structural intervals
 
@@ -101,7 +118,7 @@ about fairness or a person. The original main-effects results remain separate.
 
 ## G studies and D studies
 
-The supported design is completely crossed and balanced, with one or two
+The default ANOVA design is completely crossed and balanced, with one or two
 random facets besides the object of measurement, at least two levels of each
 factor, one observation per cell and unit observation weights. Missing or
 repeated cells and unsupported designs produce a reason rather than an
@@ -114,8 +131,55 @@ alongside the zero-clipped components used for the coefficients. A coefficient
 alone does not establish an acceptable assessment or validate a future design.
 
 The desktop G/D entry uses the original observed scores without requiring an
-MFRM fit. Multivariate G-theory and uncertainty intervals for G/Phi are not
-implemented. These restrictions also apply when G/D is requested alongside MFRM.
+MFRM fit. The development Python API
+can explicitly request pointwise logit-delta intervals for G/Phi under independent
+normal random effects in the supported balanced crossed designs. This includes
+the full component covariance and random-facet uncertainty; it is a plug-in
+approximation, not exact or distribution-robust inference. Relevant nonpositive
+raw components and boundary coefficients withhold the corresponding interval.
+Few facet levels can still give poor coverage. The old person-only bootstrap
+remains withheld. The same conditions apply alongside an MFRM analysis; the
+MFRM fit does not validate the normal model for the original scores.
+[Interval assumptions and statuses](python_library.md#approximate-gphi-intervals-development-version)
+
+The development multivariate entry accepts multiple outcomes on the same complete
+balanced crossed cells and explicit nonnegative composite weights. It retains
+raw covariance components and PSD diagnostics, then projects each score/composite
+component before clipping negative scalar variances for G/Phi. This agrees with
+directly forming the specified composite, but it does not repair the joint
+covariance matrices or qualify estimated correlations. G/Phi and SEM are reported
+separately for each outcome and the composite. Multivariate intervals, different
+facet counts by outcome are not supported. Missing/unbalanced/nested designs require
+the separate explicit MINQUE(0) method described below. Fixed-facet conditioning retains its existing elementary-cell checks.
+[Multivariate assumptions and weights](python_library.md#multivariate-scores-and-a-weighted-composite-development-version)
+
+The development `method="minque0"` supports one or two random facets, crossed or
+with one non-object facet nested in the other. It estimates single-score variance
+components or covariance components for the same retained rows of multiple scores.
+`missing="error"` is the default; `missing="omit"` explicitly removes rows missing
+any selected score or identifier, including outcomes with zero composite weight.
+Absent cells need no placeholders. Duplicated cells, nonfinite/nonnumeric scores,
+non-unit observation weights and invalid labels remain unsupported.
+
+Identification uses the normalized Gram matrix of covariance kernels after removing
+the intercept. Its numerical rank, tolerance, condition number and component support
+are retained. Full rank supports component separation under the declared model; it
+does not establish precise estimates or ignorable missingness. Independent random
+effects with the same component covariance across levels are assumed conditional on
+the assignment. Informative missingness can violate these assumptions; omission is
+not a correction for selection. Negative and non-PSD component estimates are retained
+and scalar projections are clipped as in the balanced multivariate entry.
+
+An unbalanced design has no automatic observed G/Phi in this implementation. Its
+pooled level counts are not replication counts. Without `selected_plan`, components
+and diagnostics are available while D projections remain absent. An explicit plan
+specifies the common counts for a future balanced mean; a nested child's count is
+**per parent**, not its total across parents. These projections do not describe
+the heterogeneous observed means. MINQUE(0) intervals, arbitrary or person-nested
+layouts, cell replication and fixed-facet aggregation are not supported. Point
+calculations have been checked against mfrmr 0.3.2 and independent dense-kernel
+algebra; interval coverage and estimator efficiency have not been qualified.
+[MINQUE(0) example and retained audit](python_library.md#missing-unbalanced-and-nested-designs-development-version)
 
 ## When a result cannot support inference
 
@@ -150,6 +214,15 @@ measures for each observation. They are different diagnostics. The application's
 RSM/PCM fit ZSTD follows a FACETS-style fourth-moment/Wilson–Hilferty convention
 with an absolute cap of 9; the GPCM adaptation is approximate. Agreement in one
 diagnostic does not establish equivalence of the programs.
+
+Infit and Outfit describe squared residuals. Evaluate their magnitude alongside
+the number of observations, category use and the person scoring method. The
+fixed-SD MML fit table plugs EAP person measures estimated from the same ratings
+into the category predictions. With few ratings per person, this reuse can lower
+the mean squares even in data generated by the fitted model. The ZSTD
+calculation carries that effect into the standardized value. Use fit statistics to
+select ratings for inspection and use signed residuals or an explicit contrast
+for questions about the direction of a rater effect.
 
 AIC/AICc/BIC, model-choice LR values and automatic model recommendations remain
 restricted to technical review. Residual PCA is a diagnostic requiring attention

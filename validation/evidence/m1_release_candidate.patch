@@ -1,0 +1,774 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8815a85..8ef4226 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -8,6 +8,12 @@ restricted or removed from the core workflow. Consult
+ using a result. Complete source changes remain in Git history; scientific
+ methods and validation findings belong in their dedicated technical records.
+ 
++## mfrmpy 0.2.2
++
++- Add `check_rater_contrast` to check whether observed assignments identify a prespecified rater severity contrast and to show the works linking the raters.
++- Compare planned and scored cells, identify missing and unplanned ratings, and show when scoring a single missing cell would restore structural support.
++- In group comparisons, reject work IDs shared across groups in ratings or the planned roster by default. Use `shared_work_locations=True` for an intentionally shared location per repeated work ID.
++
+ ## mfrmpy 0.2.1
+ 
+ - Preserve `score_k` facet labels, round accepted near-integer scores, and report invalid scores and ambiguous IDs before estimation. Cell density uses unique observed cells. Large unverified design ranks have unknown nullity.
+diff --git a/README.md b/README.md
+index 6298e0d..d492ea6 100644
+--- a/README.md
++++ b/README.md
+@@ -6,6 +6,7 @@ This is the Python package repository. Report library problems in [mfrmpy issues
+ 
+ - **PyPI releases:** [mfrmpy](https://pypi.org/project/mfrmpy/)
+ - **Package documentation:** [docs/python_library.md](docs/python_library.md)
++- **Rater comparisons:** [trace shared works and check planned scoring](docs/python_library.md#which-ratings-support-a-rater-comparison)
+ - **Statistical scope and interpretation boundaries:** [docs/analysis_scope.md](docs/analysis_scope.md)
+ - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+ - **Web & Desktop applications:** [MFRM_Python_Application](https://github.com/Ryuya-dot-com/MFRM_Python_Application)
+diff --git a/docs/analysis_scope.md b/docs/analysis_scope.md
+index 1c68a05..ac1e015 100644
+--- a/docs/analysis_scope.md
++++ b/docs/analysis_scope.md
+@@ -44,6 +44,19 @@ equivalence conclusions. Selected structural intervals have the separate,
+ limited scope below. An available selected interval does not remove the
+ restrictions on other outputs.
+ 
++## Assignment support for a rater comparison
++
++`check_rater_contrast` traces shared works and checks whether the observed
++allocation identifies a specified severity contrast. With a planned roster
++it also reports missing cells and whether a specific cell would restore
++structural support. In group comparisons, the same work ID across groups
++requires an explicit decision to share its modeled location. The check uses
++unit-weight ratings. Conditional likelihood information, finite estimates,
++interval precision and coverage require separate checks. An anchor-dependent
++result assumes the supplied fixed values. A size-limited result leaves
++estimability unknown.
++[Examples and returned statuses](python_library.md#which-ratings-support-a-rater-comparison)
++
+ ## Specified structural intervals
+ 
+ For supported unit-weight, fixed-SD RSM/PCM analyses, this output provides
+diff --git a/docs/python_library.md b/docs/python_library.md
+index 33393e3..02ffe0a 100644
+--- a/docs/python_library.md
++++ b/docs/python_library.md
+@@ -4,7 +4,9 @@
+ notebooks. It uses the same Python engine as the existing MFRM Web and desktop
+ applications. It does not require R, FACETS, Streamlit or Tkinter for analysis.
+ 
+-Version **0.2.1** corrects score preparation, design checks, partial-anchor reporting and G/D coefficients at zero object variance. The [package repository](https://github.com/Ryuya-dot-com/mfrmpy) hosts library documentation and issues. Available analyses are RSM/PCM with JMLE
++Version **0.2.2** adds a structural check for a specified rater comparison,
++including planned and observed ratings. The [package repository](https://github.com/Ryuya-dot-com/mfrmpy)
++hosts library documentation and issues. Available analyses are RSM/PCM with JMLE
+ or fixed-population-SD MML, diagnostics, conditional bias, selected structural
+ intervals, a separate joint-interaction model, and balanced observed-score G/D
+ studies. Numerical eligibility checks and interpretation limits remain in
+@@ -86,6 +88,155 @@ for your own data, adjusting the ID columns as needed. Explicit string types
+ preserve leading zeroes. The input/design audit remains part of the returned
+ analysis and tables; inspect it before interpreting estimates.
+ 
++## Which ratings support a rater comparison?
++
++Use `check_rater_contrast` (introduced in 0.2.2) before fitting. Include every
++facet whose effect you want to separate. In the bundled writing example, R1
++and R3 directly scored the same 30 people, and their severity difference is
++estimable with Task and Criterion in the design.
++
++```python
++import mfrmpy
++
++comparison = mfrmpy.check_rater_contrast(
++    mfrmpy.load_example(), person="Person", facets=["Rater", "Task", "Criterion"],
++    score="Score", rating_min=0, rating_max=5, rater="Rater", difference=("R1", "R3"),
++)
++print(comparison["status"])               # observed
++print(comparison["overlap"][0]["path"])    # rater pair and shared person IDs per link
++```
++
++The target is the first rater minus the second on the **severity** scale.
++A positive fitted contrast means the first rater is stricter. The returned
++`contrast_weights` apply to the model coefficients, so they change sign if
++`positive_facets` codes the rater coefficient as leniency. The structural
++test concerns the location shared by the adjacent logits of an RSM or PCM
++with centered steps. Category use, precision and finite parameter estimates
++each require separate checks.
++
++### Does the rater difference change between two schools?
++
++Both assignments below have six works, eight ratings and four ratings per
++rater. The question is whether (R1 − R2) at school A minus (R1 − R2) at
++school B can be distinguished from differences in the quality of the works.
++
++```python
++import pandas as pd
++import mfrmpy
++
++def school_comparison(assignments):
++    rows = [(school, work, rater) for (school, work), raters in
++            zip([("A", "a1"), ("A", "a2"), ("A", "a3"),
++                 ("B", "b1"), ("B", "b2"), ("B", "b3")], assignments)
++            for rater in raters]
++    data = pd.DataFrame(rows, columns=["School", "Work", "Rater"])
++    data["Score"] = [0, 1] * 4
++    return mfrmpy.check_rater_contrast(
++        data, person="Work", facets=["Rater", "School"], score="Score",
++        rater="Rater", difference=("R1", "R2"), group="School", group_difference=("A", "B"),
++    )
++
++both, r1, r2 = ("R1", "R2"), ("R1",), ("R2",)
++for assignment in [(both, r1, r2, both, r1, r2), (both, both, r1, r1, r2, r2)]:
++    result = school_comparison(assignment)
++    print(result["status"], [g["kind"] for g in result["overlap"]])
++# observed              ['direct', 'direct']
++# common_location_only  ['direct', 'none']
++```
++
++The second assignment leaves both B-school raters free to explain the score
++difference through the quality of their assigned works. The group argument
++adds a rater-by-group interaction. Its coefficient raises the coded score,
++so the weights for interaction cells (R1,A), (R2,A), (R1,B), (R2,B) are
++(−1, +1, +1, −1) for this severity contrast. These are design results for a
++prespecified comparison. The function fits no interaction and tests no DFF null hypothesis.
++
++| `status` | How to read it |
++|---|---|
++| `observed` | The contrast is a linear combination of observed design rows while each person or work has its own location. |
++| `anchor_dependent` | Observations and the supplied fixed-level or group-mean constraints together identify the contrast. Inspect the assumed calibration values. |
++| `fixed_by_anchors` | The constraints already fix the contrast before seeing the ratings. `observation_estimable` separately records whether the assignments could support it without the anchors. |
++| `common_location_only` | The free-person check fails. A second, unanchored calculation imposing a common person location removes the structural ambiguity. A population model would need its own distributional and numerical checks. |
++| `unsupported` | The observed allocation, any supplied anchor constraints with free person locations, and the separate common-location calculation each leave the contrast unresolved. For example, one task per rater can confound task difficulty with severity. |
++| `audit_size_limit` | The dense calculation exceeds five million matrix entries. Estimability is unknown. The overlap paths are still available. |
++
++The check treats retained rows as unit-weight ratings. When preparing data
++for a weighted analysis, pass only the ratings that enter that analysis.
++For example, remove a zero-weight row that the estimator would exclude.
++`observed` describes structural support with free work locations. CML also
++depends on the possible response patterns at each observed total. A work
++with all minimum or all maximum scores has only one such pattern and
++contributes no conditional information, even if two raters scored it.
++
++`overlap` reports one shortest path per requested group (or one for the entire
++additive design), with **all** shared person IDs on each link. Paths describe
++assignments. Other facets in the rank calculation can still confound the rater
++difference. Set `person` to a unique performance or recording ID to trace
++rescoring of the same work. For comparisons by `group`, each work ID must
++belong to one group by default. Apply that rule across both ratings and the
++planned roster. If schools each use numbers such as `1` for different works,
++use globally unique IDs such as `A:1` and `B:1` in both tables. When the same
++recording is intentionally scored under different groups or conditions, pass
++`shared_work_locations=True` to give each repeated ID one shared location.
++The result records this setting. The reported paths still describe each
++group's own assignments.
++
++Missing scores and incomplete assignments contribute no links. Replicate
++ratings of one work contribute one assignment to the rank calculation. The
++design check also accepts a single observed score category. Supply both rubric
++endpoints to check that every retained score is in range.
++
++Supply `anchors`, `group_anchors`, `noncenter_facet` and `positive_facets`
++using the same conventions as `analyze`. Interaction rows and columns have zero
++margins under those constraints. The check treats external anchor values as exact.
++`estimable_with_anchors` is `None` when no anchors are supplied or the rank
++calculation is size-limited. Use the original ratings to run this preflight
++independently of a fitted or archived analysis.
++
++### Compare planned and observed scoring
++
++Pass a long-form `planned_assignments` table with the work ID and all facets
++used in the contrast. For example, both schools planned to double-score one
++work. School B has one missing score. Use the original group and rater columns.
++
++```python
++import pandas as pd
++import mfrmpy
++
++roster = pd.DataFrame(
++    [("a1", "A", "R1"), ("a1", "A", "R2"), ("b1", "B", "R1"),
++     ("b1", "B", "R2"), ("b2", "B", "R2")],
++    columns=["Work", "School", "Rater"],
++)
++scored = roster.assign(Score=[3, 4, 2, None, 4])
++review = mfrmpy.check_rater_contrast(
++    scored, person="Work", facets=["School", "Rater"], score="Score",
++    rater="Rater", difference=("R1", "R2"), group="School", group_difference=("B", "A"),
++    planned_assignments=roster,
++)
++print(review["status"])  # common_location_only
++print(review["plan"]["planned_observation_estimable"])  # True
++print(review["plan"]["missing"])
++# [{'assignment': {'Work': 'b1', 'School': 'B', 'Rater': 'R2'}, 'restores_contrast': True}]
++```
++
++The roster comparison counts unique work-by-facet cells. A blank or absent
++score for a planned cell counts as missing. A scored cell absent from the
++roster is listed as unplanned and remains in the observed design. Directly
++shared works are counted once per group, even when both raters scored several
++tasks on the same work. The structural calculation includes all supplied
++facets and can detect confounding that these counts cannot show.
++
++`planned_observation_estimable` checks the proposed roster by itself.
++`completed_observation_estimable` checks the observed design plus all its
++missing planned cells. Both checks concern structural support from the
++assignments without anchors. If observed support is absent,
++`restores_contrast` shows whether a particular missing cell would suffice
++on its own. Several missing cells may be needed together. `None` means the
++single-cell check was unnecessary or unavailable, including when the observed
++design already supports the contrast or the rank check exceeds its size limit.
++These checks use cell identities and leave the observed status unchanged.
++
+ ## Models and supplementary requests
+ 
+ `analyze` is the shared application service, not a second implementation of
+diff --git a/mfrm_app/rater_contrast.py b/mfrm_app/rater_contrast.py
+new file mode 100644
+index 0000000..6636063
+--- /dev/null
++++ b/mfrm_app/rater_contrast.py
+@@ -0,0 +1,298 @@
++"""Observation-level design support for a prespecified rater severity contrast."""
++from collections import defaultdict, deque
++
++import numpy as np
++import pandas as pd
++
++from mfrm_app import basic_analysis, engine
++
++
++def _pair(values, levels, name):
++    if not isinstance(values, (tuple, list)) or len(values) != 2:
++        raise ValueError(f"{name} requires an ordered pair of two levels")
++    if any(not isinstance(x, str) or x.strip() not in levels for x in values):
++        raise ValueError(f"{name} must refer to two observed level labels")
++    left, right = (x.strip() for x in values)
++    if left == right:
++        raise ValueError(f"{name} requires two distinct levels")
++    return left, right
++
++
++def _observed_assignments(data, person, facets, score, rating_min, rating_max, *, allow_empty=False):
++    cols = [person, *facets, score]
++    if len(set(cols)) != len(cols) or any(f in {"Person", "Score", "Weight"} for f in facets):
++        raise ValueError("Select distinct roles and use facet names other than Person, Score and Weight")
++    if not data.columns.is_unique or any(col not in data for col in cols):
++        raise ValueError("Selected columns must exist and column names must be unique")
++    audit = engine.build_response_data_audit(data, person_col=person, facet_cols=facets, score_col=score)
++    engine.validate_rating_scores(audit["rows"])
++    keep = audit["rows"]["IncludedInLikelihood"].to_numpy(dtype=bool)
++    if rating_min is not None or rating_max is not None:
++        if not (basic_analysis._is_int(rating_min) and basic_analysis._is_int(rating_max) and rating_min < rating_max):
++            raise ValueError("Specify both integer rubric endpoints with rating_min < rating_max")
++        if not pd.to_numeric(data.loc[keep, score]).round().between(rating_min, rating_max).all():
++            raise ValueError("Observed scores fall outside the supplied rating range")
++    rows = data.loc[keep, [person, *facets]].rename(columns={person: "Person"}).copy()
++    if rows.empty and not allow_empty:
++        raise ValueError("No observed ratings remain after input exclusions")
++    for col in rows:
++        rows[col] = pd.Categorical(engine.normalized_rating_ids(rows[col]))
++    return rows.drop_duplicates(), len(rows)
++
++
++def _overlap(rows, rater, pair, group_level):
++    # Traverse the bipartite graph so one commonly rated work costs O(raters) edges.
++    by_rater, by_person = defaultdict(set), defaultdict(set)
++    for person_id, rater_id in rows.loc[:, ["Person", rater]].drop_duplicates().itertuples(index=False, name=None):
++        by_person[person_id].add(rater_id)
++        by_rater[rater_id].add(person_id)
++    left, right = pair
++    queue = deque([left])
++    parent = {left: None}
++    seen_people = set()
++    while queue and right not in parent:
++        current = queue.popleft()
++        for person_id in sorted(by_rater[current] - seen_people):
++            seen_people.add(person_id)
++            for other in sorted(by_person[person_id]):
++                if other not in parent:
++                    parent[other] = current
++                    queue.append(other)
++    path = []
++    if right in parent:
++        node = right
++        while node != left:
++            previous = parent[node]
++            path.append(dict(from_rater=previous, to_rater=node,
++                             persons=sorted(by_rater[previous] & by_rater[node])))
++            node = previous
++        path.reverse()
++    kind = "none" if not path else ("direct" if len(path) == 1 else "indirect")
++    return dict(group_level=group_level, kind=kind, path=path)
++
++
++def _in_row_space(matrix, target):
++    # Economy SVD also covers wide designs whose omitted right singular vectors
++    # span part of the null space. Project onto the retained row space.
++    basis, tol = _row_space(matrix)
++    residual = target - (target @ basis.T) @ basis
++    return bool(np.linalg.norm(residual) <= tol * np.linalg.norm(target))
++
++
++def _row_space(matrix):
++    _, singular, vh = np.linalg.svd(matrix, full_matrices=False)
++    tol = max(matrix.shape) * np.finfo(float).eps
++    return (vh[singular > tol * singular[0]] if len(singular) else vh), tol
++
++
++def _constraint_rows(levels, offsets, origin, fixed, means):
++    indices = {f: {name: i + offsets[f] for i, name in enumerate(names)} for f, names in levels.items()}
++    rows = [[indices[row["Facet"]][row["Level"]]] for row in fixed]
++    by_mean = defaultdict(list)
++    for row in means:
++        by_mean[row["Facet"], row["Group"]].append(indices[row["Facet"]][row["Level"]])
++    rows.extend(by_mean.values())
++    anchored = {row["Facet"] for row in fixed + means}
++    for f, names in levels.items():
++        if f != origin and f not in anchored:
++            rows.append(range(offsets[f], offsets[f] + len(names)))
++    return rows
++
++
++def _design(rows, levels, signs, rater, group, weights, origin=None, fixed=(), means=()):
++    offsets = {}
++    n_main = 0
++    for facet, names in levels.items():
++        offsets[facet] = n_main
++        n_main += len(names)
++    n_raters = len(levels[rater])
++    n_groups = len(levels[group]) if group is not None else 0
++    dimension = n_main + n_raters * n_groups
++    constraints = []
++    if fixed or means:
++        constraints = _constraint_rows(levels, offsets, origin, fixed, means)
++        if group is not None:
++            constraints.extend(range(n_main+i, dimension, n_raters) for i in range(n_raters))
++            for j in range(n_groups):
++                first = n_main + j*n_raters
++                constraints.append(range(first, first+n_raters))
++    if (len(rows) + len(constraints)) * dimension > 5_000_000:
++        return None, None
++    matrix = np.zeros((len(rows) + len(constraints), dimension))
++    positions = np.arange(len(rows))
++    maps = {f: {level: i for i, level in enumerate(names)} for f, names in levels.items()}
++    codes = {f: rows[f].map(index).to_numpy(dtype=int) for f, index in maps.items()}
++    for f, start in offsets.items():
++        matrix[positions, start+codes[f]] = signs[f]
++    if group is not None:
++        matrix[positions, n_main+codes[rater]+n_raters*codes[group]] = 1
++    target = np.zeros(dimension)
++    for term in weights:
++        i = maps[rater][term["rater_level"]]
++        j = maps[group][term["group_level"]] if group is not None else None
++        col = n_main+j*n_raters+i if group is not None else offsets[rater]+i
++        target[col] = term["weight"]
++    for i, cols in enumerate(constraints, len(rows)):
++        matrix[i, cols] = 1
++    return matrix, target
++
++
++def _planned_rows(data, person, facets):
++    cols = [person, *facets]
++    if (not isinstance(data, pd.DataFrame) or data.empty or not data.columns.is_unique
++            or any(col not in data for col in cols)):
++        raise ValueError("planned_assignments requires a nonempty table with the work and all selected facet columns")
++    if any(engine._blank_or_na_mask(data[col]).any() for col in cols):
++        raise ValueError("Planned assignments require complete work and facet IDs")
++    rows = data[cols].rename(columns={person: "Person"})
++    return rows.apply(engine.normalized_rating_ids).drop_duplicates().reset_index(drop=True)
++
++
++def _restoring_rows(observed, missing, target):
++    basis, tol = _row_space(observed)
++    residual = target - (target @ basis.T) @ basis
++    outside = missing - (missing @ basis.T) @ basis
++    # One additional row restores support exactly when its residual spans the missing direction.
++    lengths = np.linalg.norm(outside, axis=1)
++    unit = np.divide(outside, lengths[:, None], out=np.zeros_like(outside),
++                     where=lengths[:, None] > tol*np.linalg.norm(missing, axis=1)[:, None])
++    remainder = residual - (unit @ residual)[:, None]*unit
++    return (np.linalg.norm(remainder, axis=1) <= tol*np.linalg.norm(target)).tolist()
++
++
++def _compare_plan(observed, planned, levels, signs, rater, group, weights, person, observed_support):
++    keys = list(planned.columns)
++    roster = pd.MultiIndex.from_frame(planned)
++    scored = pd.MultiIndex.from_frame(observed)
++    missing = planned.loc[~roster.isin(scored)].sort_values(keys)
++    extra = observed.loc[~scored.isin(roster)].sort_values(keys)
++    planned_support = observed_support
++    if not missing.empty or not extra.empty:
++        matrix, target = _design(planned, levels, signs, rater, group, weights)
++        planned_support = None if matrix is None else _in_row_space(matrix, target)
++        del matrix
++    completed_support = observed_support
++    repair = [None]*len(missing)
++    if observed_support is not True and not missing.empty:
++        completed = pd.concat([observed, missing], ignore_index=True)
++        matrix, target = _design(completed, levels, signs, rater, group, weights)
++        completed_support = None if matrix is None else _in_row_space(matrix, target)
++        if observed_support is False and completed_support is not None:
++            repair = (_restoring_rows(matrix[:len(observed)], matrix[len(observed):], target)
++                      if completed_support else [False]*len(missing))
++    by_group = []
++    groups = list(dict.fromkeys(term["group_level"] for term in weights))
++    left, right = weights[0]["rater_level"], weights[1]["rater_level"]
++    for code in groups:
++        rows = [part if group is None else part.loc[part[group].eq(code)]
++                for part in (planned, observed, missing, extra)]
++        plan_works, scored_works = (set(part.loc[part[rater].eq(left), "Person"])
++                                 & set(part.loc[part[rater].eq(right), "Person"]) for part in rows[:2])
++        by_group.append(dict(group_level=code, planned_cells=len(rows[0]), observed_cells=len(rows[1]),
++                             missing_cells=len(rows[2]), unplanned_cells=len(rows[3]),
++                             planned_shared_works=sorted(plan_works), observed_shared_works=sorted(scored_works),
++                             missing_shared_works=sorted(plan_works - scored_works)))
++    return dict(planned_cells=len(planned), observed_planned_cells=len(planned)-len(missing),
++                planned_observation_estimable=planned_support,
++                completed_observation_estimable=completed_support,
++                missing=[dict(assignment=row, restores_contrast=restores) for row, restores in
++                         zip(missing.rename(columns={"Person": person}).to_dict("records"), repair, strict=True)],
++                unplanned=extra.rename(columns={"Person": person}).to_dict("records"), by_group=by_group)
++
++
++def check_rater_contrast(data, *, person, facets, score, rater, difference,
++                         group=None, group_difference=None, rating_min=None, rating_max=None, positive_facets=None,
++                         noncenter_facet="Person", anchors=None, group_anchors=None, planned_assignments=None,
++                         shared_work_locations=False):
++    """Trace shared persons/works and check structural support without fitting.
++
++    `difference=(a, b)` always means severity of a minus severity of b.
++    With `group` and `group_difference=(g, h)`, compare that difference in
++    g minus h using a rater-by-group interaction. Include every modeled facet
++    in `facets`. Use a work ID as `person` to trace repeated scoring of works.
++    For a group comparison, each work ID belongs to one group by default.
++    Use `shared_work_locations=True` when repeated IDs deliberately refer to
++    the same work location across groups.
++    Supply `planned_assignments` with work and facet columns to compare the
++    declared roster with the scored cells, without adding any responses.
++    See the package guide for the meanings of the returned support states.
++    """
++    if not isinstance(data, pd.DataFrame) or (data.empty and planned_assignments is None):
++        raise ValueError("A nonempty long-form ratings table is required")
++    if not isinstance(facets, (list, tuple)) or rater not in facets:
++        raise ValueError("rater must be one of the selected facets")
++    if (group is None) != (group_difference is None):
++        raise ValueError("Supply group and group_difference together")
++    if group is not None and (group not in facets or group == rater):
++        raise ValueError("group must be a selected facet distinct from rater")
++    if not isinstance(shared_work_locations, (bool, np.bool_)):
++        raise ValueError("shared_work_locations must be True or False")
++    facets = list(facets)
++    rows, included = _observed_assignments(data, person, facets, score, rating_min, rating_max,
++                                          allow_empty=planned_assignments is not None)
++    levels = {f: list(rows[f].cat.categories) for f in rows}
++    planned = None if planned_assignments is None else _planned_rows(planned_assignments, person, facets)
++    if group is not None and not shared_work_locations:
++        work_groups = rows[["Person", group]]
++        if planned is not None:
++            work_groups = pd.concat([work_groups, planned[["Person", group]]], ignore_index=True)
++        if work_groups.drop_duplicates()["Person"].duplicated().any():
++            raise ValueError(
++                "Work IDs appear in multiple groups across observed and planned assignments. "
++                "Use globally unique IDs for different works, for example by prefixing local IDs with the group. "
++                "Set shared_work_locations=True only if repeated IDs denote the same work location across groups."
++            )
++    known = levels if planned is None else {f: sorted(set(levels[f]).union(planned[f])) for f in levels}
++    pair = _pair(difference, known[rater], "difference")
++    groups = _pair(group_difference, known[group], "group_difference") if group is not None else ()
++    roles = dict(person_col=person, facet_cols=facets)
++    origin, positive = basic_analysis.normalize_scale_orientation(noncenter_facet, positive_facets, **roles)
++    observed = {f: set(names) for f, names in levels.items()}
++    fixed = basic_analysis.normalize_anchor_records(anchors, observed_levels=observed, **roles)
++    means = basic_analysis.normalize_group_anchor_records(group_anchors, observed_levels=observed,
++                                                          fixed_records=fixed, **roles)
++    signs = {f: 1 if f == "Person" or f in positive else -1 for f in levels}
++    if groups:
++        overlap = [_overlap(rows.loc[rows[group].eq(g)], rater, pair, g) for g in groups]
++    else:
++        overlap = [_overlap(rows, rater, pair, None)]
++    # The joint interaction enters eta positively. Greater severity lowers eta.
++    multiplier = -1 if groups else -signs[rater]
++    weights = []
++    for g, direction in zip(groups or (None,), (1, -1)):
++        for level, side in zip(pair, (1, -1)):
++            weights.append(dict(rater_level=level, group_level=g, weight=direction * side * multiplier))
++
++    result = dict(status="audit_size_limit", person=person, rater=rater, group=group,
++                  shared_work_locations=bool(shared_work_locations) if group is not None else None,
++                  observation_estimable=None, fixed_by_anchors=None,
++                  estimable_with_anchors=None, overlap=overlap, contrast_weights=weights,
++                  facet_signs=signs, noncenter_facet=origin, anchors=fixed, group_anchors=means,
++                  included_rows=included, excluded_rows=len(data) - included)
++
++    # Planned levels only enter the observed design if a requested level has no scores.
++    levels[rater] = sorted(set(levels[rater]).union(pair))
++    if groups:
++        levels[group] = sorted(set(levels[group]).union(groups))
++    matrix, target = _design(rows, levels, signs, rater, group, weights, origin, fixed, means)
++    if matrix is not None:
++        obs = matrix[:len(rows)]
++        data_support = _in_row_space(obs, target)
++        constrained = len(matrix) > len(rows)
++        fixed_target = constrained and _in_row_space(matrix[len(rows):], target)
++        conditional = (data_support or fixed_target or _in_row_space(matrix, target)) if constrained else None
++        if fixed_target:
++            status = "fixed_by_anchors"
++        elif data_support:
++            status = "observed"
++        elif conditional:
++            status = "anchor_dependent"
++        else:
++            start = len(levels["Person"])
++            status = "common_location_only" if _in_row_space(obs[:, start:], target[start:]) else "unsupported"
++        result.update(status=status, observation_estimable=data_support, fixed_by_anchors=fixed_target,
++                      estimable_with_anchors=conditional)
++    if planned is not None:
++        result["plan"] = _compare_plan(rows.astype(str), planned, known, signs, rater, group, weights, person,
++                                       result["observation_estimable"])
++    return result
+diff --git a/mfrmpy/__init__.py b/mfrmpy/__init__.py
+index fffbfd0..2a2ddff 100644
+--- a/mfrmpy/__init__.py
++++ b/mfrmpy/__init__.py
+@@ -1,6 +1,7 @@
+ """Public Python interface to the shared MFRM application calculations.
+ 
+-Use :func:`check_design` for optimization-free preflight checks, :func:`analyze`
++Use :func:`check_design` and :func:`check_rater_contrast` for optimization-free
++preflight checks, :func:`analyze`
+ for RSM/PCM or observed-score G/D studies, :func:`summary`, :func:`tables` and
+ :func:`export_csv` for qualified results, and :func:`save_project` /
+ :func:`load_project` for portable .mfrm archives. Raw retained results do not
+@@ -19,11 +20,12 @@ import pandas as pd
+ from mfrm_app import basic_analysis, desktop_analysis, exports, project
+ from mfrm_app.desktop_analysis import check_design, run_analysis as analyze
+ from mfrm_app.project import ProjectError, load_project, save_project
++from mfrm_app.rater_contrast import check_rater_contrast
+ 
+-__version__ = "0.2.1"
++__version__ = "0.2.2"
+ 
+ __all__ = [
+-    "__version__", "analyze", "check_design", "summary", "tables", "export_csv",
++    "__version__", "analyze", "check_design", "check_rater_contrast", "summary", "tables", "export_csv",
+     "load_example", "save_project", "load_project", "ProjectError", "plot", "report_html",
+ ]
+ 
+diff --git a/tests/test_python_library.py b/tests/test_python_library.py
+index f5b2034..43dc582 100644
+--- a/tests/test_python_library.py
++++ b/tests/test_python_library.py
+@@ -1292,3 +1292,213 @@ def test_rater_profile_respects_positive_direction_and_facet_role():
+     assert "leniency" in fig._suptitle.get_text()
+     assert "raise" in fig.axes[0].get_xlabel()
+     assert "Rater" not in mfrmpy.plot(an, "rater_severity", facet="Task")._suptitle.get_text()
++
++
++def test_rater_contrast_paths_and_confounded_tasks():
++    data = pd.DataFrame([
++        ("w1", "A", "t1", 1), ("w1", "B", "t1", 2),
++        ("w2", "B", "t1", 1), ("w2", "C", "t1", 2),
++        ("w3", "A", "t1", 1), ("w3", "C", "t1", None),
++        ("w4", "D", "t2", 2),
++    ], columns=["Work", "Rater", "Task", "Score"])
++    args = dict(person="Work", facets=["Rater", "Task"], score="Score", rater="Rater")
++    check = mfrmpy.check_rater_contrast
++    indirect = check(data, **args, difference=["A", "C"])
++    assert indirect["status"] == "observed" and indirect["excluded_rows"] == 1
++    assert indirect["overlap"] == [dict(group_level=None, kind="indirect", path=[
++        dict(from_rater="A", to_rater="B", persons=["w1"]),
++        dict(from_rater="B", to_rater="C", persons=["w2"]),
++    ])]
++    # The isolated fourth rater does not destroy a comparison within the linked component.
++    direct = check(data, **args, difference=["A", "B"], positive_facets=["Rater"])
++    assert direct["status"] == "observed" and direct["overlap"][0]["kind"] == "direct"
++    assert [term["weight"] for term in direct["contrast_weights"]] == [-1, 1]
++    confounded = data.assign(Task=data.Rater)
++    alias = check(confounded, **args, difference=["A", "B"])
++    assert alias["overlap"][0]["kind"] == "direct" and alias["status"] == "unsupported"
++    assert not alias["observation_estimable"]
++    unlinked = check(data.assign(Task="t"), **args, difference=["A", "D"])
++    assert unlinked["overlap"][0]["kind"] == "none" and unlinked["status"] == "common_location_only"
++
++
++@pytest.mark.parametrize("balanced_bridge", [True, False])
++def test_rater_contrast_eight_ratings_against_work_cell_null_space(balanced_bridge):
++    works = [0, 0, 1, 2, 3, 3, 4, 5] if balanced_bridge else [0, 0, 1, 1, 2, 3, 4, 5]
++    raters = [0, 1, 0, 1, 0, 1, 0, 1] if balanced_bridge else [0, 1, 0, 1, 0, 0, 1, 1]
++    schools = np.array(works) // 3
++    cells = 2 * schools + raters
++    raw = np.column_stack([np.eye(6)[works], -np.eye(4)[cells]])
++    target = np.r_[np.zeros(6), 1, -1, -1, 1]
++    # Each component of this work-by-cell design admits its own common shift.
++    component = ([0, 0, 0, 1, 1, 1, 0, 0, 1, 1] if balanced_bridge else
++                 [0, 0, 0, 1, 2, 2, 0, 0, 1, 2])
++    null = np.eye(max(component) + 1, dtype=int)[component]
++    assert not (raw @ null).any()
++    assert np.linalg.matrix_rank(raw) + null.shape[1] == 10
++    supported = not (target @ null).any()
++    assert supported == balanced_bridge
++    for free_cells in [[6, 8], [7, 9]]:
++        # Set the other rater to zero within each school. Each nested work
++        # absorbs its school's origin; the severity difference keeps its sign.
++        cols = [*range(6), *free_cells]
++        design = raw[:, cols]
++        assert (np.linalg.matrix_rank(np.vstack([design, target[cols]])) ==
++                np.linalg.matrix_rank(design)) == supported
++
++    data = pd.DataFrame(dict(Work=works, Rater=np.array(["R1", "R2"])[raters],
++                             School=np.array(["A", "B"])[schools], Score=[0, 1] * 4))
++    recoded = data.iloc[::-1].replace({"Rater": {"R1": "Z", "R2": "A"}, "School": {"A": "Y", "B": "X"}})
++    for frame, order, group_order, origin in [(data, ["R1", "R2"], ["A", "B"], "Person"),
++                                              (recoded, ["Z", "A"], ["Y", "X"], "Rater")]:
++        out = mfrmpy.check_rater_contrast(frame, person="Work", facets=["School", "Rater"],
++            score="Score", rater="Rater", difference=order, group="School",
++            group_difference=group_order, noncenter_facet=origin)
++        assert out["observation_estimable"] == supported
++        assert [g["kind"] for g in out["overlap"]] == ["direct", "direct" if balanced_bridge else "none"]
++        # Interaction coefficients raise scores, so their signs reverse for severity.
++        weights = {(t["rater_level"], t["group_level"]): t["weight"] for t in out["contrast_weights"]}
++        assert [weights[r, g] for g in group_order for r in order] == [-1, 1, 1, -1]
++    if not balanced_bridge:
++        # Fixing both main rater coefficients fixes their average difference
++        # over schools. With zero interaction margins the A contrast then links B.
++        args = dict(person="Work", facets=["Rater", "School"], score="Score", rater="Rater",
++                    difference=["R1", "R2"], group="School", group_difference=["A", "B"])
++        fixed = [dict(Facet="Rater", Level=r, Anchor=0) for r in ("R1", "R2")]
++        assert mfrmpy.check_rater_contrast(data, **args, anchors=fixed[:1])["status"] == "common_location_only"
++        conditional = mfrmpy.check_rater_contrast(data, **args, anchors=fixed)
++        assert conditional["status"] == "anchor_dependent" and not conditional["observation_estimable"]
++
++
++def test_rater_contrast_distinguishes_fixed_values_and_anchor_dependent_links():
++    data = pd.DataFrame({"Work": ["1", "1", "2", "2"], "Rater": ["A", "B", "C", "D"],
++                         "Score": [0, 1, 0, 1]})
++    args = dict(person="Work", facets=["Rater"], score="Score", rater="Rater", difference=("A", "D"))
++    def anchored(*names):
++        return [dict(Facet="Rater", Level=r, Anchor=.2) for r in names]
++    check = mfrmpy.check_rater_contrast
++    assert check(data, **args, anchors=anchored("B"))["status"] == "common_location_only"
++    link = check(data, **args, anchors=anchored("B", "C"))
++    assert link["status"] == "anchor_dependent" and link["estimable_with_anchors"]
++    assert not link["observation_estimable"] and not link["fixed_by_anchors"]
++    assert link["overlap"][0]["kind"] == "none"
++    assert check(data, **args, anchors=anchored("A", "D"))["status"] == "fixed_by_anchors"
++    assert check(data.assign(Score=0), **args, anchors=anchored("A", "D"))["status"] == "fixed_by_anchors"
++    means = [dict(Facet="Rater", Level=r, Group=g, GroupValue=0)
++             for r, g in zip("ABCD", ["left", "left", "right", "right"])]
++    assert check(data, **args, group_anchors=means)["status"] == "anchor_dependent"
++    # The single grand mean fixes an origin; it cannot bridge these two panels.
++    assert not check(data, **args, group_anchors=[dict(row, Group="all") for row in means])["estimable_with_anchors"]
++
++
++def test_rater_contrast_all_eight_rating_allocations():
++    from itertools import combinations
++    from collections import Counter
++
++    works = set(range(6))
++    counts = Counter()
++    for shared in combinations(sorted(works), 2):
++        single = works.difference(shared)
++        for r1_only in combinations(sorted(single), 2):
++            rows = [(w, "A" if w < 3 else "B", r) for r, assigned in
++                    [("R1", set(shared).union(r1_only)), ("R2", works.difference(r1_only))]
++                    for w in sorted(assigned)]
++            df = pd.DataFrame(rows, columns=["Work", "School", "Rater"]).assign(Score=1)
++            out = mfrmpy.check_rater_contrast(df, person="Work", facets=["School", "Rater"],
++                score="Score", rater="Rater", difference=("R1", "R2"),
++                group="School", group_difference=("A", "B"))
++            # With two raters and unrestricted nested works, a within-work
++            # rater difference in each school is necessary and sufficient.
++            both_schools = shared[0] < 3 <= shared[1]
++            assert out["observation_estimable"] == both_schools
++            counts[out["status"]] += 1
++    assert counts == {"observed": 54, "common_location_only": 36}
++
++
++def test_rater_contrast_labels_missing_cells_and_size_limit():
++    data = pd.DataFrame(dict(Work=[" R1 ", "P"], Rater=[" R1 ", "R2"], School=["A", "B"], Score=[0, 2]))
++    args = dict(person="Work", facets=["Rater", "School"], score="Score", rater="Rater", difference=["R1", "R2"])
++    assert mfrmpy.check_rater_contrast(data, **args, group="School", group_difference=["A", "B"])["status"] == "unsupported"
++    for kwargs in [dict(group="School"), dict(difference=["R1", "R1"]), dict(difference=["R1", "missing"]),
++                   dict(rater="Work"), dict(group="Rater", group_difference=["R1", "R2"]),
++                   dict(rating_min=0), dict(rating_min=0, rating_max=1)]:
++        with pytest.raises(ValueError):
++            mfrmpy.check_rater_contrast(data, **(args | kwargs))
++    large = pd.DataFrame(dict(Work=np.arange(2500), Rater=["A", "B"] * 1250, Score=[0, 1] * 1250))
++    out = mfrmpy.check_rater_contrast(large, person="Work", facets=["Rater"], score="Score",
++                                      rater="Rater", difference=("A", "B"))
++    assert out["status"] == "audit_size_limit" and out["observation_estimable"] is None
++
++
++def test_rater_contrast_planned_assignments_and_structural_restoration():
++    columns = ["Work", "School", "Rater"]
++    planned = pd.DataFrame([("a", "A", "R1"), ("a", "A", "R2"), ("b", "B", "R1"), ("b", "B", "R2"),
++                            ("c", "B", "R2"), ("d", "B", "R1")], columns=columns)
++    actual = pd.concat([planned.iloc[[0, 0, 1, 2, 3, 4]].assign(Score=[1, 3, 2, 1, np.nan, 1]),
++                        pd.DataFrame([("x", "B", "R2", 4)], columns=[*columns, "Score"])], ignore_index=True)
++    args = dict(person="Work", facets=["School", "Rater"], score="Score", rater="Rater",
++                difference=("R1", "R2"), group="School", group_difference=("B", "A"), rating_min=1, rating_max=5)
++    check = mfrmpy.check_rater_contrast
++    review = check(actual, **args, planned_assignments=planned.assign(Score=99))
++    plan = review["plan"]
++    assert review["status"] == "common_location_only" and not review["observation_estimable"]
++    assert {k: v for k, v in review.items() if k != "plan"} == check(actual, **args)
++    assert plan["planned_cells"] == 6 and plan["observed_planned_cells"] == 4
++    assert plan["planned_observation_estimable"] and plan["completed_observation_estimable"]
++    assert plan["by_group"][0]["missing_shared_works"] == ["b"]
++    assert plan["unplanned"] == [dict(Work="x", School="B", Rater="R2")]
++    assert [case["restores_contrast"] for case in plan["missing"]] == [True, False]
++    for cell in plan["missing"]:
++        appended = pd.concat([actual, pd.DataFrame([dict(cell["assignment"], Score=3)])], ignore_index=True)
++        assert check(appended, **args)["observation_estimable"] == cell["restores_contrast"]
++
++    all_missing = check(actual.iloc[:0], **args, planned_assignments=planned)
++    assert all_missing["status"] == "unsupported" and all_missing["plan"]["planned_observation_estimable"]
++    assert all(case["restores_contrast"] is False for case in all_missing["plan"]["missing"])
++    only_a = check(actual.loc[actual.School.eq("A")], **args, planned_assignments=planned)
++    assert only_a["status"] == "unsupported" and not any(case["restores_contrast"] for case in only_a["plan"]["missing"])
++    with pytest.raises(ValueError, match="complete"):
++        check(actual, **args, planned_assignments=planned.assign(School=" "))
++
++
++@pytest.mark.parametrize("collision_source", ["ratings", "roster", "combined"])
++def test_rater_contrast_requires_explicit_shared_work_locations(collision_source):
++    data = pd.DataFrame([("1", "A", "R1", 2), ("2", "A", "R2", 3),
++                         ("1", "B", "R1", 3), ("2", "B", "R2", 2)],
++                        columns=["Work", "School", "Rater", "Score"])
++    args = dict(person="Work", facets=["School", "Rater"], score="Score", rater="Rater",
++                difference=("R1", "R2"), group="School", group_difference=("B", "A"))
++    roster = data.drop(columns="Score")
++    if collision_source == "ratings":
++        actual, planned = data, None
++    elif collision_source == "roster":
++        actual, planned = data.iloc[:0], roster
++    else:
++        actual = data.iloc[:2]
++        planned = roster.iloc[2:].assign(Work=lambda rows: " " + rows.Work)
++
++    with pytest.raises(ValueError, match="Work IDs appear in multiple groups"):
++        mfrmpy.check_rater_contrast(actual, **args, planned_assignments=planned)
++    shared = mfrmpy.check_rater_contrast(actual, **args, planned_assignments=planned, shared_work_locations=True)
++    assert shared["shared_work_locations"] is True
++    if planned is None:
++        assert shared["status"] == "observed"
++        assert [link["kind"] for link in shared["overlap"]] == ["none", "none"]
++    else:
++        assert not shared["observation_estimable"]
++        assert shared["plan"]["completed_observation_estimable"] is True
++        assert shared["plan"]["planned_observation_estimable"] == (collision_source == "roster")
++
++
++def test_rater_contrast_distinguishes_different_works_with_the_same_local_number():
++    data = pd.DataFrame([("1", "A", "R1", 2), ("2", "A", "R2", 3),
++                         ("1", "B", "R1", 3), ("2", "B", "R2", 2)],
++                        columns=["Work", "School", "Rater", "Score"])
++    data["Work"] = data.School + ":" + data.Work
++    args = dict(person="Work", facets=["School", "Rater"], score="Score", rater="Rater",
++                difference=("R1", "R2"), group="School", group_difference=("B", "A"))
++    result = mfrmpy.check_rater_contrast(data, **args, planned_assignments=data.drop(columns="Score"))
++    assert result["status"] == "common_location_only"
++    assert result["shared_work_locations"] is False
++    assert not result["plan"]["completed_observation_estimable"]
++    with pytest.raises(ValueError, match="True or False"):
++        mfrmpy.check_rater_contrast(data, **args, shared_work_locations="False")

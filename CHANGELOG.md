@@ -8,11 +8,38 @@ restricted or removed from the core workflow. Consult
 using a result. Complete source changes remain in Git history; scientific
 methods and validation findings belong in their dedicated technical records.
 
-## mfrmpy 0.2.2
+## Unreleased
 
-- Add `check_rater_contrast` to check whether observed assignments identify a prespecified rater severity contrast and to show the works linking the raters.
-- Compare planned and scored cells, identify missing and unplanned ratings, and show when scoring a single missing cell would restore structural support.
-- In group comparisons, reject work IDs shared across groups in ratings or the planned roster by default. Use `shared_work_locations=True` for an intentionally shared location per repeated work ID.
+The integrated local development candidate is `0.2.3.dev3`; it has not been
+published. Earlier development snapshots retained the `0.2.1` label and should
+be distinguished by their recorded artifact hashes.
+
+- Extend shared anchor calibration with an explicit source facet and receiving-to-source level map. Reusing a prior estimate across years retains its covariance. Validate matching rating events and distinguish calibration overlap from cross-occasion overlap. Add an anchor-sensitivity interval plot and ordinary API annual examples with preserved confounding holds; coverage qualification remains conditional on existing annual evidence.
+
+- Add `report_text`, `export_out` and disk-backed `export_bundle` for qualified UTF-8 text, CSV and selected PNG/SVG plots. Preserve the previous destination on failure; retain provenance and plot options in the ZIP. `.mfrm` remains the optional format for reopening an analysis.
+- Expose `tables(..., "fair_average")` with observed averages, FairM/FairZ and availability reasons. Share prediction holds with plots and rescaled tables; retain score-scale versus logit and reference-location distinctions. Fair-score intervals remain unsupported; DFF's existing model scope and coverage qualifications are unchanged.
+- Withhold nonperson FairM when its reference mean includes unbounded JMLE person estimates, even if finite optimizer proxies were retained. Keep FairZ distinct and preserve saved raw values.
+
+- Include both public-workflow and G3 tests in package CI. Run core tests without optional plotting dependencies, then figures/HTML tests with them. Keep G3 persistence and boundary checks in the core test set.
+- Add explicit `method="minque0"` for one-/two-facet crossed designs and one random facet nested in the other, for single or multiple scores. Record listwise omission, centered-kernel identification and raw covariance components. Withhold observed G/Phi for unbalanced data; require an explicit future balanced D plan. Keep unsupported intervals and confounded components withheld, with reasons retained through save/load, tables, CSV, HTML and figures.
+- Add balanced crossed multivariate G/D studies using `score_cols` and explicit `composite_weights`. Retain raw covariance components and PSD diagnostics; report individual and composite G/Phi, error variances and SEMs by projecting before scalar clipping. Save the targets, weights, holds and diagnostics without recalculation. Multivariate intervals remain unsupported.
+- Add opt-in pointwise logit-delta G/Phi intervals for complete balanced crossed observed-score designs under explicit independent normal random effects. Propagate full component covariance to observed and planned counts; retain boundary holds, assumptions and confidence levels in saved projects, tables, CSV, figures and HTML. Legacy person-only bootstrap bounds remain withheld.
+- Add `fit()` to save calibration before diagnostics and `diagnose(outputs=...)` to add measures, agreement, scorefiles or PCA without refitting. Partial schema-3 archives retain computed sections; complete analyses continue to use schema 2 and old archives remain readable.
+- Reuse observation diagnostics and probabilities within an output operation, and select requested table families before building them.
+- Stream archive encoding and content hashing by column; read compressed and uncompressed files in bounded chunks while retaining the existing size limits and content fingerprints.
+- Audit large JMLE designs and specified rater contrasts by eliminating person columns and testing the remaining distinct-row system. Fixed/group constraints, confounding and unknown rank remain distinct; a reduced-system size limit is retained.
+- Compute a shared-calibration interval for one prespecified rater difference in a fixed-SD additive MML RSM. The saved report pairs calibration and receiving contributions by sampling unit, shows both variance terms and their signed cross term, and can identify reused ratings by event ID.
+- Add optional conditional and independent-calibration 95% intervals to anchor sensitivity, plus scenario-level fixed population SD. Retain the labelled anchor covariance, shared-work checks, interval or hold reason, and optional signed difference in the saved report.
+- Compare a prespecified rater severity difference with and without fixed or group-mean anchors using `with_anchor_sensitivity`. The saved project and its tables, CSV and HTML retain point estimates, assignment support or hold reasons, the observed links and the origin of the fixed values.
+- Retain one prespecified group DFF contrast with `with_rater_dff` on an eligible composite-facet fit. The ordered target, links to shared works, model-based uncertainty or hold reason appear in the saved project and the qualified table, CSV, figure and HTML report. The displayed note explains how to interpret a model-based interval that spans zero.
+- Build the composite facet with `prepare_rater_dff_data`. An optional planned roster in `check_rater_contrast` and `with_rater_dff` reports missing and unexpected cells and checks whether scoring a missing cell would restore structural support.
+
+- Add `check_rater_contrast` to trace the works shared by two raters and check whether observed assignments support their severity difference or its change between two groups. The preflight reports dependence on external anchors, confounded facets and size-limited calculations.
+- In group comparisons, flag work IDs used across groups in the ratings or planned roster and require an explicit `shared_work_locations=True` to use a single location per repeated ID.
+- With explicit rubric endpoints, `check_rater_contrast` reports observed category use and checks assignment support after excluding works scored entirely at a rubric endpoint. New group DFF requests retain the category counts and the number of endpoint works on each shared-work link.
+- Add `category_design` to inspect score-specific weights, coefficient signs, anchor constraints and conditional probabilities for a selected RSM or PCM profile. Separately fitted interactions use their own main effects and steps.
+- Show the target type and per-cell rating count in the joint interaction table, including when reopening a saved result. A zero count identifies a cell whose estimate depends on model constraints.
+- Match agreement and Krippendorff's alpha by the full tuple of context identifiers, preserving distinct contexts when an identifier contains a pipe character.
 
 ## mfrmpy 0.2.1
 

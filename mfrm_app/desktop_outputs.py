@@ -8,7 +8,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from scipy.stats import norm
 
-from mfrm_app import basic_analysis as basic, desktop_analysis as desktop, engine, output_qualification, project
+from mfrm_app import basic_analysis as basic, desktop_analysis as desktop, engine, output_qualification, project, rater_dff, anchor_sensitivity
 from mfrm_app import structural_intervals as intervals, visual_maps as maps
 from mfrm_app import joint_interaction as joint
 
@@ -105,13 +105,31 @@ def figure_choices(analysis, *, language=None):
     if 'joint_analysis' in analysis:
         s = analysis['joint_analysis']['settings']
         choices.append((f"共同交互作用 · {s['facet_a']} × {s['facet_b']}", dict(kind='joint')))
+    if 'rater_dff' in analysis:
+        choices.append((rater_dff.TITLE, dict(kind='rater_dff')))
+    if 'anchor_sensitivity' in analysis:
+        choices.append((anchor_sensitivity.TITLE, dict(kind='anchor_sensitivity')))
     if analysis.get('diagnostics', {}).get('pca_enabled'):
         choices.append(('残差PCA · 固有値スクリー', dict(kind='pca')))
         choices.append(('残差PCA · 第1コントラスト負荷量', dict(kind='pca_loadings')))
+    choices = [(title, opts) for title, opts in choices if not _pending_output(analysis, opts['kind'])]
     if language is not None:
         from mfrm_app.desktop_i18n import text
         return [(text(title, language), opts) for title, opts in choices]
     return choices
+
+
+def _pending_output(analysis, kind):
+    if 'computed_outputs' not in analysis:
+        return ''
+    done = analysis['computed_outputs']
+    if kind in {'pathway', 'facet', 'rater_severity', 'bubble', 'fair_average'} and 'measures' not in done:
+        return 'measures'
+    if kind in {'unexpected', 'residual_qq'} and 'obs' not in analysis.get('diagnostics', {}):
+        return 'measures'
+    if kind in {'pca', 'pca_loadings'} and 'pca' not in done:
+        return 'pca'
+    return ''
 
 
 def _steps(result, level):
@@ -127,6 +145,95 @@ def _steps(result, level):
 def _empty(axes, reason):
     axes.text(.5, .5, textwrap.fill(str(reason), 70), ha='center', va='center', transform=axes.transAxes)
     axes.set_axis_off()
+
+
+def _rater_dff_figure(analysis):
+    project.validate_analysis(analysis)
+    if "rater_dff" not in analysis:
+        raise ValueError("The analysis has no retained group DFF request")
+    row, links = rater_dff.report(analysis)
+    fig = Figure(figsize=(9, 3.5 + .42*len(links)), layout='constrained')
+    ax, support = fig.subplots(2, 1)
+    label = row["Target"]
+    if row["CI_Level"] is not None:
+        label += f" · {row['CI_Level']:.0%} model-based interval"
+    ax.set_title(textwrap.fill(label, 76))
+    if row["Estimate"] is None:
+        _empty(ax, row["Reason"])
+    else:
+        x = row["Estimate"]
+        ax.axvline(0, color='gray', linewidth=.7)
+        if row["SE"] is None:
+            ax.plot(x, 0, 'o', color='#2563eb')
+            ax.text(.01, .85, textwrap.fill(row["Reason"], 72), transform=ax.transAxes, va='top', fontsize=8)
+        else:
+            ax.errorbar(x, 0, xerr=[[x-row["Lower"]], [row["Upper"]-x]], fmt='o', capsize=4, color='#2563eb')
+        ax.set(yticks=[], xlabel='Severity contrast (logits)')
+    support.set_title("Shared works by group")
+    support.set_axis_off()
+    for i, link in enumerate(links):
+        y = 1-(i+.5)/len(links)
+        for pos, label in ((.02, link["Group"]), (.24, link["FromRater"]), (.82, link["ToRater"])):
+            support.text(pos, y, textwrap.fill(label, 18), transform=support.transAxes, va='center')
+        count = "No observed path"
+        if link["Path"] != "none":
+            support.plot([.39, .78], [y, y], '-o', markersize=3, color='#64748b', transform=support.transAxes)
+            count = f"{link['SharedWorks']} shared"
+            if "EndpointWorks" in link:
+                count += f" · {link['EndpointWorks']} at an endpoint"
+        support.text(.585, y, count, transform=support.transAxes, ha='center', va='center',
+                     bbox=dict(facecolor='white', edgecolor='none', pad=2), fontsize=9)
+    fig.suptitle(rater_dff.TITLE)
+    fig.supxlabel(textwrap.fill(rater_dff.NOTE, 110), fontsize=8)
+    return maps.style_figure(fig)
+
+
+def _anchor_sensitivity_figure(analysis):
+    project.validate_analysis(analysis)
+    if "anchor_sensitivity" not in analysis:
+        raise ValueError("No retained anchor sensitivity analysis")
+    entry = analysis["anchor_sensitivity"]
+    rows = []
+    for scenario in entry["scenarios"]:
+        if "interval" in scenario:
+            rows.extend(anchor_sensitivity._interval_rows(scenario, scenario.get("population_prior_sd"),
+                                                          entry.get("important_difference")))
+        else:
+            rows.append(dict(Scenario=scenario["name"], Basis="point_only", Estimate=scenario["estimate"],
+                             Lower=None, Upper=None, Reason=scenario["reason"] or "Intervals not retained"))
+    fig = Figure(figsize=(11, max(4.5, .7 * len(rows) + 2)), layout='constrained')
+    ax = fig.subplots()
+    colors = {"shared_calibration": "#d88627", "conditional": "#2563eb", "no_anchors": "#2176ae"}
+    labels = []
+    for index, row in enumerate(rows):
+        label = row["Scenario"] + " · " + row["Basis"]
+        if row["Reason"]:
+            label += "\n" + row["Reason"]
+        labels.append(textwrap.fill(label, 48))
+        if row["Estimate"] is not None:
+            x = row["Estimate"]
+            color = colors.get(row["Basis"], "#64748b")
+            if row["Lower"] is None:
+                ax.plot(x, index, 'o', color=color)
+            else:
+                ax.errorbar(x, index, xerr=[[x-row["Lower"]], [row["Upper"]-x]], fmt='o', capsize=4, color=color)
+    if any(row["Estimate"] is not None for row in rows):
+        ax.axvline(0, color='#64748b', linewidth=.8)
+        if entry.get("important_difference") is not None:
+            ax.axvline(entry["important_difference"], color='#64748b', linestyle='--', linewidth=.8)
+    else:
+        ax.set_xticks([])
+        ax.text(.5, .5, 'Contrast withheld', transform=ax.transAxes, ha='center', va='center')
+    ax.set(yticks=range(len(rows)), yticklabels=labels,
+           xlabel=textwrap.fill(' minus '.join(entry['difference']) + ' (logits)', 80))
+    ax.set_ylim(len(rows)-.5, -.5)
+    fig.suptitle('Anchor sensitivity · 95% model-based intervals when available')
+    note = ('Conditional intervals hold anchors fixed; shared intervals include calibration, receiving and cross terms. '
+            'CoverageQualified=False. Sampling-error propagation does not correct drift in the anchored raters.')
+    if entry.get("important_difference") is not None:
+        note += f' Dashed line: prespecified important difference = {entry["important_difference"]:g} logits.'
+    fig.supxlabel(textwrap.fill(note, 110), fontsize=8)
+    return maps.style_figure(fig)
 
 
 def _step_series_list(result, level):
@@ -492,27 +599,14 @@ def _fair_average_figure(analysis, *, facet=None, statistic='FairM', top_n=60):
     _validate_facet_choice(facet, result, report_tables.keys())
     metric = 'FairZ' if statistic == 'FairZ' else 'FairM'
     target_facets = [str(facet)] if facet is not None else [f for f in result['config']['facet_names'] if f in report_tables]
-    frames = []
-    extreme_persons = engine._boundary_person_set(result) if facet == 'Person' else set()
-    b_audit = output_qualification.audit_boundary_and_support(result)
-    unbounded_levels = set(b_audit['unbounded_facet_levels']) | set(b_audit['unbounded_step_owners'])
-    for fname in target_facets:
-        tbl = report_tables.get(fname)
-        if isinstance(tbl, pd.DataFrame) and not tbl.empty and 'ObservedAverage' in tbl.columns:
-            sub = tbl.copy()
-            sub['Facet'] = fname
-            if fname == 'Person' and extreme_persons and 'Level' in sub.columns:
-                sub = sub.loc[~sub['Level'].astype(str).isin(extreme_persons)]
-            if unbounded_levels and 'Level' in sub.columns:
-                sub = sub.loc[~sub['Level'].astype(str).map(lambda lv, f=fname: (f, lv) in unbounded_levels)]
-            frames.append(sub)
+    qualified = desktop._fair_average_table(analysis)
     fig = Figure(figsize=(9, 4.8), layout='constrained')
     ax = fig.subplots()
-    if not frames:
+    if qualified is None:
         _empty(ax, 'Fair-average table is unavailable')
         fig.suptitle('Fair vs observed average')
         return maps.style_figure(fig)
-    df = pd.concat(frames, ignore_index=True)
+    df = qualified[1].loc[qualified[1].Facet.isin(target_facets)].copy()
     df['ObservedAverage'] = pd.to_numeric(df['ObservedAverage'], errors='coerce')
     fallback_note = ''
     if metric not in df.columns or not np.isfinite(pd.to_numeric(df[metric], errors='coerce')).any():
@@ -520,9 +614,10 @@ def _fair_average_figure(analysis, *, facet=None, statistic='FairM', top_n=60):
             metric = 'FairZ'
             fallback_note = 'FairM unavailable (unbounded person mean); displaying zero-reference FairZ.'
     df[metric] = pd.to_numeric(df.get(metric, np.nan), errors='coerce')
+    reasons = '; '.join(dict.fromkeys(df['StatusReason'].dropna().astype(str).loc[lambda values: values.ne('')]))
     df = df.loc[np.isfinite(df['ObservedAverage']) & np.isfinite(df[metric])].copy()
     if df.empty:
-        _empty(ax, 'No finite observed/fair average pairs available')
+        _empty(ax, reasons or 'No finite observed/fair average pairs available')
         fig.suptitle(f'Fair ({metric}) vs observed average')
         return maps.style_figure(fig)
     if len(df) > max(1, int(top_n)):
@@ -769,12 +864,18 @@ def analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statisti
     from mfrm_app.figure_presentation import matplotlib_figure
     project.require_reportable_input(analysis)
     canonical = KIND_ALIASES.get(str(kind), str(kind))
+    if pending := _pending_output(analysis, canonical):
+        raise ValueError(f"Output not computed. Use mfrmpy.diagnose(analysis, outputs='{pending}') first.")
     fig = _analysis_figure(analysis, canonical, level=level, index=index, facet=facet, statistic=statistic, gd_swap=gd_swap, top_n=top_n)
     return matplotlib_figure(fig, presentation)
 
 
 def _analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statistic='Infit', gd_swap=False, top_n=40):
     """Draw retained values only; unavailable intervals never become error bars."""
+    if kind == 'rater_dff':
+        return _rater_dff_figure(analysis)
+    if kind == 'anchor_sensitivity':
+        return _anchor_sensitivity_figure(analysis)
     if kind == 'pathway':
         result, diagnostics = _require_mfrm(analysis, kind)
         return maps.pathway_figure(result, diagnostics, facet=facet, statistic=statistic)
@@ -883,8 +984,25 @@ def _analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statist
             _empty(ax, 'Withheld: '+str(exc))
     elif kind == 'gd':
         entry = analysis['gd_analysis']; result = entry['result']
+        target_label = ''
+        target_note = ''
+        if 'multivariate' in result:
+            target_label = ' · Composite' if level is None else ' · Score: '+str(level)
+            if level is None:
+                target_note = textwrap.fill('Composite weights (not normalized): ' + ', '.join(
+                    f'{score}={weight:g}' for score, weight in result['multivariate']['weights'].items()), 110) + '\n'
+            if level is not None:
+                if level not in result['multivariate']['score_columns']:
+                    raise ValueError('Choose a retained score column for level, or omit level for the composite')
+                if result['available'] and not result['d_study'].empty:
+                    multi = result['multivariate']
+                    chosen = multi['d_study'].loc[multi['d_study'].TargetType.eq('score') & multi['d_study'].Target.eq(level)]
+                    result = dict(result, d_study=chosen,
+                                  selected_plan=chosen.loc[chosen.IsSelectedPlan].iloc[0].to_dict())
         if not result['available']:
             _empty(ax, result['reason'])
+        elif result['d_study'].empty:
+            _empty(ax, result['design'].get('observed_coefficient_reason', 'Specify a selected D plan.'))
         else:
             table = result['d_study']; facets = list(entry['settings']['random_facets'])
             if gd_swap and len(facets) == 2:
@@ -915,16 +1033,28 @@ def _analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statist
                 suffix = f' · {facets[1]}={group}' if group is not None else ''
                 line, = ax.plot(rows[facets[0]], rows.G, marker='o', label='G' + suffix)
                 ax.plot(rows[facets[0]], rows.Phi, marker='x', linestyle='--', color=line.get_color(), label='Phi' + suffix)
+                if result.get('coefficient_intervals') and (group is None or group == result['selected_plan'][facets[1]]):
+                    for coefficient in ('G', 'Phi'):
+                        ax.fill_between(rows[facets[0]], rows[coefficient+'_lower'], rows[coefficient+'_upper'],
+                                        color=line.get_color(), alpha=.10)
             selected = result['selected_plan']
             ax.scatter([selected[facets[0]]]*2, [selected['G'], selected['Phi']], marker='*', s=130, color='black', label='Selected plan', zorder=5)
             ax.set(xlabel=facets[0] + ' count', ylabel='Coefficient', ylim=(0, 1.03))
             ax.legend(fontsize=8, ncols=2)
+            if ('multivariate' in result or 'design_study' in result) and not table[['G', 'Phi']].notna().any().any():
+                _empty(ax, 'Coefficients undefined: zero total variance for this target; see retained components.')
         fc = entry['settings'].get('fixed_condition')
         cond_suffix = ''
         if fc:
             cond_suffix = f" · {fc['facet']}={fc['level']}" if fc['mode'] == 'level' else f" · {fc['facet']} ({fc['mode']})"
-        fig.suptitle('D-Study · original observed scores' + cond_suffix)
-        fig.supxlabel('G: relative decisions; Phi: absolute decisions. Point projections; intervals withheld.', fontsize=8)
+        fig.suptitle('D-Study · original observed scores' + target_label + cond_suffix)
+        ci = result.get('coefficient_intervals')
+        band_slice = (f" at {facets[1]}={result['selected_plan'][facets[1]]}" if ci and result['available'] and len(facets) == 2 else '')
+        interval_note = (f"Shading: {100*ci['confidence']:g}% pointwise normal-model approximations{band_slice}; see tables for holds."
+                         if ci else 'Point projections; intervals withheld.')
+        if entry['settings'].get('method') == 'minque0':
+            interval_note += ' Future balanced mean. ' + result['design'].get('count_convention', '')
+        fig.supxlabel(target_note + textwrap.fill('G: relative decisions; Phi: absolute decisions. ' + interval_note, 110), fontsize=8)
     elif kind == 'pca':
         pca = analysis.get('diagnostics', {}).get('pca')
         if not isinstance(pca, dict) or len(pca.get('eigenvalues', [])) == 0:
@@ -980,6 +1110,9 @@ def report_html(analysis, *, pathway_facet=None, pathway_statistic='Infit', face
         '<h1>' + escape(kind) + '</h1><p>Analysis ID: ' + escape(analysis['analysis_id']) + '</p>',
         '<p>' + escape(text('プロジェクトには入力データと識別子を含みます。表示・報告では再推定しません。', language)) + '</p>',
         '<h2>Settings</h2><pre>' + escape(json.dumps(request_settings(analysis), ensure_ascii=False, indent=2)) + '</pre>']
+    if 'computed_outputs' in analysis:
+        parts.append('<p>Computed outputs: ' + escape(', '.join(analysis['computed_outputs']) or 'none')
+                     + '. Other diagnostics have not been computed.</p>')
     if 'result' in analysis:
         result = analysis['result']
         current = basic.qualification_snapshot(result)

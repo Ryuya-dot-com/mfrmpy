@@ -3,6 +3,9 @@ from collections import defaultdict, deque
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
+
+from mfrm_app.design_rank import RowSpace
 
 from mfrm_app import basic_analysis, engine
 
@@ -27,17 +30,18 @@ def _observed_assignments(data, person, facets, score, rating_min, rating_max, *
     audit = engine.build_response_data_audit(data, person_col=person, facet_cols=facets, score_col=score)
     engine.validate_rating_scores(audit["rows"])
     keep = audit["rows"]["IncludedInLikelihood"].to_numpy(dtype=bool)
+    scores = audit["rows"].loc[keep, "ScoreNumeric"].round()
     if rating_min is not None or rating_max is not None:
         if not (basic_analysis._is_int(rating_min) and basic_analysis._is_int(rating_max) and rating_min < rating_max):
             raise ValueError("Specify both integer rubric endpoints with rating_min < rating_max")
-        if not pd.to_numeric(data.loc[keep, score]).round().between(rating_min, rating_max).all():
+        if not scores.between(rating_min, rating_max).all():
             raise ValueError("Observed scores fall outside the supplied rating range")
     rows = data.loc[keep, [person, *facets]].rename(columns={person: "Person"}).copy()
     if rows.empty and not allow_empty:
         raise ValueError("No observed ratings remain after input exclusions")
     for col in rows:
         rows[col] = pd.Categorical(engine.normalized_rating_ids(rows[col]))
-    return rows.drop_duplicates(), len(rows)
+    return rows, scores.to_numpy()
 
 
 def _overlap(rows, rater, pair, group_level):
@@ -71,18 +75,8 @@ def _overlap(rows, rater, pair, group_level):
     return dict(group_level=group_level, kind=kind, path=path)
 
 
-def _in_row_space(matrix, target):
-    # Economy SVD also covers wide designs whose omitted right singular vectors
-    # span part of the null space. Project onto the retained row space.
-    basis, tol = _row_space(matrix)
-    residual = target - (target @ basis.T) @ basis
-    return bool(np.linalg.norm(residual) <= tol * np.linalg.norm(target))
-
-
-def _row_space(matrix):
-    _, singular, vh = np.linalg.svd(matrix, full_matrices=False)
-    tol = max(matrix.shape) * np.finfo(float).eps
-    return (vh[singular > tol * singular[0]] if len(singular) else vh), tol
+def _in_row_space(matrix, target, n_person=0):
+    return RowSpace(matrix, n_person).contains(target)
 
 
 def _constraint_rows(levels, offsets, origin, fixed, means):
@@ -116,9 +110,7 @@ def _design(rows, levels, signs, rater, group, weights, origin=None, fixed=(), m
             for j in range(n_groups):
                 first = n_main + j*n_raters
                 constraints.append(range(first, first+n_raters))
-    if (len(rows) + len(constraints)) * dimension > 5_000_000:
-        return None, None
-    matrix = np.zeros((len(rows) + len(constraints), dimension))
+    matrix = sparse.lil_matrix((len(rows) + len(constraints), dimension))
     positions = np.arange(len(rows))
     maps = {f: {level: i for i, level in enumerate(names)} for f, names in levels.items()}
     codes = {f: rows[f].map(index).to_numpy(dtype=int) for f, index in maps.items()}
@@ -134,7 +126,31 @@ def _design(rows, levels, signs, rater, group, weights, origin=None, fixed=(), m
         target[col] = term["weight"]
     for i, cols in enumerate(constraints, len(rows)):
         matrix[i, cols] = 1
-    return matrix, target
+    return matrix.tocsr(), target
+
+
+def _score_support(ratings, scores, bounds, levels, signs, rater, group, weights, observation_estimable):
+    scored = ratings.assign(Score=scores)
+    ranges = scored.groupby("Person", observed=True)["Score"].agg(["min", "max"])
+    minimum, maximum = (sorted(ranges.index[ranges["min"].eq(bound) & ranges["max"].eq(bound)])
+                        for bound in bounds)
+    endpoint_works = set(minimum).union(maximum)
+    remaining_support = observation_estimable
+    if observation_estimable is True and endpoint_works:
+        remaining = ratings.loc[~ratings["Person"].isin(endpoint_works)].drop_duplicates()
+        matrix, target = _design(remaining, levels, signs, rater, group, weights)
+        remaining_support = None if matrix is None else _in_row_space(matrix, target, len(levels["Person"]))
+
+    keys = [rater, "Score"] if group is None else [group, rater, "Score"]
+    counts = scored.groupby(keys, observed=True).size()
+    return dict(rating_min=int(bounds[0]), rating_max=int(bounds[1]),
+                works_at_minimum=minimum, works_at_maximum=maximum,
+                observation_estimable_without_endpoint_works=remaining_support,
+                category_counts=[dict(score=int(score), count=int(count)) for score, count in
+                                 scored["Score"].value_counts(sort=False).sort_index().items()],
+                by_rater=[dict(group_level=key[0] if group is not None else None,
+                               rater_level=key[-2], score=int(key[-1]), count=int(count))
+                          for key, count in counts.items()])
 
 
 def _planned_rows(data, person, facets):
@@ -148,16 +164,19 @@ def _planned_rows(data, person, facets):
     return rows.apply(engine.normalized_rating_ids).drop_duplicates().reset_index(drop=True)
 
 
-def _restoring_rows(observed, missing, target):
-    basis, tol = _row_space(observed)
-    residual = target - (target @ basis.T) @ basis
-    outside = missing - (missing @ basis.T) @ basis
-    # One additional row restores support exactly when its residual spans the missing direction.
-    lengths = np.linalg.norm(outside, axis=1)
-    unit = np.divide(outside, lengths[:, None], out=np.zeros_like(outside),
-                     where=lengths[:, None] > tol*np.linalg.norm(missing, axis=1)[:, None])
-    remainder = residual - (unit @ residual)[:, None]*unit
-    return (np.linalg.norm(remainder, axis=1) <= tol*np.linalg.norm(target)).tolist()
+def _restoring_rows(observed, missing, target, n_person=0):
+    space = RowSpace(observed, n_person)
+    residual = space.residual(target)
+    if residual is None:
+        return [None] * missing.shape[0]
+    answers = []
+    for i in range(missing.shape[0]):
+        outside = space.residual(missing[i])
+        length = np.linalg.norm(outside)
+        unit = outside / length if length > space.tolerance else np.zeros_like(outside)
+        remainder = residual - np.dot(unit, residual) * unit
+        answers.append(bool(np.linalg.norm(remainder) <= space.tolerance * max(1., np.linalg.norm(target))))
+    return answers
 
 
 def _compare_plan(observed, planned, levels, signs, rater, group, weights, person, observed_support):
@@ -169,16 +188,16 @@ def _compare_plan(observed, planned, levels, signs, rater, group, weights, perso
     planned_support = observed_support
     if not missing.empty or not extra.empty:
         matrix, target = _design(planned, levels, signs, rater, group, weights)
-        planned_support = None if matrix is None else _in_row_space(matrix, target)
+        planned_support = None if matrix is None else _in_row_space(matrix, target, len(levels["Person"]))
         del matrix
     completed_support = observed_support
     repair = [None]*len(missing)
     if observed_support is not True and not missing.empty:
         completed = pd.concat([observed, missing], ignore_index=True)
         matrix, target = _design(completed, levels, signs, rater, group, weights)
-        completed_support = None if matrix is None else _in_row_space(matrix, target)
+        completed_support = None if matrix is None else _in_row_space(matrix, target, len(levels["Person"]))
         if observed_support is False and completed_support is not None:
-            repair = (_restoring_rows(matrix[:len(observed)], matrix[len(observed):], target)
+            repair = (_restoring_rows(matrix[:len(observed)], matrix[len(observed):], target, len(levels["Person"]))
                       if completed_support else [False]*len(missing))
     by_group = []
     groups = list(dict.fromkeys(term["group_level"] for term in weights))
@@ -215,6 +234,8 @@ def check_rater_contrast(data, *, person, facets, score, rater, difference,
     the same work location across groups.
     Supply `planned_assignments` with work and facet columns to compare the
     declared roster with the scored cells, without adding any responses.
+    Supply both rubric endpoints to report category use and check design
+    support after excluding works whose scores are all at one endpoint.
     See the package guide for the meanings of the returned support states.
     """
     if not isinstance(data, pd.DataFrame) or (data.empty and planned_assignments is None):
@@ -228,8 +249,10 @@ def check_rater_contrast(data, *, person, facets, score, rater, difference,
     if not isinstance(shared_work_locations, (bool, np.bool_)):
         raise ValueError("shared_work_locations must be True or False")
     facets = list(facets)
-    rows, included = _observed_assignments(data, person, facets, score, rating_min, rating_max,
-                                          allow_empty=planned_assignments is not None)
+    ratings, scores = _observed_assignments(data, person, facets, score, rating_min, rating_max,
+                                           allow_empty=planned_assignments is not None)
+    rows = ratings.drop_duplicates()
+    included = len(ratings)
     levels = {f: list(rows[f].cat.categories) for f in rows}
     planned = None if planned_assignments is None else _planned_rows(planned_assignments, person, facets)
     if group is not None and not shared_work_locations:
@@ -277,11 +300,13 @@ def check_rater_contrast(data, *, person, facets, score, rater, difference,
     matrix, target = _design(rows, levels, signs, rater, group, weights, origin, fixed, means)
     if matrix is not None:
         obs = matrix[:len(rows)]
-        data_support = _in_row_space(obs, target)
-        constrained = len(matrix) > len(rows)
-        fixed_target = constrained and _in_row_space(matrix[len(rows):], target)
-        conditional = (data_support or fixed_target or _in_row_space(matrix, target)) if constrained else None
-        if fixed_target:
+        data_support = _in_row_space(obs, target, len(levels["Person"]))
+        constrained = matrix.shape[0] > len(rows)
+        fixed_target = constrained and _in_row_space(matrix[len(rows):], target, len(levels["Person"]))
+        conditional = (data_support or fixed_target or _in_row_space(matrix, target, len(levels["Person"]))) if constrained else None
+        if data_support is None or fixed_target is None or (constrained and conditional is None):
+            status = "audit_size_limit"
+        elif fixed_target:
             status = "fixed_by_anchors"
         elif data_support:
             status = "observed"
@@ -289,9 +314,15 @@ def check_rater_contrast(data, *, person, facets, score, rater, difference,
             status = "anchor_dependent"
         else:
             start = len(levels["Person"])
-            status = "common_location_only" if _in_row_space(obs[:, start:], target[start:]) else "unsupported"
+            common = _in_row_space(obs[:, start:], target[start:])
+            status = "audit_size_limit" if common is None else "common_location_only" if common else "unsupported"
         result.update(status=status, observation_estimable=data_support, fixed_by_anchors=fixed_target,
                       estimable_with_anchors=conditional)
+        del obs
+    del matrix
+    if rating_min is not None:
+        result["score_support"] = _score_support(ratings, scores, (rating_min, rating_max), levels, signs,
+                                                 rater, group, weights, result["observation_estimable"])
     if planned is not None:
         result["plan"] = _compare_plan(rows.astype(str), planned, known, signs, rater, group, weights, person,
                                        result["observation_estimable"])

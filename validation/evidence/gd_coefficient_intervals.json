@@ -1,0 +1,452 @@
+{
+  "python": "3.14.3 (v3.14.3:323c59a5e34, Feb  3 2026, 11:41:37) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "seed": 20261126,
+  "repetitions": 3000,
+  "basis": "Exact independent chi-square mean squares under balanced independent Gaussian random effects; all true variance components one",
+  "prespecified_criterion": "95% Wilson return lower bound >= .80; coverage interval wholly within .92-.98",
+  "r_reference": [
+    {
+      "design": "one",
+      "max_covariance_difference": 5.024453075819224e-14,
+      "max_interval_difference": 1.199040866595169e-14
+    },
+    {
+      "design": "two",
+      "max_covariance_difference": 4.845632575745107e-12,
+      "max_interval_difference": 4.04121180963557e-13
+    }
+  ],
+  "simulations": [
+    {
+      "shape": [
+        60,
+        12
+      ],
+      "plan": "double_facets",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2842,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9387529707572728,
+        0.9547695525831357
+      ],
+      "conditional_coverage": 0.9473333333333334,
+      "median_width": 0.0324196522349709,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        60,
+        12
+      ],
+      "plan": "double_facets",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2832,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9351903791147342,
+        0.9516740032171762
+      ],
+      "conditional_coverage": 0.944,
+      "median_width": 0.08238509465368765,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        60,
+        12
+      ],
+      "plan": "observed",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2842,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9387529707572728,
+        0.9547695525831357
+      ],
+      "conditional_coverage": 0.9473333333333334,
+      "median_width": 0.059563531678728354,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        60,
+        12
+      ],
+      "plan": "observed",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2832,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9351903791147342,
+        0.9516740032171762
+      ],
+      "conditional_coverage": 0.944,
+      "median_width": 0.1403737727785434,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        20,
+        3
+      ],
+      "plan": "double_facets",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 2997,
+      "covered": 2934,
+      "return_wilson": [
+        0.9970638561911638,
+        0.9996598527809608
+      ],
+      "coverage_wilson": [
+        0.9731966981309428,
+        0.9835349517737739
+      ],
+      "conditional_coverage": 0.978978978978979,
+      "median_width": 0.269102474853291,
+      "statuses": {
+        "approximate_normal_delta": 2997,
+        "boundary_coefficient": 3
+      },
+      "criterion_met": false
+    },
+    {
+      "shape": [
+        20,
+        3
+      ],
+      "plan": "double_facets",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 2858,
+      "covered": 2726,
+      "return_wilson": [
+        0.9444718635239991,
+        0.9597036854300057
+      ],
+      "coverage_wilson": [
+        0.945490846916468,
+        0.9609185532286171
+      ],
+      "conditional_coverage": 0.9538138558432471,
+      "median_width": 0.48654598533723015,
+      "statuses": {
+        "approximate_normal_delta": 2858,
+        "nonpositive_component": 139,
+        "boundary_coefficient": 3
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        20,
+        3
+      ],
+      "plan": "observed",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 2997,
+      "covered": 2934,
+      "return_wilson": [
+        0.9970638561911638,
+        0.9996598527809608
+      ],
+      "coverage_wilson": [
+        0.9731966981309428,
+        0.9835349517737739
+      ],
+      "conditional_coverage": 0.978978978978979,
+      "median_width": 0.38429864152361604,
+      "statuses": {
+        "approximate_normal_delta": 2997,
+        "boundary_coefficient": 3
+      },
+      "criterion_met": false
+    },
+    {
+      "shape": [
+        20,
+        3
+      ],
+      "plan": "observed",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 2858,
+      "covered": 2726,
+      "return_wilson": [
+        0.9444718635239991,
+        0.9597036854300057
+      ],
+      "coverage_wilson": [
+        0.945490846916468,
+        0.9609185532286171
+      ],
+      "conditional_coverage": 0.9538138558432471,
+      "median_width": 0.575533660520834,
+      "statuses": {
+        "approximate_normal_delta": 2858,
+        "nonpositive_component": 139,
+        "boundary_coefficient": 3
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        80,
+        12,
+        10
+      ],
+      "plan": "double_facets",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2835,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9362582736191412,
+        0.9526035510153186
+      ],
+      "conditional_coverage": 0.945,
+      "median_width": 0.06137949973433654,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        80,
+        12,
+        10
+      ],
+      "plan": "double_facets",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 2997,
+      "covered": 2833,
+      "return_wilson": [
+        0.9970638561911638,
+        0.9996598527809608
+      ],
+      "coverage_wilson": [
+        0.9365512705893225,
+        0.9528659267620146
+      ],
+      "conditional_coverage": 0.9452786119452786,
+      "median_width": 0.1368326782072944,
+      "statuses": {
+        "approximate_normal_delta": 2997,
+        "nonpositive_component": 3
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        80,
+        12,
+        10
+      ],
+      "plan": "observed",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 3000,
+      "covered": 2834,
+      "return_wilson": [
+        0.9987211512746742,
+        1.0000000000000002
+      ],
+      "coverage_wilson": [
+        0.9359022265984466,
+        0.9522937839351636
+      ],
+      "conditional_coverage": 0.9446666666666667,
+      "median_width": 0.10455823461179453,
+      "statuses": {
+        "approximate_normal_delta": 3000
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        80,
+        12,
+        10
+      ],
+      "plan": "observed",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 2997,
+      "covered": 2834,
+      "return_wilson": [
+        0.9970638561911638,
+        0.9996598527809608
+      ],
+      "coverage_wilson": [
+        0.9369078384856727,
+        0.9531758385939156
+      ],
+      "conditional_coverage": 0.9456122789456123,
+      "median_width": 0.20087102626256859,
+      "statuses": {
+        "approximate_normal_delta": 2997,
+        "nonpositive_component": 3
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        20,
+        3,
+        2
+      ],
+      "plan": "double_facets",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 2836,
+      "covered": 2706,
+      "return_wilson": [
+        0.9366144037583548,
+        0.9529132349769549
+      ],
+      "coverage_wilson": [
+        0.9458301083900946,
+        0.9612627830101668
+      ],
+      "conditional_coverage": 0.9541607898448519,
+      "median_width": 0.6196691509526081,
+      "statuses": {
+        "approximate_normal_delta": 2836,
+        "boundary_coefficient": 157,
+        "nonpositive_component": 7
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        20,
+        3,
+        2
+      ],
+      "plan": "double_facets",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 1330,
+      "covered": 1314,
+      "return_wilson": [
+        0.42564036004274014,
+        0.4611712428127968
+      ],
+      "coverage_wilson": [
+        0.9805475316598864,
+        0.9925816145488517
+      ],
+      "conditional_coverage": 0.98796992481203,
+      "median_width": 0.7590821152578295,
+      "statuses": {
+        "nonpositive_component": 1513,
+        "approximate_normal_delta": 1330,
+        "boundary_coefficient": 157
+      },
+      "criterion_met": false
+    },
+    {
+      "shape": [
+        20,
+        3,
+        2
+      ],
+      "plan": "observed",
+      "coefficient": "G",
+      "attempted": 3000,
+      "returned": 2836,
+      "covered": 2701,
+      "return_wilson": [
+        0.9366144037583548,
+        0.9529132349769549
+      ],
+      "coverage_wilson": [
+        0.9439307877306308,
+        0.9596407803334496
+      ],
+      "conditional_coverage": 0.9523977433004231,
+      "median_width": 0.6661286322038467,
+      "statuses": {
+        "approximate_normal_delta": 2836,
+        "boundary_coefficient": 157,
+        "nonpositive_component": 7
+      },
+      "criterion_met": true
+    },
+    {
+      "shape": [
+        20,
+        3,
+        2
+      ],
+      "plan": "observed",
+      "coefficient": "Phi",
+      "attempted": 3000,
+      "returned": 1330,
+      "covered": 1311,
+      "return_wilson": [
+        0.42564036004274014,
+        0.4611712428127968
+      ],
+      "coverage_wilson": [
+        0.9777953190195129,
+        0.9908355414594469
+      ],
+      "conditional_coverage": 0.9857142857142858,
+      "median_width": 0.6889445132299478,
+      "statuses": {
+        "nonpositive_component": 1513,
+        "approximate_normal_delta": 1330,
+        "boundary_coefficient": 157
+      },
+      "criterion_met": false
+    }
+  ],
+  "source_sha256": {
+    "mfrm_app/gd_intervals.py": "eb3eaa28d559a43b8a35388c44ea268039572a52a783cc10608c3ceb017c557c",
+    "mfrm_app/generalizability.py": "03d4801dbf1f3486f5e04b755c41bd68319227b4ea4637552422f14e2f476293",
+    "/Users/tohokusla/Developer/mfrmpy-pkg/validation/gd_coefficient_intervals.py": "25da27b6b0cc4769e0e907225aa763edc452fb3d0acd51185c2cc992a24a7269"
+  },
+  "post_validation_changes": "Only output fields for interval width/method/confidence/assumption were added to gd_intervals.py after numerical verification; covariance, logit endpoints, and hold decisions are unchanged. Output roundtrip tests were rerun.",
+  "final_interval_source_sha256": "4cf9c5b9483687cede06c3b893bed3b38d81a5f7ffecd64a4cdf46fab0d20478"
+}

@@ -1,0 +1,38 @@
+{
+  "python": "3.14.3",
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "mfrmr": "0.3.2",
+  "mfrmr_archive_sha256": "611ac538da670a58bd9a245d97fcc202b02524c5dc3dbcf03c071b48be68867e",
+  "covariance_reference": "Balanced ANOVA raw covariance matrices",
+  "scalar_reference": "Henderson scalar composite and univariate components with negative scalar estimates clipped",
+  "results": [
+    {
+      "design": "one",
+      "score_count": 3,
+      "ratings": 72,
+      "covariance_max_difference": 5.10702591327572e-15,
+      "composite_component_max_difference": 4.996003610813204e-16,
+      "metric_max_difference": 5.10702591327572e-15,
+      "non_psd_components": []
+    },
+    {
+      "design": "two",
+      "score_count": 3,
+      "ratings": 360,
+      "covariance_max_difference": 5.773159728050814e-15,
+      "composite_component_max_difference": 3.1086244689504383e-15,
+      "metric_max_difference": 5.329070518200751e-15,
+      "non_psd_components": [
+        "Rater",
+        "Task"
+      ]
+    }
+  ],
+  "source_sha256": {
+    "mfrm_app/multivariate_gd.py": "b1a51ed9bf507e9a761c409f168aa4db6e91f3c1b6dc816625272e52fff08a3b",
+    "validation/multivariate_gd.py": "0a5e1488da2f371a53e7aabbf1ab0799874058c98818c197220af54794fc258b",
+    "validation/multivariate_gd.R": "b0479d980529b4c0928744ba83f651509091b1d9220fb096d27ff994530ff4de"
+  },
+  "post_validation_changes": "Added range holds for overflowing projected total variance, empty-input handling, and explanatory output text; finite-case covariance and projection formulas are unchanged. Range, archive identity and input tests were added/rerun.",
+  "final_multivariate_source_sha256": "45d459846900798ff03b2c082117e7089c99dc631e51b39824674574dcf1932f"
+}

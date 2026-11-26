@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mfrmpy"
 dynamic = ["version"]
-description = "Many-facet Rasch analysis and balanced generalizability studies"
+description = "Many-facet Rasch analysis and observed-score generalizability studies"
 readme = "docs/python_library.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -48,7 +48,8 @@ exclude = ["mfrm_app/legacy_compat"]
 only-include = [
     "mfrmpy", "mfrm_app", "locales/en.json", "examples/desktop_writing.csv",
     "docs/python_library.md", "docs/analysis_scope.md", "CHANGELOG.md",
-    "tests/test_python_library.py", "LICENSE", "LICENSE_NOTICE.md", "pyproject.toml",
+    "tests/test_python_library.py", "tests/test_gd_designs.py", "tests/test_reports.py", "tests/test_annual_drift.py",
+    "tests/annual_drift.csv", "LICENSE", "LICENSE_NOTICE.md", "pyproject.toml",
 ]
 exclude = ["mfrm_app/legacy_compat"]
 

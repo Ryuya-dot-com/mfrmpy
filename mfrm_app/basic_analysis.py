@@ -45,7 +45,8 @@ def _source_versions():
     else:
         modules = (engine, output_qualification, reporting_facts, project)
         paths = [Path(module.__file__) for module in modules] + [Path(__file__)]
-        for name in ("desktop_analysis", "desktop_examples", "desktop_outputs", "bias_analysis", "generalizability",
+        for name in ("anchor_intervals", "anchor_sensitivity", "shared_calibration", "rater_contrast", "design_rank", "desktop_analysis", "desktop_examples",
+                     "desktop_outputs", "bias_analysis", "generalizability", "gd_intervals", "multivariate_gd", "unbalanced_gd",
                      "reliability", "structural_intervals", "joint_interaction", "project_portability",
                      "mml_fixed_sd_review", "mml_joint"):
             candidate = Path(__file__).with_name(name + ".py")
@@ -191,7 +192,7 @@ def normalize_scale_orientation(
     return norm_nc, [f for f in facet_cols if f in pos_set]
 
 
-def _finish_analysis(result, data, settings, progress):
+def _finish_analysis(result, data, settings, progress, *, outputs=None):
     compute_pca = bool(settings.get("compute_pca", False))
     umean = float(settings.get("umean", 0.0))
     uscale = float(settings.get("uscale", 1.0))
@@ -200,11 +201,6 @@ def _finish_analysis(result, data, settings, progress):
         settings.get("noncenter_facet", "Person") != "Person"
         or bool(settings.get("positive_facets"))
     )
-    progress("diagnostics")
-    diagnostics = engine.mfrm_diagnostics(result, compute_pca=compute_pca, compute_marginal=False,
-                                         compute_eb_shrinkage=False)
-    progress("tables")
-    tables = engine.calc_facets_report_tbls(result, diagnostics, umean=umean, uscale=uscale)
     has_anchors = bool(settings.get("anchors") or settings.get("group_anchors"))
     analysis = {
         "kind": ("basic-rsm-jmle-v1"
@@ -217,15 +213,87 @@ def _finish_analysis(result, data, settings, progress):
         "input_data": data.copy(deep=True),
         "fit_settings": dict(settings),
         "result": result,
-        "diagnostics": diagnostics,
-        "report_tables": tables,
-        "scorefile": engine.compute_scorefile(result),
         "qualification_at_save": qualification_snapshot(result),
         "scope": {"includes_input": True, "optimizer_checkpoint": False,
                   "pca": compute_pca, "marginal_fit": False, "bias_refits": False},
     }
+    if outputs is not None:
+        analysis["kind"] = "mfrm-analysis-v3"
+        analysis["computed_outputs"] = []
+        analysis["scope"]["pca"] = False
     analysis["content_fingerprint"] = project.content_fingerprint(analysis)
-    return analysis
+    requested = outputs if outputs is not None else ["measures", "agreement", "scorefile", *(["pca"] if compute_pca else [])]
+    return complete_analysis(analysis, outputs=requested, progress=progress)
+
+
+def complete_analysis(analysis, *, outputs=("measures", "agreement", "scorefile"), progress=None):
+    """Add selected outputs without refitting or changing the source archive.
+
+    Work on a new envelope so a failed diagnostic leaves the fitted source
+    available for saving and retry. Large retained input arrays are shared.
+    """
+    project.validate_analysis(analysis)
+    project.require_reportable_input(analysis)
+    if "result" not in analysis:
+        raise ValueError("Diagnostics require an MFRM fit")
+    outputs = [outputs] if isinstance(outputs, str) else list(outputs)
+    allowed = {"measures", "agreement", "scorefile", "pca"}
+    if any(not isinstance(name, str) or name not in allowed for name in outputs):
+        raise ValueError("outputs must select measures, agreement, scorefile or pca")
+    done = set(analysis.get("computed_outputs", ()))
+    if "computed_outputs" not in analysis and "diagnostics" in analysis:
+        done = {"measures", "agreement", "scorefile"}
+        if analysis["diagnostics"].get("pca_enabled"):
+            done.add("pca")
+    needed = set(outputs) - done
+    if not needed:
+        return analysis
+    progress = progress or (lambda phase: None)
+    out = dict(analysis, result=dict(analysis["result"]), scope=dict(analysis["scope"]))
+    diagnostics = dict(analysis.get("diagnostics", {}))
+    obs = diagnostics.get("obs")
+    # Reuse probabilities within this operation, but do not retain an N x K
+    # cache in the archive when no scorefile was requested.
+    probs = (engine.compute_prob_matrix(out["result"])
+             if obs is None or needed & {"agreement", "scorefile"} else None)
+    if obs is None:
+        obs = engine.compute_obs_table(out["result"], probs=probs)
+    if needed & {"measures", "agreement", "pca"}:
+        progress("diagnostics")
+        calculated = engine.mfrm_diagnostics(
+            out["result"], compute_pca="pca" in needed, compute_measures="measures" in needed,
+            compute_agreement="agreement" in needed, obs_df=obs, probs=probs,
+        )
+        # Unrequested sections must not erase previously computed diagnostics.
+        for name, value in calculated.items():
+            if name not in diagnostics or not (
+                (name in engine.MEASURE_DIAGNOSTIC_KEYS and "measures" not in needed)
+                or (name in {"krippendorff_alpha", "interrater_agreement"} and "agreement" not in needed)
+                or (name.startswith("pca") and "pca" not in needed)
+            ):
+                diagnostics[name] = value
+    else:
+        diagnostics["obs"] = obs
+    out["diagnostics"] = diagnostics
+    if "measures" in needed:
+        progress("tables")
+        out["report_tables"] = engine.calc_facets_report_tbls(
+            out["result"], diagnostics, umean=float(analysis["fit_settings"].get("umean", 0.)),
+            uscale=float(analysis["fit_settings"].get("uscale", 1.)))
+    if "scorefile" in needed:
+        progress("scorefile")
+        out["scorefile"] = engine.compute_scorefile(out["result"], obs=obs, probs=probs)
+    if "pca" in needed:
+        out["scope"]["pca"] = True
+        out["fit_settings"] = dict(out["fit_settings"], compute_pca=True)
+        if out["kind"] == "basic-rsm-jmle-v1":
+            out["kind"] = "mfrm-analysis-v2"
+    if "computed_outputs" in analysis:
+        out["computed_outputs"] = sorted(done | needed)
+        out["output_source"] = _source_versions()
+    out["content_fingerprint"] = project.content_fingerprint(out)
+    project.validate_analysis(out)
+    return out
 
 
 def _is_int(value) -> bool:
@@ -238,7 +306,7 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
                        estimate_population_sd=False, mml_engine="EM",
                        noncenter_facet="Person", positive_facets=None,
                        anchors=None, group_anchors=None,
-                       compute_pca=False, umean=0.0, uscale=1.0, progress=None):
+                       compute_pca=False, umean=0.0, uscale=1.0, progress=None, outputs=None):
     """Fit once and retain qualified tables. Failure/unknown termination stays so.
 
     Progress identifies phases, not a fabricated percentage. A desktop worker
@@ -354,16 +422,23 @@ def run_basic_analysis(data, *, person_col, facet_cols, score_col, rating_min, r
     progress = progress or (lambda phase: None)
     progress("estimating")
     result = engine.mfrm_estimate(data=data, **estimate_kwargs)
-    return _finish_analysis(result, data, settings, progress)
+    return _finish_analysis(result, data, settings, progress, outputs=outputs)
 
 
-def current_tables(analysis, *, extended: bool = False):
+def current_tables(analysis, *, extended: bool = False, include=None, _validated=False):
     """Reapply current display qualification without refitting or rewriting provenance."""
-    project.validate_analysis(analysis)
+    if not _validated:
+        project.validate_analysis(analysis)
     result = analysis["result"]
     project.require_reportable_input(analysis)
-    facts = reporting_facts.observed_report_tables(result)
-    tables = [(title, table, note) for title, table, note in facts]
+    include = include or (lambda title: True)
+    facts = (reporting_facts.observed_report_tables(result)
+             if any(include(t) for t in ("Analysis Design and Retained Ratings", "Observed Category Use")) else [])
+    tables = [(title, table, note) for title, table, note in facts if include(title)]
+    if not include("Measures and Fit") or "measures" not in analysis.get("diagnostics", {}):
+        return tables
+    if "computed_outputs" in analysis and "measures" not in analysis["computed_outputs"]:
+        return tables
     fit_note = metric_note("fit")
     measures, note = reporting_facts.publication_measure_table(
         result, analysis["diagnostics"], fit_note=fit_note, extended=extended

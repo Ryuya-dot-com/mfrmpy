@@ -12,7 +12,7 @@ on:
       - "docs/python_library.md"
       - "docs/analysis_scope.md"
       - "CHANGELOG.md"
-      - "tests/test_python_library.py"
+      - "tests/**"
       - "LICENSE*"
       - ".github/workflows/python-package.yml"
   pull_request:
@@ -87,9 +87,9 @@ jobs:
         run: |
           python -m pip install dist/*.whl "pytest>=8"
           python -m pip check
-          cp pyproject.toml tests/test_python_library.py "$RUNNER_TEMP/"
+          cp pyproject.toml tests/test_*.py tests/annual_drift.csv "$RUNNER_TEMP/"
           cd "$RUNNER_TEMP"
-          python -I -m pytest test_python_library.py -q
+          python -I -m pytest test_*.py -q -m "not figures"
       - name: Install optional plotting dependency
         if: ${{ !matrix.minimum }}
         run: python -m pip install "matplotlib>=3.8"
@@ -99,7 +99,7 @@ jobs:
       - name: Test figures and HTML from the installed package
         run: |
           cd "$RUNNER_TEMP"
-          python -I -m pytest test_python_library.py -q -m figures
+          python -I -m pytest test_*.py -q -m figures
 
   publish:
     if: >-

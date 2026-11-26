@@ -1,0 +1,8 @@
+metric,threshold,common_n,changed_n,common_review,changed_review,common_lower,common_upper,changed_lower,changed_upper,wrong_contrasts,wrong_reviewed,wrong_not_reviewed,changed_not_reviewed
+MnSq,0.50–1.50,500,500,56,208,56,0,208,0,151,68,83,292
+MnSq,0.60–1.40,500,500,211,363,211,0,363,0,151,116,35,137
+MnSq,0.70–1.30,500,500,368,456,368,0,456,0,151,138,13,44
+ZSTD,1.5,500,500,374,457,374,0,457,0,151,139,12,43
+ZSTD,2.0,500,500,246,382,246,0,382,0,151,124,27,118
+ZSTD,2.5,500,500,128,271,128,0,271,0,151,90,61,229
+ZSTD,3.0,500,500,49,131,49,0,131,0,151,46,105,369

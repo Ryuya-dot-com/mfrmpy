@@ -1,0 +1,33 @@
+replicate,design,effect,route,metric,estimate,se,status,detail,estimate_python,se_python
+1,balanced24,ability_only,TAM joint,severity logit,-0.230476139910143,0.374485809970212,verified,Full observed information from the TAM marginal likelihood,-0.23047614450080325,0.3744858074404992
+1,balanced24,ability_only,mfrmr joint,severity logit,-0.230476080315007,,numerical_review_failed,Local solution,-0.23047614450080325,0.3744858074404992
+1,balanced24,ability_only,mfrmr residual,score residual A-B,-0.0553929881002712,,not_applicable,not reported: residual-contrast uncertainty is not established,-0.23047614450080325,0.3744858074404992
+1,balanced24,ability_only,mfrmr refit,severity logit,-0.110371566355017,,linked,conditional independent-subgroup plug-in SE; baseline-anchor uncertainty and cross-refit covariance omitted,-0.23047614450080325,0.3744858074404992
+2,balanced24,ability_only,TAM joint,severity logit,-0.199348701327071,0.376556345004276,verified,Full observed information from the TAM marginal likelihood,-0.1993487039135084,0.3765563543602932
+2,balanced24,ability_only,mfrmr joint,severity logit,-0.199348617537322,,numerical_review_failed,Local solution,-0.1993487039135084,0.3765563543602932
+2,balanced24,ability_only,mfrmr residual,score residual A-B,-0.0796872730091075,,not_applicable,not reported: residual-contrast uncertainty is not established,-0.1993487039135084,0.3765563543602932
+2,balanced24,ability_only,mfrmr refit,severity logit,-0.199371354296948,,linked,not reported without complete conditional-screen inputs,-0.1993487039135084,0.3765563543602932
+1,balanced6,ability_only,TAM joint,severity logit,-0.0452627972363607,0.483994575772155,verified,Full observed information from the TAM marginal likelihood,-0.045262794577154264,0.48399458399172635
+1,balanced6,ability_only,mfrmr joint,severity logit,-0.0452619331381388,,numerical_review_failed,Local solution,-0.045262794577154264,0.48399458399172635
+1,balanced6,ability_only,mfrmr residual,score residual A-B,-0.00517442529843715,,not_applicable,not reported: residual-contrast uncertainty is not established,-0.045262794577154264,0.48399458399172635
+1,balanced6,ability_only,mfrmr refit,severity logit,0.0524972548397142,,linked,not reported without complete conditional-screen inputs,-0.045262794577154264,0.48399458399172635
+2,balanced6,ability_only,TAM joint,severity logit,0.0471649950828457,0.473045076842352,verified,Full observed information from the TAM marginal likelihood,0.04716499784246722,0.47304509354398555
+2,balanced6,ability_only,mfrmr joint,severity logit,0.0471649575593863,,numerical_review_failed,Local solution,0.04716499784246722,0.47304509354398555
+2,balanced6,ability_only,mfrmr residual,score residual A-B,0.0174790861524295,,not_applicable,not reported: residual-contrast uncertainty is not established,0.04716499784246722,0.47304509354398555
+2,balanced6,ability_only,mfrmr refit,severity logit,0.0896303767813146,,linked,conditional independent-subgroup plug-in SE; baseline-anchor uncertainty and cross-refit covariance omitted,0.04716499784246722,0.47304509354398555
+1,balanced24,r3_stricter,TAM joint,severity logit,0.327457261695107,0.376699059397065,verified,Full observed information from the TAM marginal likelihood,0.3274572560537583,0.3766990609318025
+1,balanced24,r3_stricter,mfrmr joint,severity logit,0.327457244803735,,numerical_review_failed,Local solution,0.3274572560537583,0.3766990609318025
+1,balanced24,r3_stricter,mfrmr residual,score residual A-B,0.132370925260437,,not_applicable,not reported: residual-contrast uncertainty is not established,0.3274572560537583,0.3766990609318025
+1,balanced24,r3_stricter,mfrmr refit,severity logit,0.49623147947049,,linked,conditional independent-subgroup plug-in SE; baseline-anchor uncertainty and cross-refit covariance omitted,0.3274572560537583,0.3766990609318025
+2,balanced24,r3_stricter,TAM joint,severity logit,0.311633107193321,0.380148541843741,verified,Full observed information from the TAM marginal likelihood,0.3116331084767367,0.38014853663917453
+2,balanced24,r3_stricter,mfrmr joint,severity logit,0.311632295601874,,numerical_review_failed,Local solution,0.3116331084767367,0.38014853663917453
+2,balanced24,r3_stricter,mfrmr residual,score residual A-B,0.0880793495218655,,not_applicable,not reported: residual-contrast uncertainty is not established,0.3116331084767367,0.38014853663917453
+2,balanced24,r3_stricter,mfrmr refit,severity logit,0.303895884940215,,linked,not reported without complete conditional-screen inputs,0.3116331084767367,0.38014853663917453
+1,balanced6,r3_stricter,TAM joint,severity logit,0.485032971736913,0.486168270095796,verified,Full observed information from the TAM marginal likelihood,0.4850329735085066,0.48616827176915733
+1,balanced6,r3_stricter,mfrmr joint,severity logit,0.485033676213617,,numerical_review_failed,Local solution,0.4850329735085066,0.48616827176915733
+1,balanced6,r3_stricter,mfrmr residual,score residual A-B,0.0967203052920404,,not_applicable,not reported: residual-contrast uncertainty is not established,0.4850329735085066,0.48616827176915733
+1,balanced6,r3_stricter,mfrmr refit,severity logit,0.600502428323548,,linked,not reported without complete conditional-screen inputs,0.4850329735085066,0.48616827176915733
+2,balanced6,r3_stricter,TAM joint,severity logit,0.580202272393089,0.47286749326812,verified,Full observed information from the TAM marginal likelihood,0.580202275784275,0.4728674913297999
+2,balanced6,r3_stricter,mfrmr joint,severity logit,0.580202251517112,,numerical_review_failed,Local solution,0.580202275784275,0.4728674913297999
+2,balanced6,r3_stricter,mfrmr residual,score residual A-B,0.122624757640863,,not_applicable,not reported: residual-contrast uncertainty is not established,0.580202275784275,0.4728674913297999
+2,balanced6,r3_stricter,mfrmr refit,severity logit,0.618476610971982,,linked,conditional independent-subgroup plug-in SE; baseline-anchor uncertainty and cross-refit covariance omitted,0.580202275784275,0.4728674913297999

@@ -14,10 +14,11 @@ import numpy as np
 import pandas as pd
 
 from mfrm_app.engine import dataframe_fingerprint, stable_json_fingerprint
+from mfrm_app import gd_intervals
 
 
 _GD_STUDY_DEFAULT_GRID = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-_GD_CALCULATION_VERSION = "balanced_anova_v3"
+_GD_CALCULATION_VERSION = "balanced_anova_v4"
 _GD_CI_REASON = "Person-only resampling has not qualified intervals for the declared random-facet G/D targets."
 _RESERVED_GD_NAMES = {"Residual", "G", "Phi", "IsObservedDesign", "_section"}
 
@@ -25,6 +26,12 @@ GD_SECTION_ORDER = (
     "observed_coefficients",
     "selected_d_study",
     "variance_components",
+    "covariance_components",
+    "component_diagnostics",
+    "estimation",
+    "component_support",
+    "kernel_gram",
+    "excluded_rows",
     "d_study",
     "metadata",
 )
@@ -1085,9 +1092,16 @@ def _g_d_error_row(coefficients: dict) -> dict:
 
 
 def g_d_study_export_frame(bundle: dict) -> pd.DataFrame:
-    """Self-describing public CSV; technical bootstrap bounds are held."""
+    """Self-describing output; legacy person-only bootstrap bounds remain held."""
+    if bundle.get("design", {}).get("method") == "minque0" and ("multivariate" in bundle or "design_study" in bundle):
+        from mfrm_app.unbalanced_gd import export_frame
+        return export_frame(bundle)
+    if "multivariate" in bundle:
+        from mfrm_app.multivariate_gd import export_frame
+        return export_frame(bundle)
     design = bundle.get("design", {})
     bootstrap = bundle.get("bootstrap_ci", {})
+    intervals = bundle.get("coefficient_intervals", {})
     metadata = {
         "available": bool(bundle.get("available")),
         "reason_code": bundle.get("reason_code", ""), "reason": bundle.get("reason", ""),
@@ -1100,7 +1114,14 @@ def g_d_study_export_frame(bundle: dict) -> pd.DataFrame:
         "error_variance_units": "score_squared",
         "sem_units": "score_units",
         "population_status": "declaration_not_verified",
-        "interval_inference_allowed": False, "interval_hold_reason": _GD_CI_REASON,
+        "interval_inference_allowed": any(intervals.get("observed", {}).get(f"{k}_interval_status")
+                                           == "approximate_normal_delta" for k in ("G", "Phi")),
+        "interval_hold_reason": "See coefficient-specific status" if intervals else _GD_CI_REASON,
+        "interval_method": intervals.get("method", "not_requested"),
+        "interval_assumption": intervals.get("assumption", "none"),
+        "interval_confidence": intervals.get("confidence"),
+        "interval_scope": intervals.get("scope", _GD_CI_REASON),
+        "interval_covariance_basis": intervals.get("covariance_basis", "none"),
         "bootstrap_requested": bool(bootstrap.get("requested", False)),
         "bootstrap_method": bootstrap.get("method", "not_run"),
         "bootstrap_n_requested": bootstrap.get("n_bootstrap", 0) if bootstrap.get("requested") else 0,
@@ -1124,10 +1145,12 @@ def g_d_study_export_frame(bundle: dict) -> pd.DataFrame:
         coef = bundle["observed_coefficients"]
         frames.append(pd.DataFrame([{
             "_section": "observed_coefficients", **design.get("observed_n", {}),
-            **_g_d_error_row(coef), "IsObservedDesign": True}]))
+            **_g_d_error_row(coef), **intervals.get("observed", {}), "IsObservedDesign": True}]))
         d_study = bundle.get("d_study")
         if isinstance(d_study, pd.DataFrame) and not d_study.empty:
             columns = list(design.get("random_facets", [])) + ["G", "Phi", "IsObservedDesign"]
+            if intervals:
+                columns += gd_intervals.FIELDS
             frames.append(d_study.reindex(columns=columns).assign(_section="d_study"))
     if bundle.get("available") and bundle.get("selected_plan"):
         frames.append(pd.DataFrame([{**bundle["selected_plan"], "_section": "selected_d_study"}]))

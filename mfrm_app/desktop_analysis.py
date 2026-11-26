@@ -8,7 +8,8 @@ from scipy.linalg import cho_solve
 from scipy.stats import norm
 
 from mfrm_app import basic_analysis as basic, bias_analysis as bias, engine, output_qualification, reporting_facts
-from mfrm_app import generalizability as gd, project, structural_intervals as intervals, joint_interaction as joint
+from mfrm_app import generalizability as gd, gd_intervals, multivariate_gd, unbalanced_gd, project, structural_intervals as intervals, joint_interaction as joint
+from mfrm_app import anchor_sensitivity, rater_dff
 from mfrm_app._resources import metric_note
 
 
@@ -55,10 +56,17 @@ prepare_gd_input_data = gd.prepare_gd_input_data
 def _gd_settings(settings):
     if not isinstance(settings, dict) or set(settings) - {
         "object_facet", "random_facets", "score_col", "n_max_per_facet",
-        "target_population", "selected_plan", "fixed_condition",
+        "target_population", "selected_plan", "fixed_condition", "coefficient_intervals",
+        "score_cols", "composite_weights", "method", "missing", "nesting",
     }:
         raise ValueError("Unknown G/D settings")
     raw = deepcopy(settings)
+    multivariate = "score_cols" in raw
+    if multivariate and "score_col" in raw:
+        raise ValueError("Choose score_col or score_cols, not both")
+    if not multivariate and "composite_weights" in raw:
+        raise ValueError("composite_weights requires score_cols")
+    ci_request = gd_intervals.validate_request(raw.pop("coefficient_intervals", None))
     fixed_raw = raw.pop("fixed_condition", None)
     out = dict(score_col="Score", n_max_per_facet=10, target_population="", selected_plan=None)
     out.update(raw)
@@ -76,11 +84,19 @@ def _gd_settings(settings):
                 or any(not basic._is_int(n) or int(n) < 1 for n in selected.values())):
             raise ValueError("A selected D plan must specify positive integer counts for every random facet")
         out["selected_plan"] = {k: int(v) for k, v in selected.items()}
+    if ci_request is not None:
+        out["coefficient_intervals"] = ci_request
+    if multivariate:
+        out["score_cols"], out["composite_weights"] = multivariate_gd.validate_settings(out)
     fixed_validated = _validate_fixed_condition(
-        fixed_raw, out["object_facet"], out["score_col"], out["random_facets"]
+        fixed_raw, out["object_facet"], out["score_cols"][0] if multivariate else out["score_col"], out["random_facets"]
     )
     if fixed_validated is not None:
         out["fixed_condition"] = fixed_validated
+    if multivariate:
+        multivariate_gd.validate_settings(out)
+        out.pop("score_col")
+    unbalanced_gd.validate_settings(out)
     return out
 
 
@@ -514,6 +530,54 @@ def _agreement_and_alpha_tables(analysis) -> list[tuple[str, pd.DataFrame, str]]
     return out_tables
 
 
+def _fair_average_table(analysis):
+    """Qualify retained score predictions without recalculating diagnostics."""
+    retained = analysis.get("report_tables", {})
+    if not retained or ("computed_outputs" in analysis and "measures" not in analysis["computed_outputs"]):
+        return None
+    result = analysis["result"]
+    audit = output_qualification.audit_boundary_and_support(result)
+    unbounded = set(audit["unbounded_facet_levels"]) | set(audit["unbounded_step_owners"])
+    boundary_persons = engine._boundary_person_set(result)
+    block = output_qualification.calibration_screening_block_reason(result)
+    hold = output_qualification.calibration_inference_hold_reason(result)
+    frames = []
+    for facet, retained_frame in retained.items():
+        frame = retained_frame.reindex(columns=["Level", "ObservedAverage", "FairM", "FairZ", "Anchor"]).copy()
+        frame.insert(0, "Facet", facet)
+        frame["StatusReason"] = hold or ""
+        boundary = frame.Level.astype(str).map(
+            lambda level: (facet, level) in unbounded or (facet == "Person" and level in boundary_persons))
+        for metric in ("FairM", "FairZ"):
+            values = pd.to_numeric(frame[metric], errors="coerce")
+            frame[metric] = values.where(np.isfinite(values), np.nan)
+            frame[metric + "Status"] = np.where(np.isfinite(values), "point_only", "unavailable_reference")
+            if metric == "FairM" and facet != "Person" and boundary_persons:
+                # JMLE retains finite optimizer proxies even when the person mean is unbounded.
+                frame[metric] = np.nan
+                frame[metric + "Status"] = "unavailable_reference"
+                frame["StatusReason"] = ("FairM reference includes unbounded JMLE person locations; FairZ uses zero. " + (hold or ""))
+            frame.loc[boundary, metric] = np.nan
+            frame.loc[boundary, metric + "Status"] = "withheld_boundary"
+            if block:
+                frame[metric] = np.nan
+                frame[metric + "Status"] = "withheld_calibration"
+        frame.loc[boundary, "StatusReason"] = "No finite reportable level estimate"
+        if block:
+            frame["StatusReason"] = block
+        frame["SupportsFormalInference"] = False
+        frames.append(frame)
+    note = (
+        "FairM and FairZ are model-expected ratings in the original score units, not logits or evidence of fairness. "
+        "FairM holds other facet locations at their unweighted fitted means (including the person mean for nonperson targets); "
+        "FairZ holds other locations at zero. These are predictions at reference locations, not averages of predictions. "
+        "PCM uses the target step-owner's thresholds, or mean thresholds for other targets. "
+        "An unbounded person mean makes nonperson FairM unavailable; FairZ remains a distinct zero-reference quantity. "
+        "Boundary and calibration holds are retained. No fair-score SE or interval is implemented; logit SEs cannot be reused."
+    )
+    return "Fair Average Scores", pd.concat(frames, ignore_index=True), note
+
+
 def _rescaled_measures_table(analysis) -> tuple[str, pd.DataFrame, str] | None:
     if "result" not in analysis:
         return None
@@ -550,7 +614,9 @@ def _rescaled_measures_table(analysis) -> tuple[str, pd.DataFrame, str] | None:
         "ScaledUpper": (raw_hi * uscale + umean).where(hi_visible, np.nan).round(3),
     })
 
-    report_tables = analysis.get("report_tables", {})
+    fair_table = _fair_average_table(analysis)
+    report_tables = ({name: group for name, group in fair_table[1].groupby("Facet", sort=False)}
+                     if fair_table is not None else {})
     if isinstance(report_tables, dict) and report_tables:
         aux_frames = []
         for f_name, f_tbl in report_tables.items():
@@ -990,7 +1056,15 @@ def preview_gd_design(data, *, object_facet, score_col, random_facets, fixed_con
 
 
 def _run_gd(data, settings):
-    arguments = {k: v for k, v in settings.items() if k != "selected_plan"}
+    if settings.get("method") == "minque0":
+        result = unbalanced_gd.study(data, settings)
+        return dict(settings=settings, result=result,
+                    analysis_id=project.gd_analysis_identity(data, settings, result["calculation_version"]))
+    if "score_cols" in settings:
+        result = multivariate_gd.study(data, settings)
+        return dict(settings=settings, result=result,
+                    analysis_id=project.gd_analysis_identity(data, settings, result["calculation_version"]))
+    arguments = {k: v for k, v in settings.items() if k not in {"selected_plan", "coefficient_intervals", "method"}}
     result = gd.compute_generalizability_from_data(data, **arguments)
     if result["available"]:
         counts = settings["selected_plan"] or result["design"]["observed_n"]
@@ -1014,6 +1088,7 @@ def _run_gd(data, settings):
                 .reset_index(drop=True)
             )
         result["selected_plan"] = {**counts, **gd._g_d_error_row(coefficients)}
+    gd_intervals.add_intervals(result, settings.get("coefficient_intervals"))
     return dict(settings=settings, result=result,
                 analysis_id=project.gd_analysis_identity(data, settings, result["calculation_version"]))
 
@@ -1061,6 +1136,33 @@ def check_design(
 
     if workflow == "gd":
         cfg = dict(gd_settings or {})
+        if any(k in cfg for k in ("method", "missing", "nesting")):
+            cfg.setdefault("object_facet", p_col)
+            cfg.setdefault("random_facets", f_cols)
+            cfg = _gd_settings(cfg)
+        if cfg.get("method") == "minque0":
+            work, design, excluded, reason = unbalanced_gd.prepare(data, cfg)
+            audit = {}
+            if not reason:
+                audit, _, _, _ = unbalanced_gd.kernel_audit(work, design)
+                if not audit["identified"]:
+                    reason = "unidentified_components"
+            return dict(workflow="gd", ok=not reason, status="identified" if not reason else "withheld",
+                        reason_code=reason, design=design, observed_n=design.get("observed_n", {}),
+                        estimation=audit, excluded_rows=excluded, score_columns=design["score_columns"],
+                        summary=unbalanced_gd.REASONS.get(reason, "MINQUE(0) covariance components are identifiable; intervals remain withheld."),
+                        summary_ja="成分の識別監査を実施しました。観測配置と欠測処理、D配置の指定を確認してください。")
+        if "score_cols" in cfg:
+            cfg.setdefault("object_facet", p_col)
+            cfg.setdefault("random_facets", f_cols)
+            cfg = _gd_settings(cfg)
+            _, design, reason = multivariate_gd.prepare(data, cfg)
+            return dict(workflow="gd", ok=not reason, status="balanced" if not reason else "incomplete",
+                        reason_code=reason, observed_n=design.get("observed_n", {}), extra_facets=[],
+                        zero_variance_levels={}, score_columns=cfg["score_cols"],
+                        summary_ja=("全ての得点が同じ完全均衡交差セルにそろっています。" if not reason
+                                    else "多変量G/Dの入力を確認してください：" + reason),
+                        summary=gd._GD_INPUT_REASONS.get(reason, "All scores share the same complete balanced crossed cells."))
         obj_col = cfg.get("object_facet", p_col)
         rf_cols = cfg.get("random_facets", f_cols)
         sc_col = cfg.get("score_col", s_col or "Score")
@@ -1268,14 +1370,18 @@ def run_analysis(data, *, workflow="mfrm", bias_requests=None, interval_requests
     return analysis
 
 
-def current_additional_tables(analysis, *, extended: bool = False):
+def current_additional_tables(analysis, *, extended: bool = False, include=None, _validated=False):
     """Reapply output guards to retained records, without estimation or ANOVA."""
-    project.validate_analysis(analysis)
+    if not _validated:
+        project.validate_analysis(analysis)
+    include = include or (lambda title: True)
     tables = []
     for entry in analysis.get("bias_analyses", []):
         settings, result = entry["settings"], entry["result"]
         pair = settings["facet_a"] + " × " + settings["facet_b"]
         model_name = analysis["result"]["config"]["model"]
+        if not include("Bias: " + pair):
+            continue
         if extended:
             table = bias.bias_screening_table({pair: result}, analysis["result"])
             note = bias.bias_screening_caption(model_name, analysis["result"])
@@ -1292,6 +1398,8 @@ def current_additional_tables(analysis, *, extended: bool = False):
                 table = pd.DataFrame([dict(Use="Unavailable", Reason=result.get("_skip_reason", "No computed cells"))])
         tables.append(("Bias: " + pair, table, note))
     for entry in analysis.get("interval_analyses", []):
+        if not include("Specified intervals: " + entry["settings"]["facet"]):
+            continue
         try:
             if entry["status"] != "computed":
                 raise ValueError(entry["reason"])
@@ -1310,7 +1418,7 @@ def current_additional_tables(analysis, *, extended: bool = False):
             )
             table, note = pd.DataFrame([row]), intervals.CAUTION
         tables.append(("Specified intervals: " + entry["settings"]["facet"], table, note))
-    if entry := analysis.get("gd_analysis"):
+    if (entry := analysis.get("gd_analysis")) and any(include("G/D: " + name) for name in gd.GD_SECTION_ORDER):
         frame = gd.g_d_study_export_frame(entry["result"])
         by_section = {
             section: table.drop(columns="_section").dropna(axis=1, how="all")
@@ -1319,27 +1427,47 @@ def current_additional_tables(analysis, *, extended: bool = False):
         ordered_sections = [s for s in gd.GD_SECTION_ORDER if s in by_section]
         ordered_sections += [s for s in by_section if s not in gd.GD_SECTION_ORDER]
         for section in ordered_sections:
+            if not include("G/D: " + section):
+                continue
             sec_table = by_section[section]
             note = gd.GD_SECTION_NOTES.get(section, gd._GD_CI_REASON)
+            if "multivariate" in entry["result"]:
+                note = multivariate_gd.CAUTION
+            if entry["settings"].get("method") == "minque0":
+                note = unbalanced_gd.CAUTION
+            if entry["result"].get("coefficient_intervals"):
+                note = note.replace(" Intervals for G and Phi are withheld.", "")
+                note = note.replace("(interval_inference_allowed=False)", "(explicit normal-model interval assumptions)")
+                if section in {"observed_coefficients", "selected_d_study", "d_study", "metadata"}:
+                    note += " " + gd_intervals.CAUTION
             if section in {"observed_coefficients", "selected_d_study", "d_study"}:
                 for coefficient in ("G", "Phi"):
                     if coefficient not in sec_table:
                         sec_table[coefficient] = np.nan
-                        note += f" {coefficient} is undefined because its denominator is zero."
+                        if entry["settings"].get("method") == "minque0":
+                            note += f" {coefficient} is withheld; see its status and the design reason."
+                        else:
+                            note += f" {coefficient} is undefined because its denominator is zero."
             if section == "metadata" and entry["result"].get("reason_code") == "undefined_coefficients" and entry["result"].get("calculation_version") == "balanced_anova_v2":
                 note += " This archived calculation withheld both coefficients. Rerun the G/D study to check each denominator separately."
             if (
                 section == "variance_components"
+                and "multivariate" not in entry["result"]
+                and entry["settings"].get("method") != "minque0"
                 and "RawVariance" in sec_table.columns
                 and (pd.to_numeric(sec_table["RawVariance"], errors="coerce") < -1e-12).any()
             ):
                 note = gd.GD_VARIANCE_NEGATIVE_NOTE
             tables.append(("G/D: " + section, sec_table, note))
-    if entry := analysis.get('joint_analysis'):
+    if (entry := analysis.get('joint_analysis')) and (include('Joint model: main effects and steps') or include('Joint interaction: '+entry['settings']['facet_a']+' × '+entry['settings']['facet_b'])):
         try:
             if entry['status'] != 'computed':
                 raise ValueError(entry['reason'])
             table, note = joint.publication_table(analysis['result'], entry['record'])
+            targets = entry['record']['targets']
+            table.insert(1, 'Kind', [target['Kind'] for target in targets])
+            table.insert(2, 'Ratings', pd.array([target['Ratings'] for target in targets], dtype='Int64'))
+            note += ' Ratings counts observations per cell. An estimate for a zero-count cell depends on the fitted constraints.'
         except ValueError as exc:
             table, note = pd.DataFrame([dict(Use='Withheld', Reason=str(exc))]), joint.CAUTION
         tables.append(('Joint interaction: '+entry['settings']['facet_a']+' × '+entry['settings']['facet_b'], table, note))
@@ -1347,21 +1475,30 @@ def current_additional_tables(analysis, *, extended: bool = False):
             tables.append(('Joint model: main effects and steps',
                 pd.DataFrame(entry['record']['main_effects_and_steps']),
                 'Point estimates from the separate joint model; baseline maps and tables retain the original main-effects fit.'))
-    if linking := _connectivity_and_anchor_table(analysis):
+    if "rater_dff" in analysis and any(include(title) for title in (rater_dff.TITLE, rater_dff.OVERLAP, rater_dff.SCORES, rater_dff.PLAN, rater_dff.GAPS)):
+        tables.extend(rater_dff.tables(analysis))
+    if "anchor_sensitivity" in analysis and any(include(title) for title in (anchor_sensitivity.TITLE, anchor_sensitivity.CONSTRAINTS, anchor_sensitivity.WORKS, anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS)):
+        tables.extend(anchor_sensitivity.tables(analysis))
+    if include("Connectivity and Scale Linking") and (linking := _connectivity_and_anchor_table(analysis)):
         tables.append(linking)
-    if rel_tbl := _reliability_summary_table(analysis):
+    if include("Separation and Reliability by Facet") and (rel_tbl := _reliability_summary_table(analysis)):
         tables.append(rel_tbl)
-    tables.extend(_agreement_and_alpha_tables(analysis))
-    if rescaled := _rescaled_measures_table(analysis):
+    if include("Inter-rater Agreement and Krippendorff's Alpha") or any(include("Pairwise Agreement: " + f) for f in analysis.get("result", {}).get("config", {}).get("facet_names", [])):
+        tables.extend(_agreement_and_alpha_tables(analysis))
+    if include("Rescaled Measures (Umean / Uscale)") and (rescaled := _rescaled_measures_table(analysis)):
         tables.append(rescaled)
-    tables.extend(_pca_tables(analysis))
-    return tables
+    if include("Fair Average Scores") and (fair := _fair_average_table(analysis)):
+        tables.append(fair)
+    if any(include(title) for title in ("Residual PCA: Eigenvalues and Stability", "Residual PCA: First-Contrast Loadings")):
+        tables.extend(_pca_tables(analysis))
+    return [(title, frame, note) for title, frame, note in tables if include(title)]
 
 
-def current_tables(analysis):
+def current_tables(analysis, *, include=None):
     """Unified core-only qualified table list across MFRM and standalone G/D."""
     project.validate_analysis(analysis)
-    base = [] if analysis.get("kind") == "gd-analysis-v2" else basic.current_tables(analysis, extended=True)
-    if step_tbl := _step_thresholds_table(analysis):
+    include = include or (lambda title: True)
+    base = [] if analysis.get("kind") == "gd-analysis-v2" else basic.current_tables(analysis, extended=True, include=include, _validated=True)
+    if include("Step Thresholds") and (step_tbl := _step_thresholds_table(analysis)):
         base.append(step_tbl)
-    return base + current_additional_tables(analysis, extended=True)
+    return base + current_additional_tables(analysis, extended=True, include=include, _validated=True)

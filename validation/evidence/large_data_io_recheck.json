@@ -1,0 +1,68 @@
+{
+  "python": "3.14.3 (v3.14.3:323c59a5e34, Feb  3 2026, 11:41:37) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "numpy": "2.5.5",
+  "pandas": "3.1.1",
+  "measurement": "Tracemalloc peak per phase; process RSS peak cumulative within each fresh scenario.",
+  "source_sha256": {
+    "mfrm_app/basic_analysis.py": "01d9e5417610c098ff43d4b8d5cbd150f4ffe8e74de9354b29e6ec64a3923d18",
+    "mfrm_app/engine.py": "d554d5d6ebf90c157c08860b41ad9e8c607fa98c35875ae949661571136dd8e2",
+    "mfrm_app/design_rank.py": "ae0304ea4cedeb23c0732cf3213f2d7cf5f9916f43e6b46d4aedff85312f63f4",
+    "mfrm_app/rater_contrast.py": "10b007305b06a1e29c14454d2f23d03f529182d32417a9ef0622b10c0015f5e7",
+    "mfrm_app/output_qualification.py": "dbfbb0135ad4cb34ef961211b41e1c77a354bc05d72f5ee8d0da18509651d25c",
+    "mfrm_app/project.py": "98a4b6c2b6271bc5529bf6381121f6ac488cf08c9ac3c1733c05781ce45199a8",
+    "mfrm_app/desktop_analysis.py": "ff61913f1b817105938c5e3dc9803eca184bb6855ef2c8edbd3f2b06d8b5a229",
+    "mfrmpy/__init__.py": "cb9098b6e08d98b356bf5c77c1ed1800201395f71ef07426962ee72dcf4042b1",
+    "/Users/tohokusla/Developer/mfrmpy-pkg/validation/large_data_workflow.py": "3b97b3b13ddc53844931dfc8963d03441b7a90ef445077c3d11e375862cc0f9d"
+  },
+  "runs": [
+    {
+      "persons": 2000,
+      "ratings": 4000,
+      "fit_archive_bytes": 100303,
+      "optimizer_success": true,
+      "audit_status": "eta_identified",
+      "contrast_status": "observed",
+      "dense_design_cells": 8004000,
+      "reduced_cells": 4,
+      "phases": [
+        {
+          "phase": "load_fit",
+          "seconds": 0.8749984999885783,
+          "traced_peak_mib": 14.978034019470215,
+          "process_peak_mib": 214.09375
+        },
+        {
+          "phase": "one_table",
+          "seconds": 3.2533498749835417,
+          "traced_peak_mib": 5.73214054107666,
+          "process_peak_mib": 225.171875
+        }
+      ]
+    },
+    {
+      "persons": 10000,
+      "ratings": 20000,
+      "fit_archive_bytes": 416028,
+      "optimizer_success": true,
+      "audit_status": "eta_identified",
+      "contrast_status": "observed",
+      "dense_design_cells": 200020000,
+      "reduced_cells": 4,
+      "phases": [
+        {
+          "phase": "load_fit",
+          "seconds": 3.0381650420604274,
+          "traced_peak_mib": 72.68435287475586,
+          "process_peak_mib": 379.71875
+        },
+        {
+          "phase": "one_table",
+          "seconds": 15.034144792007282,
+          "traced_peak_mib": 25.916152000427246,
+          "process_peak_mib": 379.71875
+        }
+      ]
+    }
+  ]
+}

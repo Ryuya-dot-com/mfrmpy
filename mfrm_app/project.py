@@ -25,7 +25,7 @@ from scipy.optimize import OptimizeResult
 from mfrm_app import engine
 
 FORMAT = "mfrm.basic-project"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 MAX_PROJECT_BYTES = 128 * 1024 * 1024
 MAX_UNCOMPRESSED_PROJECT_BYTES = 512 * 1024 * 1024
 GZIP_MAGIC = b"\x1f\x8b"
@@ -202,28 +202,41 @@ def _json_bytes(value):
     return json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")
 
 
-def _encode_analysis_pairs(analysis):
-    if type(analysis) not in (dict, OrderedDict):
-        raise ProjectError(f"Unsupported project value: {type(analysis).__name__}")
-    return [(k, _json_bytes([_encode(k), _encode(v)])) for k, v in analysis.items()]
-
-
-def _fingerprint_from_pairs(pair_chunks):
-    digest = hashlib.sha256(b'["dict",[')
-    first = True
-    for key, chunk in pair_chunks:
-        if key == "content_fingerprint":
-            continue
-        if not first:
-            digest.update(b",")
+def content_fingerprint(analysis):
+    digest = hashlib.sha256()
+    for chunk in _encoded_chunks({k: v for k, v in analysis.items() if k != "content_fingerprint"}):
         digest.update(chunk)
-        first = False
-    digest.update(b"]]")
     return digest.hexdigest()
 
 
-def content_fingerprint(analysis):
-    return _fingerprint_from_pairs(_encode_analysis_pairs(analysis))
+def _encoded_chunks(value):
+    """Emit the existing typed JSON, retaining at most one encoded column."""
+    if isinstance(value, OptimizeResult):
+        yield b'["optimizer",'
+        yield from _encoded_chunks({k: v for k, v in value.items() if k != "hess_inv"})
+        yield b']'
+    elif type(value) in (dict, OrderedDict):
+        yield b'["ordered-dict",[' if type(value) is OrderedDict else b'["dict",['
+        for i, (key, item) in enumerate(value.items()):
+            yield b',' if i else b''
+            yield b'[' + _json_bytes(_encode(key)) + b','
+            yield from _encoded_chunks(item)
+            yield b']'
+        yield b']]'
+    elif isinstance(value, pd.DataFrame):
+        yield b'["frame",' + _json_bytes(_encode(value.index)) + b',' + _json_bytes(_encode(value.columns)) + b',['
+        for i in range(value.shape[1]):
+            yield b',' if i else b''
+            yield _json_bytes(_encode(value.iloc[:, i]))
+        yield b'],' + _json_bytes(_encode(value.attrs)) + b']'
+    elif type(value) in (list, tuple):
+        yield b'["list",[' if type(value) is list else b'["tuple",['
+        for i, item in enumerate(value):
+            yield b',' if i else b''
+            yield from _encoded_chunks(item)
+        yield b']]'
+    else:
+        yield _json_bytes(_encode(value))
 
 
 def gd_analysis_identity(data, settings, calculation_version):
@@ -236,8 +249,10 @@ def _validate_gd_entry(data, entry):
     if not isinstance(entry, dict) or not isinstance(entry.get("settings"), dict) or not isinstance(entry.get("result"), dict):
         raise ProjectError("Incomplete G/D record")
     settings, result = entry["settings"], entry["result"]
-    required = {"object_facet", "random_facets", "score_col", "n_max_per_facet", "target_population", "selected_plan"}
-    allowed = required | {"fixed_condition"}
+    multivariate = "score_cols" in settings
+    required = {"object_facet", "random_facets", "n_max_per_facet", "target_population", "selected_plan"}
+    required |= {"score_cols", "composite_weights"} if multivariate else {"score_col"}
+    allowed = required | {"fixed_condition", "coefficient_intervals", "method", "missing", "nesting"}
     if (not required.issubset(settings) or set(settings) - allowed
             or type(result.get("available")) is not bool or not result.get("calculation_version")):
         raise ProjectError("Incomplete G/D settings or availability")
@@ -245,7 +260,7 @@ def _validate_gd_entry(data, entry):
         fc = settings["fixed_condition"]
         if (not isinstance(fc, dict) or set(fc) != {"facet", "mode", "level"}
                 or not isinstance(fc.get("facet"), str) or not fc["facet"] or ":" in fc["facet"]
-                or fc["facet"] in {settings["object_facet"], settings["score_col"], *settings["random_facets"]}
+                or fc["facet"] in {settings["object_facet"], *settings.get("score_cols", [settings.get("score_col")]), *settings["random_facets"]}
                 or fc.get("mode") not in ("level", "sum", "mean")
                 or (fc["mode"] == "level" and (not isinstance(fc.get("level"), str) or not fc["level"].strip()))
                 or (fc["mode"] != "level" and fc.get("level") is not None)):
@@ -264,17 +279,88 @@ def _validate_gd_entry(data, entry):
         raise ProjectError("G/D input fingerprint does not match")
     if result.get("bootstrap_ci", {}).get("inference_allowed") is not False:
         raise ProjectError("G/D interval qualification is missing or unsupported")
+    from mfrm_app import unbalanced_gd
+    try:
+        unbalanced_gd.validate_settings(settings)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ProjectError(str(exc)) from exc
+    minque = settings.get("method") == "minque0"
+    if minque:
+        if (result.get("calculation_version") != unbalanced_gd.VERSION or design.get("method") != "minque0"
+                or design.get("nesting") != (settings.get("nesting") or {})
+                or design.get("missing") != settings.get("missing", "error")
+                or not isinstance(result.get("excluded_rows"), pd.DataFrame)):
+            raise ProjectError("MINQUE(0) design or missing-data record is inconsistent")
+        if result["available"]:
+            audit = result.get("estimation", {})
+            sources = list(design.get("component_factors", {}))
+            gram = audit.get("kernel_gram")
+            if (not audit.get("identified") or audit.get("rank") != len(sources)
+                    or not isinstance(gram, pd.DataFrame) or list(gram.index) != sources or list(gram.columns) != sources
+                    or design.get("planning_status") not in ("balanced_mean_projection", "selected_plan_required")):
+                raise ProjectError("MINQUE(0) component identification record is incomplete")
+    from mfrm_app import gd_intervals
+    try:
+        request = gd_intervals.validate_request(settings.get("coefficient_intervals"))
+    except ValueError as exc:
+        raise ProjectError(str(exc)) from exc
+    recorded = result.get("coefficient_intervals")
+    if request is not None:
+        if (not isinstance(recorded, dict) or any(recorded.get(k) != v for k, v in request.items())
+                or not isinstance(recorded.get("scope"), str) or not recorded["scope"].strip()
+                or recorded.get("covariance_basis") != "normal_expected_mean_squares_nonnegative_plugin"):
+            raise ProjectError("G/D coefficient interval assumptions are missing or inconsistent")
+        if result["available"]:
+            covariance = recorded.get("covariance")
+            names = result["variance_components"].Source.tolist()
+            if (recorded.get("status") != "computed" or not isinstance(covariance, pd.DataFrame)
+                    or list(covariance.index) != names or list(covariance.columns) != names
+                    or not set(gd_intervals.FIELDS).issubset(recorded.get("observed", {}))
+                    or not set(gd_intervals.FIELDS).issubset(result.get("selected_plan", {}))
+                    or not set(gd_intervals.FIELDS).issubset(result["d_study"].columns)):
+                raise ProjectError("G/D coefficient interval record is incomplete")
+    elif recorded is not None:
+        raise ProjectError("G/D coefficient intervals require explicit assumptions in settings")
+    if multivariate or minque:
+        from mfrm_app import multivariate_gd
+        try:
+            scores, weights = (multivariate_gd.validate_settings(settings) if multivariate else ([settings["score_col"]], {}))
+        except ValueError as exc:
+            raise ProjectError(str(exc)) from exc
+        record = result.get("multivariate" if multivariate else "design_study", {})
+        if (not isinstance(record, dict) or record.get("score_columns") != scores or record.get("weights") != weights
+                or design.get("score_columns") != scores or design.get("composite_weights", {}) != weights):
+            raise ProjectError("Multivariate score identities or weights do not match")
+        if result["available"]:
+            matrices = record.get("covariance_components")
+            sources = result["variance_components"].Source.tolist()
+            if not isinstance(matrices, dict) or list(matrices) != sources:
+                raise ProjectError("Multivariate covariance components are incomplete")
+            for matrix in matrices.values():
+                if (not isinstance(matrix, pd.DataFrame) or list(matrix.index) != scores or list(matrix.columns) != scores
+                        or not np.isfinite(matrix.to_numpy(dtype=float)).all()
+                        or not np.allclose(matrix, matrix.T, rtol=1e-12, atol=0)):
+                    raise ProjectError("Multivariate covariance score labels or symmetry are invalid")
+            for key in ("observed", "selected", "variance_components", "d_study", "component_diagnostics"):
+                empty_allowed = minque and not settings["selected_plan"] and not design["observed_n"] and key in ("selected", "d_study")
+                if not isinstance(record.get(key), pd.DataFrame) or (record[key].empty and not empty_allowed):
+                    raise ProjectError("Multivariate retained output is incomplete")
+    elif "multivariate" in result:
+        raise ProjectError("Multivariate results require score_cols settings")
     if result["available"]:
         counts = settings["selected_plan"] or design["observed_n"]
         selected = result.get("selected_plan", {})
-        if set(counts) != set(settings["random_facets"]) or any(selected.get(f) != n for f, n in counts.items()):
+        components_only = minque and not counts and design.get("planning_status") == "selected_plan_required"
+        if (not components_only and set(counts) != set(settings["random_facets"])) or any(selected.get(f) != n for f, n in counts.items()):
             raise ProjectError("Selected D plan does not match its settings")
+        if components_only and (selected or not result["d_study"].empty):
+            raise ProjectError("Unbalanced MINQUE(0) projections require an explicit selected plan")
     elif not result.get("reason_code"):
         raise ProjectError("Unavailable G/D results must retain their reason")
 
 
 def validate_analysis(analysis, *, _computed_fingerprint=None):
-    kinds = ("basic-rsm-jmle-v1", "mfrm-analysis-v2", "gd-analysis-v2")
+    kinds = ("basic-rsm-jmle-v1", "mfrm-analysis-v2", "gd-analysis-v2", "mfrm-analysis-v3")
     if not isinstance(analysis, dict) or analysis.get("kind") not in kinds:
         raise ProjectError("Unsupported desktop analysis kind")
     expected_fp = content_fingerprint(analysis) if _computed_fingerprint is None else _computed_fingerprint
@@ -292,11 +378,28 @@ def validate_analysis(analysis, *, _computed_fingerprint=None):
                 or any(not isinstance(value, str) for value in view.values())):
             raise ProjectError("Invalid saved view settings")
     if analysis["kind"] == "gd-analysis-v2":
+        if "anchor_sensitivity" in analysis:
+            raise ProjectError("Anchor sensitivity requires an MFRM calibration")
         _validate_gd_entry(analysis["input_data"], analysis.get("gd_analysis"))
         if analysis["analysis_id"] != analysis["gd_analysis"]["analysis_id"] or "result" in analysis:
             raise ProjectError("Standalone G/D identity or workflow does not match")
         return
     result = analysis["result"]
+    if analysis["kind"] == "mfrm-analysis-v3":
+        outputs = analysis.get("computed_outputs")
+        if (not isinstance(outputs, list) or any(not isinstance(name, str) for name in outputs)
+                or outputs != sorted(set(outputs))
+                or set(outputs) - {"measures", "agreement", "scorefile", "pca"}):
+            raise ProjectError("Invalid computed output record")
+        diag = analysis.get("diagnostics", {})
+        for name, present in {
+            "measures": isinstance(diag.get("measures"), pd.DataFrame) and not diag["measures"].empty,
+            "agreement": isinstance(diag.get("interrater_agreement"), dict) and bool(diag["interrater_agreement"]),
+            "scorefile": isinstance(analysis.get("scorefile"), pd.DataFrame),
+            "pca": bool(diag.get("pca_enabled")),
+        }.items():
+            if (name in outputs) != present:
+                raise ProjectError(f"Stored {name} does not match computed_outputs")
     cfg = result["config"]
     legacy = analysis["kind"] == "basic-rsm-jmle-v1"
     if (cfg.get("model") not in ("RSM", "PCM") or cfg.get("method") not in ("JMLE", "MML")
@@ -361,7 +464,8 @@ def validate_analysis(analysis, *, _computed_fingerprint=None):
         raise ProjectError("Supplementary analyses, anchors, PCA and rescaling require schema 2")
     if "compute_pca" in settings and settings["compute_pca"] is not True:
         raise ProjectError("Stored compute_pca flag must be True when present")
-    want_pca = bool(settings.get("compute_pca", False))
+    want_pca = ("pca" in analysis["computed_outputs"] if analysis["kind"] == "mfrm-analysis-v3"
+                else bool(settings.get("compute_pca", False)))
     diag = analysis.get("diagnostics")
     scope = analysis.get("scope")
     if isinstance(diag, dict) and "pca_enabled" in diag and bool(diag.get("pca_enabled")) != want_pca:
@@ -497,50 +601,47 @@ def validate_analysis(analysis, *, _computed_fingerprint=None):
                 raise ProjectError('Joint interaction evidence does not match its request')
         elif entry.get('status') not in ('unavailable', 'failed') or entry.get('record') is not None or not entry.get('reason'):
             raise ProjectError('Joint interaction must retain evidence or an explicit failure reason')
+    if "rater_dff" in analysis:
+        from mfrm_app import rater_dff
+        rater_dff.validate_entry(analysis, analysis["rater_dff"])
+    if "anchor_sensitivity" in analysis:
+        from mfrm_app import anchor_sensitivity
+        anchor_sensitivity.validate_entry(analysis, analysis["anchor_sensitivity"])
     if entry := analysis.get("gd_analysis"):
         _validate_gd_entry(data, entry)
 
 
 def serialize_project(analysis, *, compress=True, assign_fingerprint=False):
-    """Validate and encode an analysis snapshot in a single pass."""
+    """Validate and stream typed JSON without a full intermediate JSON tree."""
     if not isinstance(analysis, dict):
         validate_analysis(analysis)
-    pair_chunks = _encode_analysis_pairs(analysis)
-    fp = _fingerprint_from_pairs(pair_chunks)
+    fp = content_fingerprint(analysis)
     if assign_fingerprint:
         analysis["content_fingerprint"] = fp
-        fp_chunk = _json_bytes([_encode("content_fingerprint"), _encode(fp)])
-        replaced = False
-        for idx, (key, _) in enumerate(pair_chunks):
-            if key == "content_fingerprint":
-                pair_chunks[idx] = ("content_fingerprint", fp_chunk)
-                replaced = True
-                break
-        if not replaced:
-            pair_chunks.append(("content_fingerprint", fp_chunk))
     validate_analysis(analysis, _computed_fingerprint=fp)
-    tag = "ordered-dict" if type(analysis) is OrderedDict else "dict"
-    header = (
-        f'{{"format":{_json_bytes(FORMAT).decode("utf-8")},'
-        f'"schema_version":{SCHEMA_VERSION},"analysis":["{tag}",['
-    ).encode("utf-8")
-    footer = b"]]}"
-    uncompressed_len = len(header) + len(footer) + max(0, len(pair_chunks) - 1) + sum(len(c) for _, c in pair_chunks)
-    if uncompressed_len > MAX_UNCOMPRESSED_PROJECT_BYTES:
-        raise ProjectError("Project exceeds the uncompressed project size limit (512 MiB)")
-    if compress:
-        buf = io.BytesIO()
-        with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=6, mtime=0) as gz:
-            gz.write(header)
-            for idx, (_, chunk) in enumerate(pair_chunks):
-                if idx:
-                    gz.write(b",")
-                gz.write(chunk)
-            gz.write(footer)
-        data = buf.getvalue()
-    else:
-        body = b",".join(chunk for _, chunk in pair_chunks)
-        data = header + body + footer
+    schema = SCHEMA_VERSION if analysis["kind"] == "mfrm-analysis-v3" else 2
+    header = (f'{{"format":{_json_bytes(FORMAT).decode("utf-8")},'
+              f'"schema_version":{schema},"analysis":').encode("utf-8")
+    buf = io.BytesIO()
+    stream = gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=6, mtime=0) if compress else buf
+    uncompressed_len = 0
+    def write(chunk):
+        nonlocal uncompressed_len
+        uncompressed_len += len(chunk)
+        if uncompressed_len > MAX_UNCOMPRESSED_PROJECT_BYTES:
+            raise ProjectError("Project exceeds the uncompressed project size limit (512 MiB)")
+        stream.write(chunk)
+        if buf.tell() > MAX_PROJECT_BYTES:
+            raise ProjectError("Project exceeds the project size limit (128 MiB)")
+    try:
+        write(header)
+        for chunk in _encoded_chunks(analysis):
+            write(chunk)
+        write(b"}")
+    finally:
+        if compress:
+            stream.close()
+    data = buf.getvalue()
     if len(data) > MAX_PROJECT_BYTES:
         raise ProjectError("Project exceeds the project size limit (128 MiB)")
     return data
@@ -568,6 +669,16 @@ def write_bytes_atomic(path, data):
             temporary.unlink(missing_ok=True)
 
 
+def _read_bounded(stream, limit):
+    data = bytearray()
+    while len(data) <= limit:
+        chunk = stream.read(min(1024 * 1024, limit + 1 - len(data)))
+        if not chunk:
+            break
+        data.extend(chunk)
+    return data
+
+
 def _unpack_project_bytes(data):
     if not isinstance(data, (bytes, bytearray)):
         raise ProjectError("Project payload must be raw bytes")
@@ -577,7 +688,7 @@ def _unpack_project_bytes(data):
     if raw.startswith(GZIP_MAGIC):
         try:
             with gzip.GzipFile(fileobj=io.BytesIO(raw), mode="rb") as gz:
-                uncompressed = gz.read(MAX_UNCOMPRESSED_PROJECT_BYTES + 1)
+                uncompressed = _read_bounded(gz, MAX_UNCOMPRESSED_PROJECT_BYTES)
         except (OSError, EOFError, zlib.error) as exc:
             raise ProjectError(f"Malformed project: {exc}") from exc
         if len(uncompressed) > MAX_UNCOMPRESSED_PROJECT_BYTES:
@@ -623,12 +734,14 @@ def loads_project(data):
         document = json.loads(raw_json)
         if not isinstance(document, dict) or document.get("format") != FORMAT:
             raise ProjectError("Not an MFRM basic project")
-        if type(document.get("schema_version")) is not int or document["schema_version"] not in (1, SCHEMA_VERSION):
+        if type(document.get("schema_version")) is not int or document["schema_version"] not in (1, 2, SCHEMA_VERSION):
             raise ProjectError("Unsupported project schema version")
         if set(document) != {"format", "schema_version", "analysis"}:
             raise ProjectError("Unknown project document fields")
         analysis = _decode(document["analysis"])
         validate_analysis(analysis)
+        if document["schema_version"] < 3 and analysis["kind"] == "mfrm-analysis-v3":
+            raise ProjectError("Partial analyses require schema 3")
         if document["schema_version"] == 1 and analysis["kind"] != "basic-rsm-jmle-v1":
             raise ProjectError("Schema 1 supports only the original RSM/JMLE workflow")
         reason = input_refit_reason(analysis)
@@ -644,5 +757,5 @@ def loads_project(data):
 def load_project(path):
     """Restore a completed or failed result without running the estimator."""
     with Path(path).open("rb") as stream:
-        data = stream.read(MAX_PROJECT_BYTES + 1)
+        data = _read_bounded(stream, MAX_PROJECT_BYTES)
     return loads_project(data)

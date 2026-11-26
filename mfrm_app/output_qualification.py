@@ -68,47 +68,40 @@ def _unlinked_anchor_levels(data, config):
     Within-person differences remove that assumption. A target is design-linked
     exactly when its contrast is in the row space of those differences.
     """
-    from .engine import _constraint_expansion_matrix_for_identifiability
+    from scipy import sparse
+    from .engine import _constraint_free_labels_for_identifiability
+    from .design_rank import RowSpace, constraint_expansion
 
     facets = config["facet_names"]
     specs = config["facet_specs"]
-    dimension = sum(specs[f]["n_params"] for f in facets)
     observations = data[["Person", *facets]].drop_duplicates()
-    n_levels = sum(len(specs[f]["levels"]) for f in facets)
-    if max(len(observations), n_levels, dimension) * dimension > 5_000_000:
-        return None
-    design = np.zeros((len(observations), dimension))
-    targets = np.zeros((n_levels, dimension))
-    labels = []
-    column = row = 0
+    blocks, targets, labels = [], [], []
     for facet in facets:
         spec = specs[facet]
-        block = _constraint_expansion_matrix_for_identifiability(spec)
+        block = constraint_expansion(spec, _constraint_free_labels_for_identifiability(spec))
         levels = pd.Index(spec["levels"]).astype(str)
         indices = levels.get_indexer(observations[facet].astype(str))
         if (indices < 0).any():
             return None
-        cols = slice(column, column + block.shape[1])
-        design[:, cols] = config.get("facet_signs", {}).get(facet, -1) * block[indices]
-        targets[row:row + len(levels), cols] = block
+        blocks.append(config.get("facet_signs", {}).get(facet, -1) * block[indices])
+        targets.append(block)
         labels.extend((facet, level) for level in levels)
-        row += len(levels)
-        column = cols.stop
-    if not dimension:
-        return set()
+    design = sparse.hstack(blocks, format="csr")
+    targets = sparse.block_diag(targets, format="csr")
     people, names = pd.factorize(observations.Person.astype(str))
     _, first = np.unique(people, return_index=True)
-    differences = design - design[first][people]
-    _, singular, vh = np.linalg.svd(differences, full_matrices=False)
-    tol = max(differences.shape) * np.finfo(float).eps
-    basis = vh[singular > tol * singular[0]]
-
-    def unlinked(matrix):
-        residual = matrix - (matrix @ basis.T) @ basis
-        return np.linalg.norm(residual, axis=1) > tol * np.maximum(1., np.linalg.norm(matrix, axis=1))
-
-    unresolved = {label for label, held in zip(labels, unlinked(targets)) if held}
-    unresolved.update(("Person", name) for name, held in zip(names, unlinked(design[first])) if held)
+    space = RowSpace(design - design[first][people])
+    if not space.available:
+        return None
+    checked = {}
+    def unlinked(row):
+        row = row.tocsr()
+        key = (row.indices.tobytes(), row.data.tobytes())
+        if key not in checked:
+            checked[key] = not space.contains(row)
+        return checked[key]
+    unresolved = {label for i, label in enumerate(labels) if unlinked(targets[i])}
+    unresolved.update(("Person", name) for i, name in enumerate(names) if unlinked(design[first[i]]))
     return unresolved
 
 

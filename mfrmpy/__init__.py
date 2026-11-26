@@ -1,7 +1,6 @@
 """Public Python interface to the shared MFRM application calculations.
 
-Use :func:`check_design` and :func:`check_rater_contrast` for optimization-free
-preflight checks, :func:`analyze`
+Use :func:`check_design` and :func:`check_rater_contrast` for optimization-free preflight checks, :func:`analyze`
 for RSM/PCM or observed-score G/D studies, :func:`summary`, :func:`tables` and
 :func:`export_csv` for qualified results, and :func:`save_project` /
 :func:`load_project` for portable .mfrm archives. Raw retained results do not
@@ -17,17 +16,46 @@ from pathlib import Path
 
 import pandas as pd
 
-from mfrm_app import basic_analysis, desktop_analysis, exports, project
-from mfrm_app.desktop_analysis import check_design, run_analysis as analyze
-from mfrm_app.project import ProjectError, load_project, save_project
-from mfrm_app.rater_contrast import check_rater_contrast
+from mfrmpy._core import anchor_sensitivity, basic_analysis, desktop_analysis, exports, project, rater_dff
+from mfrmpy._core.anchor_sensitivity import with_anchor_sensitivity
+from mfrmpy._core.desktop_analysis import check_design, run_analysis as analyze
+from mfrmpy._core.project import ProjectError, load_project, save_project
+from mfrmpy._core.rater_contrast import check_rater_contrast
+from mfrmpy._core.rater_dff import prepare_rater_dff_data, with_rater_dff
 
-__version__ = "0.2.2"
+from ._category_design import category_design
+
+__version__ = "0.2.3.dev5"
 
 __all__ = [
-    "__version__", "analyze", "check_design", "check_rater_contrast", "summary", "tables", "export_csv",
+    "__version__", "analyze", "fit", "diagnose", "check_design", "check_rater_contrast", "category_design", "summary", "tables", "export_csv",
     "load_example", "save_project", "load_project", "ProjectError", "plot", "report_html",
+    "prepare_rater_dff_data", "with_rater_dff", "with_anchor_sensitivity",
+    "report_text", "export_out", "export_bundle",
 ]
+
+
+def fit(data, **settings):
+    """Fit RSM/PCM and return a saveable result before observation diagnostics.
+
+    Accepts the MFRM fit settings of analyze(), including column aliases.
+    Use diagnose() to add selected outputs without refitting.
+    """
+    return desktop_analysis.run_analysis(data, **settings, outputs=[])
+
+
+def diagnose(analysis, *, outputs=("measures", "agreement", "scorefile"),
+             interval_requests=None, bias_requests=None, joint_settings=None,
+             gd_settings=None, progress=None):
+    """Return an analysis with selected outputs added; keep the source intact.
+
+    outputs: measures (fit, reliability and fair averages), agreement,
+    scorefile, or pca. Already computed sections are reused.
+    """
+    completed = basic_analysis.complete_analysis(analysis, outputs=outputs, progress=progress)
+    return desktop_analysis.complete_requests(
+        completed, interval_requests=interval_requests, bias_requests=bias_requests,
+        joint_settings=joint_settings, gd_settings=gd_settings, progress=progress)
 
 _TABLE_ALIASES = {
     "estimates": "measures",
@@ -45,17 +73,23 @@ _TABLE_ALIASES = {
 _VALID_TABLE_KINDS = frozenset({
     "design", "measures", "categories", "steps", "connectivity", "reliability",
     "agreement", "agreement_summary", "pairwise_agreement", "rescaled",
-    "bias", "intervals", "joint", "gd", "gd_observed", "gd_selected",
+    "bias", "intervals", "joint", "rater_dff", "anchor_sensitivity", "gd", "gd_observed", "gd_selected",
     "gd_variance", "gd_d_study", "gd_metadata", "pca",
+    "gd_covariance", "gd_component_diagnostics", "fair_average",
+    "gd_estimation", "gd_component_support", "gd_kernel_gram", "gd_excluded_rows",
     *_TABLE_ALIASES,
 })
 
 
 def _canonical_table_kind(title: str) -> str:
+    if title in {"G/D: " + s for s in ("estimation", "component_support", "kernel_gram", "excluded_rows")}:
+        return "gd_" + title[5:]
     if title == "Analysis Design and Retained Ratings":
         return "design"
     if title == "Measures and Fit":
         return "measures"
+    if title == "Fair Average Scores":
+        return "fair_average"
     if title == "Observed Category Use":
         return "categories"
     if title == "Step Thresholds":
@@ -76,12 +110,21 @@ def _canonical_table_kind(title: str) -> str:
         return "intervals"
     if title.startswith("Joint interaction:") or title == "Joint model: main effects and steps":
         return "joint"
+    if title in (rater_dff.TITLE, rater_dff.OVERLAP, rater_dff.SCORES, rater_dff.PLAN, rater_dff.GAPS):
+        return "rater_dff"
+    if title in (anchor_sensitivity.TITLE, anchor_sensitivity.CONSTRAINTS, anchor_sensitivity.WORKS,
+                 anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS, anchor_sensitivity.LEVELS):
+        return "anchor_sensitivity"
     if title == "G/D: observed_coefficients":
         return "gd_observed"
     if title == "G/D: selected_d_study":
         return "gd_selected"
     if title == "G/D: variance_components":
         return "gd_variance"
+    if title == "G/D: covariance_components":
+        return "gd_covariance"
+    if title == "G/D: component_diagnostics":
+        return "gd_component_diagnostics"
     if title == "G/D: d_study":
         return "gd_d_study"
     if title == "G/D: metadata":
@@ -106,8 +149,17 @@ def _available_plot_kinds(analysis) -> list[str]:
         kinds.append("gd")
     if "joint_analysis" in analysis:
         kinds.append("joint")
+    if "rater_dff" in analysis:
+        kinds.append("rater_dff")
+    if "anchor_sensitivity" in analysis:
+        kinds.append("anchor_sensitivity")
     if (analysis.get("diagnostics") or {}).get("pca_enabled"):
         kinds.extend(["pca", "pca_loadings"])
+    if "computed_outputs" in analysis:
+        if "measures" not in analysis["computed_outputs"]:
+            kinds = [k for k in kinds if k not in {"pathway", "facet", "rater_severity", "bubble", "fair_average"}]
+        if "obs" not in analysis.get("diagnostics", {}):
+            kinds = [k for k in kinds if k not in {"unexpected", "residual_qq"}]
     return kinds
 
 
@@ -116,15 +168,13 @@ def tables(analysis, kind=None):
 
     Pass ``kind`` (e.g. ``"measures"``, ``"steps"``, ``"reliability"``,
     ``"agreement"``, ``"categories"``, ``"design"``, ``"bias"``, ``"intervals"``,
-    ``"joint"``, ``"gd"``, ``"pca"``) or an iterable of kinds to filter specific tables.
+    ``"joint"``, ``"rater_dff"``, ``"anchor_sensitivity"``, ``"gd"``, ``"pca"``) or an iterable of kinds to filter specific tables.
     """
-    all_tables = desktop_analysis.current_tables(analysis)
     if kind is None:
-        return all_tables
+        return desktop_analysis.current_tables(analysis)
     requested = [kind] if isinstance(kind, str) else list(kind)
     if not requested or any(not isinstance(k, str) or not k.strip() for k in requested):
         raise ValueError("kind must be a nonblank table kind string or iterable of strings")
-    title_lookup = {t.lower(): t for t, _, _ in all_tables}
     target_kinds: set[str] = set()
     target_titles: set[str] = set()
     for raw_k in requested:
@@ -133,18 +183,19 @@ def tables(analysis, kind=None):
         if mapped == "agreement":
             target_kinds.update({"agreement_summary", "pairwise_agreement"})
         elif mapped == "gd":
-            target_kinds.update({"gd_observed", "gd_selected", "gd_variance", "gd_d_study", "gd_metadata"})
+            target_kinds.update({"gd_observed", "gd_selected", "gd_variance", "gd_d_study", "gd_metadata",
+                                 "gd_covariance", "gd_component_diagnostics", "gd_estimation", "gd_component_support",
+                                 "gd_kernel_gram", "gd_excluded_rows"})
         elif mapped in _VALID_TABLE_KINDS:
             target_kinds.add(mapped)
-        elif norm_k in title_lookup:
-            target_titles.add(title_lookup[norm_k])
         else:
-            raise ValueError(f"Unknown table kind: {raw_k!r}")
-    return [
-        (t, f, n)
-        for t, f, n in all_tables
-        if _canonical_table_kind(t) in target_kinds or t in target_titles
-    ]
+            target_titles.add(norm_k)
+    selected = desktop_analysis.current_tables(
+        analysis, include=lambda title: _canonical_table_kind(title) in target_kinds or title.lower() in target_titles)
+    unknown = target_titles - {title.lower() for title, _, _ in selected}
+    if unknown:
+        raise ValueError(f"Unknown table kind: {sorted(unknown)[0]!r}")
+    return selected
 
 
 def summary(analysis) -> pd.DataFrame:
@@ -153,11 +204,38 @@ def summary(analysis) -> pd.DataFrame:
         project.validate_analysis(analysis)
         return pd.DataFrame([("AnalysisID", analysis["analysis_id"]), ("RunQualificationState", "refit_required"),
                              ("Reason", reason), ("SupportsFormalInference", "False")], columns=["Field", "Value"])
-    all_tables = desktop_analysis.current_tables(analysis)
-    avail_tables = ", ".join(dict.fromkeys(
-        ("gd" if k.startswith("gd_") else ("agreement" if k in {"agreement_summary", "pairwise_agreement"} else k))
-        for k in (_canonical_table_kind(t) for t, _, _ in all_tables)
-    ))
+    if "computed_outputs" in analysis:
+        project.validate_analysis(analysis)
+        available = ["design", "categories", "steps"]
+        done = analysis["computed_outputs"]
+        if "measures" in done:
+            available.extend(["measures", "reliability", "fair_average"])
+        if "agreement" in done:
+            available.append("agreement")
+        if "pca" in done:
+            available.append("pca")
+        settings = analysis["fit_settings"]
+        connectivity = analysis["result"].get("identifiability", {}).get("connectivity")
+        if (settings.get("anchors") or settings.get("group_anchors")
+                or isinstance(connectivity, pd.DataFrame) and not connectivity.empty and connectivity.Components.gt(1).any()):
+            available.append("connectivity")
+        if "measures" in done and (settings.get("umean", 0.), settings.get("uscale", 1.)) != (0., 1.):
+            available.append("rescaled")
+        for key, name in (("bias_analyses", "bias"), ("interval_analyses", "intervals"), ("gd_analysis", "gd"),
+                          ("joint_analysis", "joint"), ("rater_dff", "rater_dff"), ("anchor_sensitivity", "anchor_sensitivity")):
+            if analysis.get(key):
+                available.append(name)
+        avail_tables = ", ".join(available)
+    else:
+        all_tables = desktop_analysis.current_tables(analysis)
+        avail_tables = ", ".join(dict.fromkeys(
+            ("gd" if k.startswith("gd_") else ("agreement" if k in {"agreement_summary", "pairwise_agreement"} else k))
+            for k in (_canonical_table_kind(t) for t, _, _ in all_tables)
+        ))
+    order = ("design", "measures", "fair_average", "categories", "steps", "connectivity", "reliability",
+             "agreement", "rescaled", "bias", "intervals", "joint", "rater_dff", "anchor_sensitivity", "gd", "pca")
+    names = set(avail_tables.split(", ")) - {""}
+    avail_tables = ", ".join([k for k in order if k in names] + sorted(names-set(order)))
     avail_plots = ", ".join(_available_plot_kinds(analysis))
 
     if analysis.get("kind") == "gd-analysis-v2":
@@ -166,6 +244,7 @@ def summary(analysis) -> pd.DataFrame:
         gd_res = gd_entry["result"]
         avail = bool(gd_res.get("available"))
         obs_c = gd_res.get("observed_coefficients") or {}
+        ci = gd_res.get("coefficient_intervals", {})
         rows = [
             ("Workflow", "gd"),
             ("AnalysisID", str(analysis.get("analysis_id", ""))),
@@ -177,9 +256,35 @@ def summary(analysis) -> pd.DataFrame:
             ("ObservedG", f"{float(obs_c['G']):.3f}" if avail and pd.notna(obs_c.get("G")) else ""),
             ("ObservedPhi", f"{float(obs_c['Phi']):.3f}" if avail and pd.notna(obs_c.get("Phi")) else ""),
             ("SupportsFormalInference", "False"),
+            ("CoverageQualified", "False"),
+            ("CIEligible", str(any(ci.get("observed", {}).get(f"{k}_interval_status")
+                                   == "approximate_normal_delta" for k in ("G", "Phi")))),
+            ("IntervalMethod", ci.get("method", "not_requested")),
+            ("IntervalAssumption", ci.get("assumption", "none")),
+            ("IntervalScope", "pointwise_normal_random_effects_approximation" if ci else "none"),
+            ("GIntervalStatus", ci.get("observed", {}).get("G_interval_status", "withheld")),
+            ("PhiIntervalStatus", ci.get("observed", {}).get("Phi_interval_status", "withheld")),
             ("AvailableTables", avail_tables),
             ("AvailablePlots", avail_plots),
         ]
+        if "score_cols" in gd_cfg:
+            diagnostics = gd_res.get("multivariate", {}).get("component_diagnostics")
+            rows.extend([("ScoreColumns", ", ".join(gd_cfg["score_cols"])),
+                         ("ObservedCoefficientTarget", "Composite"),
+                         ("CompositeWeights", str(gd_cfg["composite_weights"])),
+                         ("ComponentTreatment", "clip_scalar_after_projection"),
+                         ("NonPSDComponents", ", ".join(diagnostics.loc[~diagnostics.PositiveSemidefinite, "Source"])
+                          if isinstance(diagnostics, pd.DataFrame) else "not_computed"),
+                         ("IntervalHoldReason", "Multivariate G/Phi intervals are not implemented or qualified.")])
+        if gd_cfg.get("method") == "minque0":
+            design, audit = gd_res["design"], gd_res.get("estimation", {})
+            rows = [row for row in rows if row[0] != "IntervalHoldReason"]
+            rows.extend([("Method", "minque0"), ("MissingPolicy", design["missing"]),
+                         ("OmittedRows", str(design["n_omitted_rows"])),
+                         ("Nesting", str(design["nesting"])), ("ComponentRank", str(audit.get("rank", "not_checked"))),
+                         ("PlanningStatus", design.get("planning_status", "unavailable")),
+                         ("ObservedCoefficientHoldReason", design.get("observed_coefficient_reason", "")),
+                         ("IntervalHoldReason", gd_res["bootstrap_ci"]["inference_reason"])])
         return pd.DataFrame(rows, columns=["Field", "Value"])
 
     result = analysis["result"]
@@ -211,6 +316,11 @@ def summary(analysis) -> pd.DataFrame:
         ("AvailableTables", avail_tables),
         ("AvailablePlots", avail_plots),
     ]
+    if "computed_outputs" in analysis:
+        rows.extend([
+            ("ComputedOutputs", ", ".join(analysis["computed_outputs"]) or "none"),
+            ("PendingOutputs", ", ".join(sorted({"measures", "agreement", "scorefile", "pca"} - set(analysis["computed_outputs"])))),
+        ])
     return pd.DataFrame(rows, columns=["Field", "Value"])
 
 
@@ -263,14 +373,18 @@ def _previous_export(manifest):
     return managed
 
 
-def export_csv(analysis, directory) -> list[Path]:
+def export_csv(analysis, directory, *, kind=None) -> list[Path]:
     """Write qualified CSV tables and a provenance manifest without refitting.
 
     Applies the same shared qualification rules as :func:`tables`, :func:`plot`
     and :func:`report_html`, while recording both current and save-time
     qualification reasons in ``00_manifest.csv``.
     """
-    qualified_tables = tables(analysis)
+    qualified_tables = tables(analysis, kind=kind)
+    return _export_csv(analysis, directory, qualified_tables)
+
+
+def _export_csv(analysis, directory, qualified_tables):
     out_dir = Path(directory)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -305,6 +419,12 @@ def export_csv(analysis, directory) -> list[Path]:
                 "Title": title,
                 "Rows": int(len(frame)),
                 "SupportsFormalInference": False,
+                "CoverageQualified": False,
+                "CIEligible": bool(title.startswith("G/D: ") and any(
+                    frame[column].eq("approximate_normal_delta").any()
+                    for column in ("G_interval_status", "Phi_interval_status") if column in frame)),
+                "IntervalBasis": (analysis.get("gd_analysis", {}).get("result", {}).get(
+                    "coefficient_intervals", {}).get("method", "not_requested") if title.startswith("G/D: ") else ""),
                 "RunQualificationState": str(current_snap.get("run_state", "gd_observed_scores" if not has_mfrm else "")),
                 "FormalHoldReason": str(current_snap.get("calibration_hold_reason", "")),
                 "ScreeningBlockReason": str(current_snap.get("screening_block_reason", "")),
@@ -346,7 +466,8 @@ def load_example():
 
 
 def plot(analysis, kind="wright", *, level=None, index=0, facet=None,
-         statistic="Infit", presentation="explained", gd_swap=False, top_n=40):
+         statistic="Infit", presentation="explained", gd_swap=False, top_n=40,
+         view="levels", style="forest", levels=None):
     """Return a Matplotlib Figure; install the ``figures`` extra first.
 
     Supported ``kind`` values include ``"wright"``, ``"pathway"`` (alias
@@ -355,14 +476,17 @@ def plot(analysis, kind="wright", *, level=None, index=0, facet=None,
     ``"step"`` (alias ``"thresholds"``), ``"bubble"``, ``"expected"`` (alias
     ``"tcc"``), ``"information"``, ``"fair_average"``, ``"unexpected"``,
     ``"residual_qq"``, ``"bias"``, ``"bias_ranked"``, ``"interval"``,
-    ``"joint"``, ``"gd"``, ``"pca"`` (alias ``"residual_pca"``), and
+    ``"joint"``, ``"rater_dff"``, ``"anchor_sensitivity"``, ``"gd"``, ``"pca"`` (alias ``"residual_pca"``), and
     ``"pca_loadings"``. PCM Wright maps and category curves require ``level``.
+    ``anchor_sensitivity`` defaults to a colored forest of the selected levels.
+    Choose ``view="difference"`` for the retained contrast, ``style="halfeye"``
+    for a labelled normal approximation, or ``levels=[...]`` for other levels.
     No estimator is rerun to draw results.
     """
-    from mfrm_app.desktop_outputs import analysis_figure
+    from mfrmpy._core.desktop_outputs import analysis_figure
     return analysis_figure(analysis, kind, level=level, index=index, facet=facet,
                            statistic=statistic, presentation=presentation,
-                           gd_swap=gd_swap, top_n=top_n)
+                           gd_swap=gd_swap, top_n=top_n, view=view, style=style, levels=levels)
 
 
 def report_html(analysis, *, pathway_facet=None, pathway_statistic="Infit",
@@ -373,7 +497,36 @@ def report_html(analysis, *, pathway_facet=None, pathway_statistic="Infit",
     and ``pathway_statistic`` to match :func:`plot`. Reports and .mfrm archives
     can contain the original ratings and identifiers; handle them as research data.
     """
-    from mfrm_app.desktop_outputs import report_html as render
+    from mfrmpy._core.desktop_outputs import report_html as render
     return render(analysis, pathway_facet=pathway_facet,
                   pathway_statistic=pathway_statistic, facet=facet, statistic=statistic,
                   presentation=presentation, language=language, gd_swap=gd_swap)
+
+
+def report_text(analysis, *, kind=None):
+    """Return a UTF-8-compatible plain-text report of selected qualified tables.
+
+    Includes every selected row, column and interpretation note; no refitting,
+    automatic diagnostics, or optional plotting dependency. Not a FACETS input file.
+    """
+    from ._reports import render_text
+    return render_text(analysis, tables(analysis, kind))
+
+
+def export_out(analysis, path, *, kind=None):
+    """Atomically write a plain-text .out (or .out.txt) report; return its Path."""
+    path = Path(path)
+    project.write_bytes_atomic(path, report_text(analysis, kind=kind).encode("utf-8"))
+    return path
+
+
+def export_bundle(analysis, path, *, kind=None, plots=None):
+    """Atomically write report.out, CSV tables, PNG/SVG plots and manifest.json.
+
+    plots=None selects available report figures; plots=[] needs no plotting extra.
+    Otherwise pass plot kinds or dictionaries of plot() options (e.g. PCM level).
+    kind filters tables before construction. Figures retain their explicit scope.
+    The ZIP contains reporting outputs, not a reopenable .mfrm project.
+    """
+    from ._reports import write_bundle
+    return write_bundle(analysis, path, kind=kind, plots=plots)

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mfrmpy"
 dynamic = ["version"]
-description = "Many-facet Rasch analysis and balanced generalizability studies"
+description = "Many-facet Rasch analysis and observed-score generalizability studies"
 readme = "docs/python_library.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -18,9 +18,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
-dependencies = ["numpy>=1.26", "pandas>=3.0", "scipy>=1.10", "pyarrow>=16.0"]
+dependencies = ["numpy>=1.26", "pandas>=2.2.3", "scipy>=1.10", "pyarrow>=16.0"]
 
 [project.optional-dependencies]
 figures = ["matplotlib>=3.8"]
@@ -37,20 +39,20 @@ Issues = "https://github.com/Ryuya-dot-com/mfrmpy/issues"
 path = "mfrmpy/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["mfrmpy", "mfrm_app"]
-exclude = ["mfrm_app/legacy_compat"]
+packages = ["mfrmpy"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"locales/en.json" = "mfrm_app/data/en.json"
 "examples/desktop_writing.csv" = "mfrmpy/data/writing.csv"
 
 [tool.hatch.build.targets.sdist]
 only-include = [
-    "mfrmpy", "mfrm_app", "locales/en.json", "examples/desktop_writing.csv",
+    "mfrmpy", "examples/desktop_writing.csv",
     "docs/python_library.md", "docs/analysis_scope.md", "CHANGELOG.md",
-    "tests/test_python_library.py", "LICENSE", "LICENSE_NOTICE.md", "pyproject.toml",
+    "tests/test_python_library.py", "tests/test_gd_designs.py", "tests/test_reports.py", "tests/test_annual_drift.py",
+    "tests/annual_drift.csv", "tests/diagnostic_reference.json", "tests/test_review_regressions.py", "tests/conftest.py",
+    "LICENSE", "LICENSE_NOTICE.md", "pyproject.toml",
 ]
-exclude = ["mfrm_app/legacy_compat"]
 
 [tool.pytest.ini_options]
-markers = ["figures: exercise Matplotlib figures or HTML output from the installed package"]
+pythonpath = ["."]
+markers = ["figures: exercise Matplotlib figures or HTML output", "installed: requires the candidate installed in isolated subprocesses"]

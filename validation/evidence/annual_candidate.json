@@ -1,0 +1,502 @@
+{
+  "version": "0.2.3.dev3",
+  "date": "2026-11-26",
+  "platform": "macOS-27.2.1-arm64-arm-64bit",
+  "python": "3.12.13",
+  "packages": {
+    "mfrmpy": "0.2.3.dev3",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "pyarrow": "26.0.1",
+    "matplotlib": "3.11.2",
+    "pytest": "9.2.0"
+  },
+  "artifacts": {
+    "mfrmpy-0.2.3.dev3.tar.gz": "07bb694f7c601425b308373f743ccd0e4a3265f3da572ea9d0029a9640193d9f",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "a585b5bf881174df0e73025e0602f3f8f13d1ecf006bd105f012574defbc35fc"
+  },
+  "tests": [
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "30",
+      "time": "43.392",
+      "timestamp": "2026-11-26T18:20:08.514932+09:00"
+    }
+  ],
+  "compatibility": [
+    {
+      "file": "old-022-mfrm.mfrm",
+      "content_fingerprint": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+      "analysis_id": "ana_4f2c92193d1692f26d8ea9b0",
+      "kind": "basic-rsm-jmle-v1"
+    },
+    {
+      "file": "old-022-gd.mfrm",
+      "content_fingerprint": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1",
+      "analysis_id": "gd_f9e71900cacc04784744b002",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "gd_interval_one.mfrm",
+      "content_fingerprint": "5a60081512bd1dc92268b581965224b23bc15bfa2b3930b8c7bc8205248fb0a7",
+      "analysis_id": "gd_4b616038cff727024b1c3a9b",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "gd_interval_two.mfrm",
+      "content_fingerprint": "4528b3f9b6ed354838b109ffc0dd1a3cb281073e2a8d8b1a819bea749f798517",
+      "analysis_id": "gd_23d6831c088b8f6c162cc1ea",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "multivariate_gd_one.mfrm",
+      "content_fingerprint": "751136fca15334b8da52fcc7c673f508a2e07140f74eaf80a3b8ae89095633ce",
+      "analysis_id": "gd_d7081ffb636105ffebaef4eb",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "multivariate_gd_two.mfrm",
+      "content_fingerprint": "55747aed8caf7c7c60424a7658576293d2d356f5704a793db61c128d59d4a631",
+      "analysis_id": "gd_926fd050d4c19e7109a87f42",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "unbalanced_gd_nested_missing.mfrm",
+      "content_fingerprint": "cb3ff73ce5337ad90978c2140e312175956cfe670aa3a0e990ef816f7d2b359b",
+      "analysis_id": "gd_280e986a3a053bd94d86ea4b",
+      "kind": "gd-analysis-v2"
+    },
+    {
+      "file": "m3_anchor_interval_example.mfrm",
+      "content_fingerprint": "c4b1b2401746b3a8ac7d3be5306e81c6aa42d39b78c604c4c6a1a73a0e6d9e05",
+      "analysis_id": "ana_2367782ff1ca709163d80d53",
+      "kind": "mfrm-analysis-v2"
+    },
+    {
+      "file": "m3_shared_anchor_example.mfrm",
+      "content_fingerprint": "ed1456339bd80ae53a3088f9f712946fad813ae22cc1cca9f896202dbcbea438",
+      "analysis_id": "ana_7a4b858e67a444e78200088f",
+      "kind": "mfrm-analysis-v2"
+    },
+    {
+      "file": "m5a_dff_sd_difference.mfrm",
+      "content_fingerprint": "a7c3fa328ec3ba736924fdf48067ab30cc5034ccf603a61547831c5386f3321e",
+      "analysis_id": "ana_73857088248fe47909b3fd32",
+      "kind": "mfrm-analysis-v2"
+    },
+    {
+      "file": "m5a_dff_missing_shared_works.mfrm",
+      "content_fingerprint": "9e52c5fa49db96b256dddbe20bacbb2828b4334e68f17c00bd6ca6040ce30ae9",
+      "analysis_id": "ana_82f54ac496a754009d463308",
+      "kind": "mfrm-analysis-v2"
+    },
+    {
+      "file": "m5b_anchor_sensitivity_example.mfrm",
+      "content_fingerprint": "1c1ba8546b4c66b44f2e320a4b6f4e66f69cc1fcf5ef734c898214a1e8e06157",
+      "analysis_id": "ana_9811baed2cc6fe647da4013d",
+      "kind": "mfrm-analysis-v2"
+    }
+  ],
+  "annual_comparison": "annual_api/comparison.json",
+  "dff_examples": "dff_candidate_dev3",
+  "scope": "Installed-wheel verification and seven successful CI configurations, each with 102 core and 21 figure/HTML tests. All final CI artifacts match local hashes. Numerical verification reuses 18 independent annual calculations and retained coverage studies. DFF CML reuses its saved result. All 12 legacy archives reopened without fitting. TestPyPI/PyPI publication and shared Web/desktop validation remain incomplete.",
+  "identical_installed_python_files": 107,
+  "upgrade": {
+    "from_version": "0.2.2",
+    "to_version": "0.2.3.dev3",
+    "previous_wheel_sha256": "f2430c6a8bdaf5e3c98876081e2fbb3041df2081d8c49fdbfd8999a016d89bed",
+    "preserved_fingerprints": {
+      "mfrm": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+      "gd": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1"
+    },
+    "matplotlib_installed": false,
+    "pip_check": "passed",
+    "reopen_and_export": "MFRM and G/D projects retained; resave, text and CSV ZIP succeeded with refitting disabled",
+    "candidate_wheel_sha256": "a585b5bf881174df0e73025e0602f3f8f13d1ecf006bd105f012574defbc35fc"
+  },
+  "initial_artifacts": {
+    "mfrmpy-0.2.3.dev3.tar.gz": "5fff1c53e58c02b72bf3dbe0f31ff1f4039effa62466bd79d26485f978a58406",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "340c0da7493fbaee0fa9513e9c4ca19ccb2388ded31ed5e76ece967969a1212c"
+  },
+  "initial_ci": {
+    "run_id": 45792177486,
+    "commit": "bc101e821e86984bc9f17cde36015195df4667d8",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45792177486",
+    "jobs": [
+      {
+        "id": 139813681610,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "results": []
+      },
+      {
+        "id": 139813834255,
+        "name": "test (macos-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:29:44.3563730Z 102 passed, 21 deselected in 84.01s (0:01:24)",
+          "2026-11-26T09:31:00.1880990Z 21 passed, 102 deselected in 72.23s (0:01:12)"
+        ]
+      },
+      {
+        "id": 139813834276,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:30:11.8381578Z 102 passed, 21 deselected in 111.38s (0:01:51)",
+          "2026-11-26T09:31:22.3220389Z 21 passed, 102 deselected, 3 warnings in 66.51s (0:01:06)"
+        ]
+      },
+      {
+        "id": 139813834367,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:31:47.0922974Z 102 passed, 21 deselected in 203.30s (0:03:23)",
+          "2026-11-26T09:33:49.4570636Z 21 passed, 102 deselected, 3 warnings in 117.74s (0:01:57)"
+        ]
+      },
+      {
+        "id": 139813834412,
+        "name": "test (macos-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:30:14.2812470Z 102 passed, 21 deselected in 111.50s (0:01:51)",
+          "2026-11-26T09:32:12.7476720Z 21 passed, 102 deselected in 114.75s (0:01:54)"
+        ]
+      },
+      {
+        "id": 139813834422,
+        "name": "test (windows-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:31:14.6926035Z FAILED test_annual_drift.py::test_annual_contrast_matches_independent_saved_calculation - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6926690Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[observed] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6927308Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[no_shared_works] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6927967Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6928660Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6929340Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6930262Z FAILED test_reports.py::test_pending_diagnostics_and_gd_report - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:31:14.6930656Z 7 failed, 95 passed, 21 deselected in 142.24s (0:02:22)\r"
+        ]
+      },
+      {
+        "id": 139813834450,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:32:04.6399920Z 102 passed, 21 deselected in 220.53s (0:03:40)",
+          "2026-11-26T09:34:22.1932087Z 21 passed, 102 deselected, 16 warnings in 133.11s (0:02:13)"
+        ]
+      },
+      {
+        "id": 139813834557,
+        "name": "test (windows-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:32:43.2531499Z FAILED test_annual_drift.py::test_annual_contrast_matches_independent_saved_calculation - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2532773Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[observed] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2534009Z FAILED test_python_library.py::test_group_dff_saved_request_tables_and_csv[no_shared_works] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2535681Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2537116Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2538513Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2539970Z FAILED test_reports.py::test_pending_diagnostics_and_gd_report - OSError: [Errno 9] Bad file descriptor\r",
+          "2026-11-26T09:32:43.2540715Z 7 failed, 95 passed, 21 deselected in 223.24s (0:03:43)\r"
+        ]
+      },
+      {
+        "id": 139817205515,
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "skipped",
+        "results": []
+      }
+    ]
+  },
+  "zip_sync_fix": {
+    "reason": "Windows fsync failed with a read-only descriptor. Open the completed ZIP as r+b before synchronizing; retain atomic replacement and failure cleanup.",
+    "unchanged": "All numerical code, tests, metadata and retained examples match the first candidate. Wheel differences are only mfrmpy/_reports.py and its RECORD checksum.",
+    "test": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "17",
+      "time": "20.451",
+      "timestamp": "2026-11-26T18:37:18.628906+09:00"
+    },
+    "sync_only_test": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "17",
+      "time": "20.939",
+      "timestamp": "2026-11-26T18:34:34.880520+09:00"
+    },
+    "newline_fix": "Write ZIP report.out as UTF-8 bytes, like standalone export_out, to avoid Windows newline translation.",
+    "changed_wheel_members": [
+      "mfrmpy/_reports.py",
+      "mfrmpy-0.2.3.dev3.dist-info/RECORD"
+    ]
+  },
+  "sync_only_artifacts": {
+    "mfrmpy-0.2.3.dev3.tar.gz": "1fa1a39768997330bea16a0fa1f128bd882e20587c72913be2149092ff8b1a7e",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "00e6974563c6920e7907376023ec64bd6150cbab310fdc425b5ffa98076ea064"
+  },
+  "warnings": [
+    "Linux CI lacks a CJK font: three missing-glyph warnings for Japanese IDs in figures; UTF-8 text and CSV checks pass. Japanese plot labels require an installed font containing those glyphs.",
+    "Minimum Matplotlib 3.8.0 with pyparsing 3.3.3 emits 13 upstream deprecation warnings."
+  ],
+  "sync_only_ci": {
+    "run_id": 45793404332,
+    "commit": "66626df7abbdafd48f34cf5969376c6b62f3c171",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45793404332",
+    "jobs": [
+      {
+        "id": 139817835048,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "results": []
+      },
+      {
+        "id": 139818002391,
+        "name": "test (windows-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:40:28.4304940Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4392357Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4478984Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4480006Z 3 failed, 99 passed, 21 deselected in 219.47s (0:03:39)\r"
+        ]
+      },
+      {
+        "id": 139818002419,
+        "name": "test (macos-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:40:27.3074920Z 102 passed, 21 deselected in 231.72s (0:03:51)",
+          "2026-11-26T09:42:57.9755800Z 21 passed, 102 deselected in 141.55s (0:02:21)"
+        ]
+      },
+      {
+        "id": 139818002443,
+        "name": "test (macos-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:37:46.2044900Z 102 passed, 21 deselected in 93.53s (0:01:33)",
+          "2026-11-26T09:38:56.3809260Z 21 passed, 102 deselected in 67.11s (0:01:07)"
+        ]
+      },
+      {
+        "id": 139818002465,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:39:41.8004181Z 102 passed, 21 deselected in 202.83s (0:03:22)",
+          "2026-11-26T09:41:43.0110955Z 21 passed, 102 deselected, 3 warnings in 116.73s (0:01:56)"
+        ]
+      },
+      {
+        "id": 139818002505,
+        "name": "test (windows-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:40:39.2851663Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.2917847Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.3163840Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.3165422Z 3 failed, 99 passed, 21 deselected in 231.74s (0:03:51)\r"
+        ]
+      },
+      {
+        "id": 139818002743,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:38:34.2326653Z 102 passed, 21 deselected in 130.02s (0:02:10)",
+          "2026-11-26T09:39:54.8325439Z 21 passed, 102 deselected, 16 warnings in 77.08s (0:01:17)"
+        ]
+      },
+      {
+        "id": 139818002935,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:38:44.5278384Z 102 passed, 21 deselected in 144.02s (0:02:24)",
+          "2026-11-26T09:40:13.5634511Z 21 passed, 102 deselected, 3 warnings in 84.98s (0:01:24)"
+        ]
+      },
+      {
+        "id": 139821753389,
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "skipped",
+        "results": []
+      }
+    ]
+  },
+  "final_ci": {
+    "run_id": 45794736352,
+    "commit": "c0cf6b74d48b6ce2f88a451f358777cd141e3d6a",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45794736352",
+    "conclusion": "success",
+    "artifact": {
+      "id": 15103603631,
+      "name": "python-dist",
+      "size_in_bytes": 1813641,
+      "url": "https://api.github.com/repos/Ryuya-dot-com/mfrmpy/actions/artifacts/15103603631",
+      "archive_download_url": "https://api.github.com/repos/Ryuya-dot-com/mfrmpy/actions/artifacts/15103603631/zip",
+      "expired": false,
+      "created_at": "2026-11-26T09:44:36Z",
+      "expires_at": "2027-02-24T09:44:15Z",
+      "updated_at": "2026-11-26T09:44:36Z",
+      "digest": "sha256:3925dbffdcfe6694216cff72effe9cd030010074d1e39afb0ddaed92bb1b142c",
+      "workflow_run": {
+        "id": 45794736352,
+        "repository_id": 1461217222,
+        "head_repository_id": 1461217222,
+        "head_branch": "development/annual-drift-dev3",
+        "head_sha": "c0cf6b74d48b6ce2f88a451f358777cd141e3d6a"
+      }
+    },
+    "identical_to_local_artifacts": true,
+    "jobs": [
+      {
+        "id": 139822380012,
+        "name": "build",
+        "conclusion": "success",
+        "results": [],
+        "python": "2026-11-26T09:44:24.9328603Z Successfully set up CPython (3.12.16)",
+        "dependencies": [
+          "2026-11-26T09:44:31.8138442Z Successfully installed Pygments-2.21.0 SecretStorage-3.5.0 build-1.6.1 certifi-2026.11.20 cffi-2.1.1 charset_normalizer-3.5.3 cryptography-50.0.2 docutils-0.23 id-1.6.1 idna-3.20 jaraco.classes-3.4.0 jaraco.context-6.1.2 jaraco.functools-4.6.0 jeepney-0.9.0 keyring-25.7.0 markdown-it-py-4.3.0 mdurl-0.1.2 more-itertools-11.2.1 nh3-0.3.8 packaging-26.4 pycparser-3.12 pyproject_hooks-1.3.3 readme-renderer-46.0 requests-2.34.2 requests-toolbelt-1.0.0 rfc3986-2.0.0 rich-15.0.0 twine-7.0.0 urllib3-2.8.0"
+        ]
+      },
+      {
+        "id": 139822571504,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:24.7355493Z 102 passed, 21 deselected in 144.97s (0:02:24)",
+          "2026-11-26T09:49:00.4730908Z 21 passed, 102 deselected, 3 warnings in 91.24s (0:01:31)"
+        ],
+        "python": "2026-11-26T09:44:43.8209788Z Successfully set up CPython (3.12.16)",
+        "dependencies": [
+          "2026-11-26T09:44:59.1707516Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:47:28.8716046Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571528,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:27.7019753Z 102 passed, 21 deselected in 204.93s (0:03:24)",
+          "2026-11-26T09:50:30.0900231Z 21 passed, 102 deselected, 3 warnings in 117.52s (0:01:57)"
+        ],
+        "python": "2026-11-26T09:44:44.2145025Z Successfully set up CPython (3.11.18)",
+        "dependencies": [
+          "2026-11-26T09:45:02.0100688Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:48:32.2428329Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571544,
+        "name": "test (windows-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:46.3311935Z 102 passed, 21 deselected in 148.05s (0:02:28)",
+          "2026-11-26T09:49:35.7251208Z 21 passed, 102 deselected in 101.26s (0:01:41)"
+        ],
+        "python": "2026-11-26T09:44:46.0279265Z Successfully set up CPython (3.11.9)",
+        "dependencies": [
+          "2026-11-26T09:45:17.4681765Z Successfully installed colorama-0.4.6 iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:47:54.0524165Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571591,
+        "name": "test (windows-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:49:13.0144144Z 102 passed, 21 deselected in 222.89s (0:03:42)",
+          "2026-11-26T09:51:38.7929226Z 21 passed, 102 deselected in 136.49s (0:02:16)"
+        ],
+        "python": "2026-11-26T09:44:47.5695490Z Successfully set up CPython (3.12.10)",
+        "dependencies": [
+          "2026-11-26T09:45:29.0084963Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:49:21.8322748Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571602,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:34.2991661Z 102 passed, 21 deselected in 216.71s (0:03:36)",
+          "2026-11-26T09:50:50.1397581Z 21 passed, 102 deselected, 16 warnings in 131.47s (0:02:11)"
+        ],
+        "python": "2026-11-26T09:44:42.4945971Z Successfully set up CPython (3.11.18)",
+        "dependencies": [
+          "2026-11-26T09:44:54.8917439Z Successfully installed numpy-1.26.0 pandas-3.0.0 pyarrow-16.0.0 python-dateutil-4.0.0 scipy-1.10.0 tzdata-2026.6",
+          "2026-11-26T09:44:57.0560528Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 packaging-26.4 pluggy-1.7.0 pygments-2.21.0 pytest-9.2.0",
+          "2026-11-26T09:48:38.3418152Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.8.0 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571664,
+        "name": "test (macos-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:05.4598820Z 102 passed, 21 deselected in 174.07s (0:02:54)",
+          "2026-11-26T09:50:14.6845010Z 21 passed, 102 deselected in 123.31s (0:02:03)"
+        ],
+        "python": "2026-11-26T09:44:47.8736600Z Successfully set up CPython (3.11.9)",
+        "dependencies": [
+          "2026-11-26T09:45:10.1939720Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:48:10.7145680Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571686,
+        "name": "test (macos-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:49.4885950Z 102 passed, 21 deselected in 165.17s (0:02:45)",
+          "2026-11-26T09:50:06.1020440Z 21 passed, 102 deselected in 128.94s (0:02:08)"
+        ],
+        "python": "2026-11-26T09:44:45.6318120Z Successfully set up CPython (3.12.10)",
+        "dependencies": [
+          "2026-11-26T09:45:03.3385180Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:47:56.3484410Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139826322190,
+        "name": "publish",
+        "conclusion": "skipped",
+        "results": [],
+        "dependencies": []
+      }
+    ]
+  }
+}

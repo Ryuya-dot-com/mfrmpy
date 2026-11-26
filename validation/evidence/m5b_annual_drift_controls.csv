@@ -1,0 +1,5 @@
+case,ratings,group_origin_link,r3_observed_both_years,individual_supported,panel_mean_supported
+shared_same_panel,240,observed,True,True,True
+shared_replaced_panel,240,observed,False,False,True
+no_shared_replaced_panel,240,common_location_only,False,False,False
+same_recording_mode_changes,240,unsupported,True,False,False

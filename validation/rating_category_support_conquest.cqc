@@ -1,0 +1,12 @@
+title Category use and missing ratings;
+set lconstraints=items,seed=2,nodefilter=0,exit_on_error=yes,addextension=no;
+datafile cq-ratings.csv ! filetype=csv,responses=Score,pid=Person,keeps=Item Rater,width=1,pidwidth=4,keepswidth=2,header=yes;
+codes 0,1,2,3,4;
+model Item + Rater + step;
+import anchor_covariance << covariance.txt;
+import anchor_beta << mean.txt;
+estimate ! method=quadrature,nodes=161,minnode=-8,maxnode=8,fit=no,stderr=empirical,convergence=0.000000001,deviancechange=0.00000000001,iterations=1000;
+show cases ! estimates=eap, filetype=csv >> cq-people.csv;
+show cases ! estimates=wle, filetype=csv >> cq-wle.csv;
+export history >> cq-history.txt;
+quit;

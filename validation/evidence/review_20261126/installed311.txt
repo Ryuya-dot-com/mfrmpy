@@ -1,0 +1,26 @@
+...........................                                              [100%]
+=============================== warnings summary ===============================
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+  /private/tmp/mfrmpy-review-pd22/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+    parse = parser.parseString(pattern)
+
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+  /private/tmp/mfrmpy-review-pd22/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+    parser.resetCache()
+
+test_annual_drift.py::test_annual_figure_and_bundle_use_retained_intervals
+  /private/tmp/mfrmpy-review-pd22/lib/python3.11/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+    ParserElement.enablePackrat()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+27 passed, 114 deselected, 13 warnings in 43.88s

@@ -1,0 +1,7 @@
+case,kind,rater,item,truth,ratings,screen_estimate,screen_se,screen_lr_p,screen_lr,screen_use,screen_reason,joint_estimate,joint_se,joint_lower,joint_upper,joint_p,joint_holm_p,joint_reason,recomputed_lr,recomputed_se
+all_observed,cell,R3,I1,0.5,19.0,0.6218998378713883,0.2721091730645242,0.020321163998238165,5.3840917228042215,screening_only,stat.mml_fixed_sd.numerical_qualification_pending,0.8108812107569437,0.22199331417341855,0.3757823101683583,1.245980111345529,0.00025946896129515215,0.003373096496836978,,5.384091722804235,0.2721091730645242
+all_observed,contrast,,,1.0,,1.2035192228035003,,,,diagnostic_difference,,1.3233719858070412,0.38978418089722666,0.5594090295050316,2.0873349421090506,0.0006859343732240534,0.00823121247868864,,,
+one_absent,cell,R3,I1,0.5,0.0,,,,,withheld,Cell absent,1.5303531032787,0.9917755756892529,-0.41349130581871396,3.474197512376114,0.12282016124250292,1.0,,,
+one_absent,contrast,,,1.0,,,,,,withheld,At least one diagnostic cell unavailable,2.396815603567965,1.5007046973448372,-0.5445115546579982,5.338142761793929,0.1102374583293418,1.0,,,
+two_absent,cell,R3,I1,0.5,0.0,,,,,withheld,Cell absent,,,,,,,Joint interaction design is not identified; no intervals or p-values,,
+two_absent,contrast,,,1.0,,,,,,withheld,At least one diagnostic cell unavailable,,,,,,,Joint interaction design is not identified; no intervals or p-values,,

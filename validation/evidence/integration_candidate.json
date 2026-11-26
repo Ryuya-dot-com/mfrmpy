@@ -1,0 +1,1243 @@
+{
+  "date": "2026-11-26",
+  "version": "0.2.3.dev1",
+  "published": false,
+  "artifacts": {
+    "mfrmpy-0.2.3.dev1.tar.gz": "51ae2a224409b6446ae3db56acc720b28faa85a0fc2fe162c5c2fced3343537e",
+    "mfrmpy-0.2.3.dev1-py3-none-any.whl": "bb4fcaa6a34fbc1009a69f55d6eb02a59df9936dc65ceced56a63dfd37821dd4"
+  },
+  "source_sha256": {
+    ".github/workflows/python-package.yml": "11a7f76f0876e5fe3ffbdd69d3203970d80074496f1f8a26d4d5305f10ae373a",
+    "pyproject.toml": "91d4f8e353986365509c4189486a98b07add8217a3c100c4374db1e71ee54649",
+    "mfrmpy/__init__.py": "e50087fe55b8590c7c081826ecd93c061b203f0b714af434c68a5ed3799ee076",
+    "tests/test_python_library.py": "dc77118041ccb2e19e863530e2cf705d70493d6e65afcf7e956419cc88e6b413",
+    "tests/test_gd_designs.py": "cfd4e2450d833528180793516971aaf41bd37a29275b17187a2b644930b3bc04",
+    "docs/python_library.md": "8df51025102864759997ee2ec4db154fac9b054602e27b8e4f0a45dd6cd70e51",
+    "CHANGELOG.md": "339d4e852b2326622ca6ea74b02fc9b720429cf3ba8ee38f11fe300f84e05a4c",
+    "README.md": "2716dcd4983b68c43ee6d2fd384e7dc0ad7c9645203501a189ea7990f1a4c087"
+  },
+  "build": {
+    "rebuilt_wheel_from_sdist": "byte-identical",
+    "packaged_python_files_matching_checkout": 106,
+    "twine_check": "wheel and sdist passed"
+  },
+  "numerical_evidence_reuse": {
+    "previous_wheel_sha256": "2f9ff4eb0edf0c8476d93fd6652a11afe159746465297eb99023fc6354c2045e",
+    "comparison": "All 106 Python files identical except __version__ in mfrmpy/__init__.py; no estimator, interval or rank algorithm changes.",
+    "records": [
+      "gd_coefficient_intervals.json",
+      "multivariate_gd.json",
+      "unbalanced_gd.json"
+    ]
+  },
+  "old_release": {
+    "version": "0.2.2",
+    "base": "ad3748f3e6d6e1bcb6cdedddac3c916a82a4a9d6",
+    "release_patch": "validation/evidence/m1_release_candidate.patch",
+    "patch_sha256": "c08cdfd553b3c5b968341d6287662ca4b7021e8c23477db713cb3811006d8395",
+    "reconstructed_wheel_sha256": "f2430c6a8bdaf5e3c98876081e2fbb3041df2081d8c49fdbfd8999a016d89bed",
+    "identity": "Matches the published wheel SHA-256 recorded in validation/m1_release_candidate.md; not downloaded from PyPI in this run."
+  },
+  "checks": [
+    {
+      "environment": {
+        "python": "3.11.14",
+        "platform": "macOS-27.2.1-arm64-arm-64bit",
+        "machine": "arm64",
+        "executable": "/private/tmp/mfrmpy-integration-20261126/py311-min/bin/python",
+        "module_path": "/private/tmp/mfrmpy-integration-20261126/py311-min/lib/python3.11/site-packages/mfrmpy/__init__.py",
+        "packages": {
+          "mfrmpy": "0.2.3.dev1",
+          "numpy": "1.26.0",
+          "pandas": "3.0.0",
+          "scipy": "1.10.0",
+          "pyarrow": "16.0.0",
+          "pytest": "9.2.0",
+          "matplotlib": "3.8.0",
+          "pyparsing": "3.3.3"
+        }
+      },
+      "installation": "0.2.2 to 0.2.3.dev1 upgrade",
+      "dependencies": "declared minima",
+      "core_without_matplotlib": true,
+      "dependency_check": "passed before and after installing plotting extra",
+      "runs": [
+        {
+          "phase": "core",
+          "passed": 88,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_dense_kernels_and_expectations[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_dense_kernels_and_expectations[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_balanced_matches_anova[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_balanced_matches_anova[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_missing_and_invalid_inputs"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_unidentified_and_local_nested_labels[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_unidentified_and_local_nested_labels[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_retained_outputs_and_components_only[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_retained_outputs_and_components_only[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_boundaries_and_archive_validation"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_agreement_distinguishes_context_ids_containing_separator"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_import_keeps_ui_and_plotting_optional"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_example_is_bundled_and_not_shared_mutable_state"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unidentified_measure_rows_are_withheld_with_a_reason[Facet]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unidentified_measure_rows_are_withheld_with_a_reason[Level]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_sensitivity_retains_constraints_and_holds"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_interval_bases_and_sd_persist"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_shared_anchor_calibration_links_events_and_reopens"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_joint_interaction_and_its_qualified_table[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_joint_interaction_and_its_qualified_table[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_saved_request_tables_and_csv[observed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_saved_request_tables_and_csv[no_shared_works]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_probabilities_and_severity_contrasts[RSM]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_probabilities_and_severity_contrasts[PCM]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_anchor_origins_and_input_checks"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_planning_and_unavailable_design[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_planning_and_unavailable_design[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_covariance_matches_gaussian_quadratic_forms[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_covariance_matches_gaussian_quadratic_forms[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_interval_boundaries_and_explicit_assumptions"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_intervals_remain_conditional_on_fixed_composite"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_gd_matches_scores_and_direct_composite[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_gd_matches_scores_and_direct_composite[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_covariance_full_projection_and_units[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_covariance_full_projection_and_units[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_input_support_and_fixed_composite"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_numeric_range_and_archive_identity"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_corrupt_project_is_not_accepted"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NA-python]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NA-pyarrow]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NaN-python]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NaN-pyarrow]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_cross_engine_parity_with_mfrmr_030_and_tam_4325"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_public_score_preparation_and_preflight"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_labels_and_unknown_rank"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_paths_and_confounded_tasks"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_checks_score_use_and_support_after_endpoint_works"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_eight_ratings_against_work_cell_null_space[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_eight_ratings_against_work_cell_null_space[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_distinguishes_fixed_values_and_anchor_dependent_links"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_all_eight_rating_allocations"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_labels_missing_cells_and_size_limit"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_planned_assignments_and_structural_restoration"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[ratings]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[roster]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[combined]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_distinguishes_different_works_with_the_same_local_number"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_prepare_rater_dff_data_preserves_labels_and_missing_ids"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_zero_object_variance_by_coefficient[scores0-expected0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_zero_object_variance_by_coefficient[scores1-expected1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[RSM-JMLE]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[PCM-JMLE]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[RSM-MML]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_selected_outputs_reuse_observations_and_probabilities"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_reduced_row_space_matches_dense_constraints"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[none]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[person_fixed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[person_mean]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[facet_mean]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[centered_person]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_connected_design_audits_without_person_dense_matrix"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_streamed_project_keeps_encoding_fingerprint_and_limits"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_partial_anchor_links_only_estimable_levels"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_export_switches_complete_sets_and_preserves_user_files"
+            }
+          ],
+          "junit_sha256": "0ebe684a21b5ef0b62477e4e39ef14835784949da93eb56e1f457361c989a7e5"
+        },
+        {
+          "phase": "figures",
+          "passed": 17,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_figures_and_html[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_figures_and_html[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_figures_and_html_from_archive[observed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_figures_and_html_from_archive[no_shared_works]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_normal_intervals_outputs_and_roundtrip[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_normal_intervals_outputs_and_roundtrip[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_outputs_roundtrip_and_boundary_components"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_boundary_exclusion_counts_low_df_fit_guards_and_legacy_reload"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_diagnostic_plots_coordinates_exclusions_and_qualification"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_boundary_scenarios_all_ones_category_gaps_disconnected_mml_and_zero_df"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_api_consolidation_check_design_summary_table_kinds_and_aliases"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_partial_outputs_summary_exports_and_pca"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_profile_respects_positive_direction_and_facet_role"
+            }
+          ],
+          "junit_sha256": "f6f10ca3d055318fa042286bf38495bed98e579a1e41b96c76c55fb21345d9c6"
+        }
+      ],
+      "figure_warnings": "13 PyparsingDeprecationWarning messages from Matplotlib 3.8.0 with pyparsing 3.3.3",
+      "archive_checks": [
+        {
+          "file": "old-022-mfrm.mfrm",
+          "content_fingerprint": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+          "analysis_id": "ana_4f2c92193d1692f26d8ea9b0",
+          "kind": "basic-rsm-jmle-v1"
+        },
+        {
+          "file": "old-022-gd.mfrm",
+          "content_fingerprint": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1",
+          "analysis_id": "gd_f9e71900cacc04784744b002",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_one.mfrm",
+          "content_fingerprint": "5a60081512bd1dc92268b581965224b23bc15bfa2b3930b8c7bc8205248fb0a7",
+          "analysis_id": "gd_4b616038cff727024b1c3a9b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_two.mfrm",
+          "content_fingerprint": "4528b3f9b6ed354838b109ffc0dd1a3cb281073e2a8d8b1a819bea749f798517",
+          "analysis_id": "gd_23d6831c088b8f6c162cc1ea",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_one.mfrm",
+          "content_fingerprint": "751136fca15334b8da52fcc7c673f508a2e07140f74eaf80a3b8ae89095633ce",
+          "analysis_id": "gd_d7081ffb636105ffebaef4eb",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_two.mfrm",
+          "content_fingerprint": "55747aed8caf7c7c60424a7658576293d2d356f5704a793db61c128d59d4a631",
+          "analysis_id": "gd_926fd050d4c19e7109a87f42",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "unbalanced_gd_nested_missing.mfrm",
+          "content_fingerprint": "cb3ff73ce5337ad90978c2140e312175956cfe670aa3a0e990ef816f7d2b359b",
+          "analysis_id": "gd_280e986a3a053bd94d86ea4b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "m3_anchor_interval_example.mfrm",
+          "content_fingerprint": "c4b1b2401746b3a8ac7d3be5306e81c6aa42d39b78c604c4c6a1a73a0e6d9e05",
+          "analysis_id": "ana_2367782ff1ca709163d80d53",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m3_shared_anchor_example.mfrm",
+          "content_fingerprint": "ed1456339bd80ae53a3088f9f712946fad813ae22cc1cca9f896202dbcbea438",
+          "analysis_id": "ana_7a4b858e67a444e78200088f",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_sd_difference.mfrm",
+          "content_fingerprint": "a7c3fa328ec3ba736924fdf48067ab30cc5034ccf603a61547831c5386f3321e",
+          "analysis_id": "ana_73857088248fe47909b3fd32",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_missing_shared_works.mfrm",
+          "content_fingerprint": "9e52c5fa49db96b256dddbe20bacbb2828b4334e68f17c00bd6ca6040ce30ae9",
+          "analysis_id": "ana_82f54ac496a754009d463308",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5b_anchor_sensitivity_example.mfrm",
+          "content_fingerprint": "1c1ba8546b4c66b44f2e320a4b6f4e66f69cc1fcf5ef734c898214a1e8e06157",
+          "analysis_id": "ana_9811baed2cc6fe647da4013d",
+          "kind": "mfrm-analysis-v2"
+        }
+      ]
+    },
+    {
+      "environment": {
+        "python": "3.12.13",
+        "platform": "macOS-27.2.1-arm64-arm-64bit",
+        "machine": "arm64",
+        "executable": "/private/tmp/mfrmpy-integration-20261126/py312/bin/python",
+        "module_path": "/private/tmp/mfrmpy-integration-20261126/py312/lib/python3.12/site-packages/mfrmpy/__init__.py",
+        "packages": {
+          "mfrmpy": "0.2.3.dev1",
+          "numpy": "2.5.5",
+          "pandas": "3.1.1",
+          "scipy": "1.18.1",
+          "pyarrow": "26.0.1",
+          "pytest": "9.2.0",
+          "matplotlib": "3.11.2",
+          "pyparsing": "3.3.3"
+        }
+      },
+      "installation": "fresh 0.2.3.dev1 installation",
+      "dependencies": "available newer cached versions",
+      "core_without_matplotlib": true,
+      "dependency_check": "passed before and after installing plotting extra",
+      "runs": [
+        {
+          "phase": "core",
+          "passed": 88,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_dense_kernels_and_expectations[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_dense_kernels_and_expectations[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_balanced_matches_anova[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_balanced_matches_anova[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_missing_and_invalid_inputs"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_unidentified_and_local_nested_labels[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_unidentified_and_local_nested_labels[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_retained_outputs_and_components_only[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_retained_outputs_and_components_only[True]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_boundaries_and_archive_validation"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_agreement_distinguishes_context_ids_containing_separator"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_import_keeps_ui_and_plotting_optional"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_example_is_bundled_and_not_shared_mutable_state"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unidentified_measure_rows_are_withheld_with_a_reason[Facet]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unidentified_measure_rows_are_withheld_with_a_reason[Level]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_sensitivity_retains_constraints_and_holds"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_interval_bases_and_sd_persist"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_shared_anchor_calibration_links_events_and_reopens"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_model_routes_tables_and_zero_refit_roundtrip[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_screening_only_se_intervals_and_four_series_reliability[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_joint_interaction_and_its_qualified_table[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_joint_interaction_and_its_qualified_table[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_saved_request_tables_and_csv[observed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_saved_request_tables_and_csv[no_shared_works]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_probabilities_and_severity_contrasts[RSM]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_probabilities_and_severity_contrasts[PCM]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_category_design_anchor_origins_and_input_checks"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_planning_and_unavailable_design[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_planning_and_unavailable_design[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_covariance_matches_gaussian_quadratic_forms[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_covariance_matches_gaussian_quadratic_forms[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_interval_boundaries_and_explicit_assumptions"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_intervals_remain_conditional_on_fixed_composite"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_gd_matches_scores_and_direct_composite[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_gd_matches_scores_and_direct_composite[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_covariance_full_projection_and_units[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_covariance_full_projection_and_units[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_input_support_and_fixed_composite"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_numeric_range_and_archive_identity"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_unsupported_or_invalid_requests_are_rejected_before_estimation[changed3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_corrupt_project_is_not_accepted"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NA-python]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NA-pyarrow]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NaN-python]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_project_retains_string_storage_missing_values_and_fingerprints[NaN-pyarrow]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_cross_engine_parity_with_mfrmr_030_and_tam_4325"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_public_score_preparation_and_preflight"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_anchor_labels_and_unknown_rank"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_paths_and_confounded_tasks"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_checks_score_use_and_support_after_endpoint_works"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_eight_ratings_against_work_cell_null_space[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_eight_ratings_against_work_cell_null_space[False]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_distinguishes_fixed_values_and_anchor_dependent_links"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_all_eight_rating_allocations"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_labels_missing_cells_and_size_limit"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_planned_assignments_and_structural_restoration"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[ratings]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[roster]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_requires_explicit_shared_work_locations[combined]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_contrast_distinguishes_different_works_with_the_same_local_number"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_prepare_rater_dff_data_preserves_labels_and_missing_ids"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_zero_object_variance_by_coefficient[scores0-expected0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_zero_object_variance_by_coefficient[scores1-expected1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[RSM-JMLE]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[PCM-JMLE]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_fit_saved_before_selected_diagnostics[RSM-MML]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_selected_outputs_reuse_observations_and_probabilities"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_reduced_row_space_matches_dense_constraints"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[none]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[person_fixed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[person_mean]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[facet_mean]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_audit_matches_dense_with_anchors[centered_person]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_large_connected_design_audits_without_person_dense_matrix"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_streamed_project_keeps_encoding_fingerprint_and_limits"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_partial_anchor_links_only_estimable_levels"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_export_switches_complete_sets_and_preserves_user_files"
+            }
+          ],
+          "junit_sha256": "3259ef2a50c6c58c9481ab31b7c4797c03034f8f1007076ea68b17cdfe981288"
+        },
+        {
+          "phase": "figures",
+          "passed": 17,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_figures_and_html[False]"
+            },
+            {
+              "module": "test_gd_designs",
+              "name": "test_minque_figures_and_html[True]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted2]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_optional_figures_and_report_reuse_retained_results[fitted3]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_figures_and_html_from_archive[observed]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_group_dff_figures_and_html_from_archive[no_shared_works]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_normal_intervals_outputs_and_roundtrip[shape0]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_gd_normal_intervals_outputs_and_roundtrip[shape1]"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_multivariate_outputs_roundtrip_and_boundary_components"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_boundary_exclusion_counts_low_df_fit_guards_and_legacy_reload"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_diagnostic_plots_coordinates_exclusions_and_qualification"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_boundary_scenarios_all_ones_category_gaps_disconnected_mml_and_zero_df"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_api_consolidation_check_design_summary_table_kinds_and_aliases"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_partial_outputs_summary_exports_and_pca"
+            },
+            {
+              "module": "test_python_library",
+              "name": "test_rater_profile_respects_positive_direction_and_facet_role"
+            }
+          ],
+          "junit_sha256": "8d2d8d118563def2207ec6e9d3010d0638e22c16f00e3db3af85d3e549555e07"
+        }
+      ],
+      "figure_warnings": "none",
+      "archive_checks": [
+        {
+          "file": "old-022-mfrm.mfrm",
+          "content_fingerprint": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+          "analysis_id": "ana_4f2c92193d1692f26d8ea9b0",
+          "kind": "basic-rsm-jmle-v1"
+        },
+        {
+          "file": "old-022-gd.mfrm",
+          "content_fingerprint": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1",
+          "analysis_id": "gd_f9e71900cacc04784744b002",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_one.mfrm",
+          "content_fingerprint": "5a60081512bd1dc92268b581965224b23bc15bfa2b3930b8c7bc8205248fb0a7",
+          "analysis_id": "gd_4b616038cff727024b1c3a9b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_two.mfrm",
+          "content_fingerprint": "4528b3f9b6ed354838b109ffc0dd1a3cb281073e2a8d8b1a819bea749f798517",
+          "analysis_id": "gd_23d6831c088b8f6c162cc1ea",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_one.mfrm",
+          "content_fingerprint": "751136fca15334b8da52fcc7c673f508a2e07140f74eaf80a3b8ae89095633ce",
+          "analysis_id": "gd_d7081ffb636105ffebaef4eb",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_two.mfrm",
+          "content_fingerprint": "55747aed8caf7c7c60424a7658576293d2d356f5704a793db61c128d59d4a631",
+          "analysis_id": "gd_926fd050d4c19e7109a87f42",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "unbalanced_gd_nested_missing.mfrm",
+          "content_fingerprint": "cb3ff73ce5337ad90978c2140e312175956cfe670aa3a0e990ef816f7d2b359b",
+          "analysis_id": "gd_280e986a3a053bd94d86ea4b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "m3_anchor_interval_example.mfrm",
+          "content_fingerprint": "c4b1b2401746b3a8ac7d3be5306e81c6aa42d39b78c604c4c6a1a73a0e6d9e05",
+          "analysis_id": "ana_2367782ff1ca709163d80d53",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m3_shared_anchor_example.mfrm",
+          "content_fingerprint": "ed1456339bd80ae53a3088f9f712946fad813ae22cc1cca9f896202dbcbea438",
+          "analysis_id": "ana_7a4b858e67a444e78200088f",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_sd_difference.mfrm",
+          "content_fingerprint": "a7c3fa328ec3ba736924fdf48067ab30cc5034ccf603a61547831c5386f3321e",
+          "analysis_id": "ana_73857088248fe47909b3fd32",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_missing_shared_works.mfrm",
+          "content_fingerprint": "9e52c5fa49db96b256dddbe20bacbb2828b4334e68f17c00bd6ca6040ce30ae9",
+          "analysis_id": "ana_82f54ac496a754009d463308",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5b_anchor_sensitivity_example.mfrm",
+          "content_fingerprint": "1c1ba8546b4c66b44f2e320a4b6f4e66f69cc1fcf5ef734c898214a1e8e06157",
+          "analysis_id": "ana_9811baed2cc6fe647da4013d",
+          "kind": "mfrm-analysis-v2"
+        }
+      ]
+    }
+  ],
+  "legacy_interval_reporting": [
+    {
+      "file": "gd_interval_one.mfrm",
+      "table": "G/D: observed_coefficients",
+      "qualification": [
+        {
+          "G_interval_status": "approximate_normal_delta",
+          "Phi_interval_status": "approximate_normal_delta",
+          "IntervalMethod": "normal_delta",
+          "IntervalConfidence": "0.95",
+          "IntervalAssumption": "normal"
+        }
+      ],
+      "note": "Observed-design point estimates on original scores: G for relative decisions, Phi for absolute decisions, and error variances / SEMs. Pointwise approximate logit-delta intervals under independent normal random effects for objects, declared random facets and their interactions. Component covariance uses a Gaussian plug-in model, including uncertainty in every random facet. These are not simultaneous bands, prediction intervals or distribution-robust intervals. Relevant nonpositive raw components and boundary coefficients withhold intervals; small facet samples can still give poor coverage. Fixed-facet conditioning remains conditional."
+    },
+    {
+      "file": "m3_shared_anchor_example.mfrm",
+      "table": "Anchor sensitivity intervals",
+      "qualification": [
+        {
+          "ReusedRatings": null,
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "0.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "0.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "120.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "120.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "240.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        },
+        {
+          "ReusedRatings": "240.0",
+          "Status": "model_approximation",
+          "Reason": "",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        }
+      ],
+      "note": "Pointwise 95% Wald intervals for sensitivity checks under the listed fixed population SD. Conditional holds the anchor values fixed. Independent calibration adds their full covariance without a cross-sample term. Shared calibration combines both stages' influence for each work. Interpret these diagnostic intervals using coverage evidence for the sampling model and assignment."
+    },
+    {
+      "file": "m5a_dff_sd_difference.mfrm",
+      "table": "Prespecified group DFF contrast",
+      "qualification": [
+        {
+          "Status": "point_only",
+          "Reason": "Structural intervals belong to different inputs, estimates or runtime",
+          "CoverageQualified": "False",
+          "SupportsFormalInference": "False"
+        }
+      ],
+      "note": "Severity logits for one prespecified contrast. Positive means the first rater is relatively stricter in the first group. When shown, the interval and Wald test are fixed-SD model approximations. An interval spanning zero can include differences large enough to matter. Coverage evidence is specific to the simulated models and assignments. Inspect shared works, tasks and rubric use. Conditional bias diagnostics are exploratory."
+    },
+    {
+      "file": "m5a_dff_sd_difference.mfrm",
+      "table": "Group DFF shared works",
+      "qualification": [
+        {},
+        {}
+      ],
+      "note": "Shared work IDs on each observed link of the specified comparison."
+    },
+    {
+      "file": "m5a_dff_sd_difference.mfrm",
+      "table": "Group DFF assignment coverage",
+      "qualification": [
+        {},
+        {}
+      ],
+      "note": "Counts of unique work-by-facet cells and directly shared works. Plan and completion support apply to the whole contrast without anchors."
+    },
+    {
+      "file": "m5a_dff_sd_difference.mfrm",
+      "table": "Group DFF assignment discrepancies",
+      "qualification": [],
+      "note": "Restoration checks structural support for the contrast if this cell alone were scored. This check makes no claim about precision or what score would be obtained."
+    }
+  ],
+  "ci": {
+    "workflow": ".github/workflows/python-package.yml",
+    "parse_check": "passed",
+    "local_commands": "same core/figures split as workflow; sdist tests outside checkout, Python -I",
+    "remote_run": false,
+    "remaining": [
+      "Linux and Windows workflow runs",
+      "shared Web/desktop workflow checks",
+      "TestPyPI/PyPI publication and installation from those services"
+    ]
+  }
+}

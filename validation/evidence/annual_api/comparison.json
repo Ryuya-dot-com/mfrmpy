@@ -1,0 +1,344 @@
+{
+  "version": "0.2.3.dev3",
+  "cases": [
+    {
+      "replicate": 1,
+      "design": "repeat6",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 1.2918763475644468e-07,
+        "conditional_se": 1.6978469075112912e-08,
+        "shared_se": 3.267618609026357e-08,
+        "calibration_variance": 1.3750008662043178e-10,
+        "receiving_variance": 2.1016537177231953e-08,
+        "cross_term": 9.46532286143914e-10,
+        "unanchored_estimate": 2.543019645417921e-05,
+        "unanchored_se": 2.172310594739102e-07
+      },
+      "estimate": 0.20934192726170642,
+      "shared_se": 0.3092084548824139,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 1,
+      "design": "repeat6",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 4.6899473526984536e-08,
+        "conditional_se": 5.0719637045837374e-08,
+        "shared_se": 1.0749528084330606e-07,
+        "calibration_variance": 8.868773066200014e-12,
+        "receiving_variance": 6.646319571090853e-08,
+        "cross_term": 1.7776346189317394e-09,
+        "unanchored_estimate": 2.7030571424169203e-05,
+        "unanchored_se": 5.041895682067477e-07
+      },
+      "estimate": 0.651691605747858,
+      "shared_se": 0.3009174810388838,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 1,
+      "design": "repeat6",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 4.010765392026272e-08,
+        "conditional_se": 2.115819797143814e-09,
+        "shared_se": 4.228120908944533e-09,
+        "calibration_variance": 6.349902778612394e-11,
+        "receiving_variance": 2.959073874819751e-09,
+        "cross_term": 3.1795231096413967e-10,
+        "unanchored_estimate": 2.7366768111630746e-05,
+        "unanchored_se": 4.6362419292567125e-07
+      },
+      "estimate": -0.2819820984595409,
+      "shared_se": 0.3048189230094717,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 1,
+      "design": "repeat24",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 4.4571964680217846e-07,
+        "conditional_se": 2.0136886103028218e-08,
+        "shared_se": 3.9359425385576685e-08,
+        "calibration_variance": 1.340012696074075e-10,
+        "receiving_variance": 2.285760192233255e-08,
+        "cross_term": 8.385285074803683e-10,
+        "unanchored_estimate": 3.183569099451944e-06,
+        "unanchored_se": 4.290257149541787e-09
+      },
+      "estimate": 0.3185743296082122,
+      "shared_se": 0.28142017999523605,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 1,
+      "design": "repeat24",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 8.557285136046033e-08,
+        "conditional_se": 1.9434278630825474e-09,
+        "shared_se": 3.6747283549409815e-09,
+        "calibration_variance": 2.753789078279584e-10,
+        "receiving_variance": 2.007645286128401e-09,
+        "cross_term": 2.753650276549058e-10,
+        "unanchored_estimate": 5.238195563750381e-06,
+        "unanchored_se": 2.2254245568564812e-07
+      },
+      "estimate": 0.9903409339287882,
+      "shared_se": 0.27316731870246325,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 1,
+      "design": "repeat24",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 1.1220643933440577e-06,
+        "conditional_se": 1.6840522421013304e-08,
+        "shared_se": 2.605327237281685e-08,
+        "calibration_variance": 2.6085254938948443e-10,
+        "receiving_variance": 1.619622927440112e-08,
+        "cross_term": 2.070218375524978e-09,
+        "unanchored_estimate": 3.958403698489654e-06,
+        "unanchored_se": 1.5950388387864223e-07
+      },
+      "estimate": 0.14291239569549996,
+      "shared_se": 0.2761047162854032,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 2,
+      "design": "repeat6",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 8.367286863375512e-10,
+        "conditional_se": 1.6219843801401623e-09,
+        "shared_se": 3.034778650601311e-09,
+        "calibration_variance": 1.0884699432468607e-11,
+        "receiving_variance": 1.8997151074451324e-09,
+        "cross_term": 1.4458622829820883e-12,
+        "unanchored_estimate": 2.0557499355589037e-05,
+        "unanchored_se": 1.457618049038878e-07
+      },
+      "estimate": -0.5204549091932462,
+      "shared_se": 0.31502226638455744,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 2,
+      "design": "repeat6",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 4.503262580057843e-07,
+        "conditional_se": 1.495349954971914e-09,
+        "shared_se": 5.695917792980509e-09,
+        "calibration_variance": 1.9380941034035032e-10,
+        "receiving_variance": 2.580530247819901e-09,
+        "cross_term": 5.669789665839258e-10,
+        "unanchored_estimate": 2.2187344938640052e-05,
+        "unanchored_se": 1.9792343819435843e-07
+      },
+      "estimate": 0.020584531168844844,
+      "shared_se": 0.29330818690461974,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 2,
+      "design": "repeat6",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 1.1868735672049269e-07,
+        "conditional_se": 1.3554032896045953e-09,
+        "shared_se": 3.2415478634639783e-09,
+        "calibration_variance": 1.1568666231681797e-11,
+        "receiving_variance": 2.101358087536198e-09,
+        "cross_term": 6.812343202565463e-11,
+        "unanchored_estimate": 1.9069785232583847e-05,
+        "unanchored_se": 1.3872692600225278e-07
+      },
+      "estimate": -0.7788486331026597,
+      "shared_se": 0.311836511811953,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 2,
+      "design": "repeat24",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 1.1120324516777913e-07,
+        "conditional_se": 3.286001304392272e-09,
+        "shared_se": 6.091135651420387e-09,
+        "calibration_variance": 3.134798161409159e-12,
+        "receiving_variance": 3.304149703842185e-09,
+        "cross_term": 3.105188918562968e-11,
+        "unanchored_estimate": 2.6425439625943348e-06,
+        "unanchored_se": 4.462544789252121e-08
+      },
+      "estimate": -0.2930521024508057,
+      "shared_se": 0.27351770061876307,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 2,
+      "design": "repeat24",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 2.356952449322769e-07,
+        "conditional_se": 2.330200532529858e-09,
+        "shared_se": 1.0012573548046078e-09,
+        "calibration_variance": 4.458916666883611e-11,
+        "receiving_variance": 6.123861001627873e-10,
+        "cross_term": 1.7834740547459718e-11,
+        "unanchored_estimate": 3.024807694540499e-06,
+        "unanchored_se": 1.1701747626435832e-07
+      },
+      "estimate": 0.21345699094023685,
+      "shared_se": 0.2746357692996222,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 2,
+      "design": "repeat24",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 5.242571765595727e-09,
+        "conditional_se": 1.0837600317170626e-08,
+        "shared_se": 2.441381585782665e-08,
+        "calibration_variance": 4.993391603116482e-11,
+        "receiving_variance": 1.3296055673128748e-08,
+        "cross_term": 2.335443883910108e-12,
+        "unanchored_estimate": 2.2934497178328517e-06,
+        "unanchored_se": 4.198808417621436e-08
+      },
+      "estimate": -0.3970093603456002,
+      "shared_se": 0.27123547122090264,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 44,
+      "design": "repeat6",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 1.1103990893435167e-07,
+        "conditional_se": 2.0731174499299954e-08,
+        "shared_se": 3.790430569416969e-08,
+        "calibration_variance": 7.180190972815053e-13,
+        "receiving_variance": 2.2612332728488838e-08,
+        "cross_term": 1.9766933026611674e-11,
+        "unanchored_estimate": 2.024465128774855e-05,
+        "unanchored_se": 6.189652111410204e-07
+      },
+      "estimate": -0.29056251981139836,
+      "shared_se": 0.29801161010017446,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 44,
+      "design": "repeat6",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 8.233740161900371e-07,
+        "conditional_se": 8.54010173689801e-09,
+        "shared_se": 6.455808720939871e-09,
+        "calibration_variance": 9.817131911335334e-11,
+        "receiving_variance": 4.2661884164241215e-09,
+        "cross_term": 9.12352698882843e-11,
+        "unanchored_estimate": 1.3233778262677909e-05,
+        "unanchored_se": 4.1278557505464164e-07
+      },
+      "estimate": 0.16924814098588148,
+      "shared_se": 0.3309519102596289,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 44,
+      "design": "repeat6",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 3.517530128283042e-07,
+        "conditional_se": 1.375766012223778e-08,
+        "shared_se": 3.336104337225976e-08,
+        "calibration_variance": 1.7220528686833977e-10,
+        "receiving_variance": 2.104090476851006e-08,
+        "cross_term": 2.3592075520809455e-10,
+        "unanchored_estimate": 2.5272969536721535e-05,
+        "unanchored_se": 6.366250514533434e-07
+      },
+      "estimate": -0.7029016068101979,
+      "shared_se": 0.3143964644824272,
+      "occasion_overlap": 6
+    },
+    {
+      "replicate": 44,
+      "design": "repeat24",
+      "effect": "cohort_only",
+      "errors": {
+        "estimate": 6.356333176471551e-08,
+        "conditional_se": 1.940723914906073e-09,
+        "shared_se": 2.639985452468352e-09,
+        "calibration_variance": 8.44685756700537e-13,
+        "receiving_variance": 1.551479431038949e-09,
+        "cross_term": 1.9494064308210775e-11,
+        "unanchored_estimate": 1.7680328818769908e-06,
+        "unanchored_se": 7.013159958324522e-08
+      },
+      "estimate": 0.07653890775863254,
+      "shared_se": 0.29769448095288886,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 44,
+      "design": "repeat24",
+      "effect": "r3_drifts",
+      "errors": {
+        "estimate": 8.390922290324454e-09,
+        "conditional_se": 3.7883035597374715e-09,
+        "shared_se": 7.724974715461741e-09,
+        "calibration_variance": 1.1538634861496012e-11,
+        "receiving_variance": 4.798167974051637e-09,
+        "cross_term": 5.9707518822779e-11,
+        "unanchored_estimate": 1.6927197660221438e-06,
+        "unanchored_se": 7.746855829049437e-08
+      },
+      "estimate": 0.6556412537355517,
+      "shared_se": 0.3136797917832634,
+      "occasion_overlap": 24
+    },
+    {
+      "replicate": 44,
+      "design": "repeat24",
+      "effect": "anchors_drift",
+      "errors": {
+        "estimate": 9.395365591080562e-07,
+        "conditional_se": 1.7186098877353118e-08,
+        "shared_se": 4.4792734354981434e-08,
+        "calibration_variance": 7.066413882330009e-11,
+        "receiving_variance": 2.613528327088943e-08,
+        "cross_term": 7.042556636601902e-11,
+        "unanchored_estimate": 4.016128112183104e-06,
+        "unanchored_se": 1.558704895154861e-07
+      },
+      "estimate": -0.23522372652819867,
+      "shared_se": 0.2917330574863158,
+      "occasion_overlap": 24
+    }
+  ],
+  "maximum_errors": {
+    "estimate": 1.1220643933440577e-06,
+    "conditional_se": 5.0719637045837374e-08,
+    "shared_se": 1.0749528084330606e-07,
+    "calibration_variance": 2.753789078279584e-10,
+    "receiving_variance": 6.646319571090853e-08,
+    "cross_term": 2.070218375524978e-09,
+    "unanchored_estimate": 2.7366768111630746e-05,
+    "unanchored_se": 6.366250514533434e-07
+  },
+  "source_sha256": {
+    "m5b_estimated_anchors.csv.gz": "ad552c7f6742fbc6beb02a219b1e259d421f9053c56925fe2012080d65e4a38e",
+    "m5b_annual_drift.csv.gz": "0d4ea56fba3bab86d460f4b172e10f152da571bbf40511111d4f0a4bb81c5df3"
+  },
+  "scope": "18 numerical API comparisons, not a new coverage experiment. Previous 500-replicate conditions remain distinct from API availability."
+}

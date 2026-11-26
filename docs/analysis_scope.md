@@ -3,11 +3,10 @@
 [Start here](../README.md) · [Windows guide](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/docs/desktop_user_guide.en.md) · [日本語の操作・結果の読み方](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/docs/desktop_user_guide.ja.md#分析を選ぶ)
 
 Use this page to choose an analysis and understand what its results can support.
-It describes the Web application and the desktop preview documented in this
-source branch. The desktop preview includes RSM/PCM, bias diagnostics, selected
-intervals, joint interactions and G/D studies; it is not yet a general desktop
-release. The published Web release and this desktop preview do not have
-identical controls or export formats.
+The current Python package supports RSM/PCM, bias diagnostics, selected
+intervals, joint interactions and G/D studies. Linked Web/desktop applications
+have their own release state, controls and validation; package verification
+does not certify those applications.
 
 ## Choose the analysis for your question
 
@@ -16,7 +15,7 @@ identical controls or export formats.
 | How do person measures, rater severity and task difficulty compare? | Many-facet RSM or PCM | RSM shares category steps. PCM allows separate steps for levels of the chosen step facet. A main rater effect is not a rater-by-task interaction. |
 | Does a particular combination of facet levels differ from the main-effects pattern? | Conditional bias diagnostics | These hold the original calibration fixed. They identify patterns to investigate, without confirming the presence or absence of bias. |
 | What is the uncertainty in a facet level or a planned difference? | Specified structural intervals for fixed-SD MML | Only targets passing the checks receive intervals. A difference uses the full covariance, not the sum of marginal SEs. |
-| What happens when an interaction is fitted together with main effects and steps? | Desktop joint interaction analysis | This refits a separate model. It does not turn the fixed-calibration diagnostic into a joint test. |
+| What happens when an interaction is fitted together with main effects and steps? | Joint interaction analysis | This refits a separate model. It does not turn the fixed-calibration diagnostic into a joint test. |
 | How would numbers of raters or tasks affect score reliability? | G study and D study | These use observed scores and a declared random-facet design, not the MFRM logit scale. |
 
 The Web interface also provides advanced workflows such as bounded GPCM,
@@ -26,8 +25,12 @@ statistic can support inference. Read the explanation for the selected output.
 
 ## Estimation and standard errors
 
-JMLE jointly estimates person and facet parameters. Desktop MML uses EM with
-a fixed normal population SD; the SD is a setting, not an estimated result.
+JMLE jointly estimates person and facet parameters. Package MML uses a fixed
+normal population SD; the SD is a setting, not an estimated result. Unanchored
+MML defaults to EM and population mean zero. With structural anchors, auto
+estimates the mean using Direct optimization; `population_mean="fixed_zero"`
+explicitly retains the former anchored model. Calibration metadata changes
+uncertainty propagation, not the fitted model.
 The Web interface offers additional MML controls, including optional population
 SD estimation, whose uncertainty and model-ranking uses remain unavailable.
 
@@ -44,6 +47,23 @@ equivalence conclusions. Selected structural intervals have the separate,
 limited scope below. An available selected interval does not remove the
 restrictions on other outputs.
 
+General MML SEs and reliability summaries additionally require retained
+analytic information, stationarity, doubled-order quadrature and posterior
+score-stability evidence. Failed or missing evidence withholds SEs and
+uncertainty bars; no regularized or conditional-SE fallback is displayed.
+The review runs when diagnostics are requested, not when a fit is merely
+saved, loaded or displayed. Existing archives lacking it retain point estimates
+where structurally reportable and explain the uncertainty hold. General
+anchored-model covariance is currently outside this review's supported scope.
+Anchor-sensitivity intervals use their own estimated-mean calculation.
+
+Shared-calibration propagated uncertainty also requires saved doubled-order
+checks of individual influences, the cross term and final covariance. Older
+shared archives retain their points and conditional results, but propagated
+intervals without that evidence are withheld across tables and figures.
+Neither two-order agreement at the same fitted coordinates nor a successful
+optimizer proves continuous-integral accuracy or finite-sample coverage.
+
 ## Assignment support for a rater comparison
 
 `check_rater_contrast` traces shared works and checks whether the observed
@@ -55,7 +75,33 @@ unit-weight ratings. Conditional likelihood information, finite estimates,
 interval precision and coverage require separate checks. An anchor-dependent
 result assumes the supplied fixed values. A size-limited result leaves
 estimability unknown.
-[Examples and returned statuses](python_library.md#which-ratings-support-a-rater-comparison)
+Large designs use person-column elimination and a bounded SVD of the reduced
+system. This preserves the distinction between confounding and an unverified
+rank. It does not establish finite estimates or interval coverage. Saving a fit
+before diagnostics and selecting outputs do not relax inference holds.
+[Examples and returned statuses](python_library.md#which-ratings-support-a-rater-comparison-development-version)
+
+## Annual rater comparisons in the development Python API
+
+An explicit calibration facet and level map can reuse a previous rater estimate
+across years while retaining its covariance. Keep work IDs, rating-event IDs,
+and rating occasions distinct. The report separates overlap with calibration
+from works rescored across years, and compares the recording-linked estimate
+with conditional and shared-calibration intervals. Shared calibration does
+not correct bias from raters whose severity actually changed. These intervals
+remain model approximations with `CoverageQualified=False`; annual coverage
+findings cannot be borrowed from single-year calibration. If occasion and
+rating mode are confounded, common works alone do not identify a mode-adjusted
+annual contrast. [API, assumptions and examples](python_library.md#compare-a-returning-rater-across-years)
+
+The Python comparison display defaults to a color-coded forest of individual
+rater levels, separated by scenario and origin. Their pointwise intervals retain
+the joint covariance, including estimated-origin and calibration terms. Interval
+overlap is not a test of the difference, and validation of a contrast does not
+qualify individual-level coverage. The difference display and normal-approximation
+half-eyes require explicit selection. Older files without individual evidence
+show recoverable points and hold reasons without refitting.
+[Display choices](python_library.md#choose-the-comparison-display)
 
 ## Specified structural intervals
 
@@ -101,7 +147,7 @@ about fairness or a person. The original main-effects results remain separate.
 
 ## G studies and D studies
 
-The supported design is completely crossed and balanced, with one or two
+The default ANOVA design is completely crossed and balanced, with one or two
 random facets besides the object of measurement, at least two levels of each
 factor, one observation per cell and unit observation weights. Missing or
 repeated cells and unsupported designs produce a reason rather than an
@@ -114,8 +160,55 @@ alongside the zero-clipped components used for the coefficients. A coefficient
 alone does not establish an acceptable assessment or validate a future design.
 
 The desktop G/D entry uses the original observed scores without requiring an
-MFRM fit. Multivariate G-theory and uncertainty intervals for G/Phi are not
-implemented. These restrictions also apply when G/D is requested alongside MFRM.
+MFRM fit. The development Python API
+can explicitly request pointwise logit-delta intervals for G/Phi under independent
+normal random effects in the supported balanced crossed designs. This includes
+the full component covariance and random-facet uncertainty; it is a plug-in
+approximation, not exact or distribution-robust inference. Relevant nonpositive
+raw components and boundary coefficients withhold the corresponding interval.
+Few facet levels can still give poor coverage. The old person-only bootstrap
+remains withheld. The same conditions apply alongside an MFRM analysis; the
+MFRM fit does not validate the normal model for the original scores.
+[Interval assumptions and statuses](python_library.md#approximate-gphi-intervals-development-version)
+
+The development multivariate entry accepts multiple outcomes on the same complete
+balanced crossed cells and explicit nonnegative composite weights. It retains
+raw covariance components and PSD diagnostics, then projects each score/composite
+component before clipping negative scalar variances for G/Phi. This agrees with
+directly forming the specified composite, but it does not repair the joint
+covariance matrices or qualify estimated correlations. G/Phi and SEM are reported
+separately for each outcome and the composite. Multivariate intervals, different
+facet counts by outcome are not supported. Missing/unbalanced/nested designs require
+the separate explicit MINQUE(0) method described below. Fixed-facet conditioning retains its existing elementary-cell checks.
+[Multivariate assumptions and weights](python_library.md#multivariate-scores-and-a-weighted-composite-development-version)
+
+The development `method="minque0"` supports one or two random facets, crossed or
+with one non-object facet nested in the other. It estimates single-score variance
+components or covariance components for the same retained rows of multiple scores.
+`missing="error"` is the default; `missing="omit"` explicitly removes rows missing
+any selected score or identifier, including outcomes with zero composite weight.
+Absent cells need no placeholders. Duplicated cells, nonfinite/nonnumeric scores,
+non-unit observation weights and invalid labels remain unsupported.
+
+Identification uses the normalized Gram matrix of covariance kernels after removing
+the intercept. Its numerical rank, tolerance, condition number and component support
+are retained. Full rank supports component separation under the declared model; it
+does not establish precise estimates or ignorable missingness. Independent random
+effects with the same component covariance across levels are assumed conditional on
+the assignment. Informative missingness can violate these assumptions; omission is
+not a correction for selection. Negative and non-PSD component estimates are retained
+and scalar projections are clipped as in the balanced multivariate entry.
+
+An unbalanced design has no automatic observed G/Phi in this implementation. Its
+pooled level counts are not replication counts. Without `selected_plan`, components
+and diagnostics are available while D projections remain absent. An explicit plan
+specifies the common counts for a future balanced mean; a nested child's count is
+**per parent**, not its total across parents. These projections do not describe
+the heterogeneous observed means. MINQUE(0) intervals, arbitrary or person-nested
+layouts, cell replication and fixed-facet aggregation are not supported. Point
+calculations have been checked against mfrmr 0.3.2 and independent dense-kernel
+algebra; interval coverage and estimator efficiency have not been qualified.
+[MINQUE(0) example and retained audit](python_library.md#missing-unbalanced-and-nested-designs-development-version)
 
 ## When a result cannot support inference
 
@@ -151,6 +244,15 @@ RSM/PCM fit ZSTD follows a FACETS-style fourth-moment/Wilson–Hilferty conventi
 with an absolute cap of 9; the GPCM adaptation is approximate. Agreement in one
 diagnostic does not establish equivalence of the programs.
 
+Infit and Outfit describe squared residuals. Evaluate their magnitude alongside
+the number of observations, category use and the person scoring method. The
+fixed-SD MML fit table plugs EAP person measures estimated from the same ratings
+into the category predictions. With few ratings per person, this reuse can lower
+the mean squares even in data generated by the fitted model. The ZSTD
+calculation carries that effect into the standardized value. Use fit statistics to
+select ratings for inspection and use signed residuals or an explicit contrast
+for questions about the direction of a rater effect.
+
 AIC/AICc/BIC, model-choice LR values and automatic model recommendations remain
 restricted to technical review. Residual PCA is a diagnostic requiring attention
 to sparse observations, overlap and stability, not an automatic dimensionality
@@ -163,9 +265,9 @@ limitations. Preserve captions and notes with exported figures and tables.
 Software citation does not replace citations for the statistical methods.
 
 Implementation references for technical readers:
-[output rules](../mfrm_app/output_qualification.py),
-[structural intervals](../mfrm_app/structural_intervals.py),
-[joint interactions](../mfrm_app/joint_interaction.py),
-[G/D calculations](../mfrm_app/generalizability.py).
+[output rules](../mfrmpy/_core/output_qualification.py),
+[structural intervals](../mfrmpy/_core/structural_intervals.py),
+[joint interactions](../mfrmpy/_core/joint_interaction.py),
+[G/D calculations](../mfrmpy/_core/generalizability.py).
 The [FACETS comparison](https://github.com/Ryuya-dot-com/MFRM_Python_Application/blob/main/validation/FACETS_WINDOWS_DESKTOP_REVIEW_20261029.md)
 states the conditions and limits of its numerical checks.

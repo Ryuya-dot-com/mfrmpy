@@ -1,0 +1,140 @@
+{
+  "python": "3.14.3 (v3.14.3:323c59a5e34, Feb  3 2026, 11:41:37) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "numpy": "2.5.5",
+  "pandas": "3.1.1",
+  "measurement": "Tracemalloc peak per phase; process RSS peak cumulative within each fresh scenario.",
+  "source_sha256": {
+    "mfrm_app/basic_analysis.py": "353f0957bc1a2a8dbeeb382d3398a917933f473f3dce8a3c969ee6c6a7f0e346",
+    "mfrm_app/engine.py": "d554d5d6ebf90c157c08860b41ad9e8c607fa98c35875ae949661571136dd8e2",
+    "mfrm_app/design_rank.py": "ae0304ea4cedeb23c0732cf3213f2d7cf5f9916f43e6b46d4aedff85312f63f4",
+    "mfrm_app/rater_contrast.py": "10b007305b06a1e29c14454d2f23d03f529182d32417a9ef0622b10c0015f5e7",
+    "mfrm_app/output_qualification.py": "dbfbb0135ad4cb34ef961211b41e1c77a354bc05d72f5ee8d0da18509651d25c",
+    "mfrm_app/project.py": "f55692e44567c502f62688b323e5e3bb61c7e36820e2bec308780f4e0b5b9c02",
+    "mfrm_app/desktop_analysis.py": "7e14a82ba46e5daf46548b0748966ed6b83a95bdabc6825bdf68df947be8d571",
+    "mfrmpy/__init__.py": "cb9098b6e08d98b356bf5c77c1ed1800201395f71ef07426962ee72dcf4042b1",
+    "/Users/tohokusla/Developer/mfrmpy-pkg/validation/large_data_workflow.py": "e70e06282841b89c904e98630b0f3b8266ff6a7d82876d1f25aa22bd0758154b"
+  },
+  "runs": [
+    {
+      "persons": 2000,
+      "ratings": 4000,
+      "fit_archive_bytes": 100311,
+      "optimizer_success": true,
+      "audit_status": "eta_identified",
+      "contrast_status": "observed",
+      "dense_design_cells": 8004000,
+      "reduced_cells": 4,
+      "phases": [
+        {
+          "phase": "fit",
+          "seconds": 3.2219578329240903,
+          "traced_peak_mib": 13.830493927001953,
+          "process_peak_mib": 230.546875
+        },
+        {
+          "phase": "contrast_audit",
+          "seconds": 0.12373004190158099,
+          "traced_peak_mib": 1.9603567123413086,
+          "process_peak_mib": 230.734375
+        },
+        {
+          "phase": "save_fit",
+          "seconds": 0.5549011670518667,
+          "traced_peak_mib": 10.58930492401123,
+          "process_peak_mib": 231.859375
+        },
+        {
+          "phase": "load_fit",
+          "seconds": 0.8112027909373865,
+          "traced_peak_mib": 528.3573970794678,
+          "process_peak_mib": 262.15625
+        },
+        {
+          "phase": "measures",
+          "seconds": 9.663249250035733,
+          "traced_peak_mib": 51.59374713897705,
+          "process_peak_mib": 346.015625
+        },
+        {
+          "phase": "one_table",
+          "seconds": 7.632883582962677,
+          "traced_peak_mib": 48.96979522705078,
+          "process_peak_mib": 346.015625
+        },
+        {
+          "phase": "agreement",
+          "seconds": 8.354378374991938,
+          "traced_peak_mib": 48.65382957458496,
+          "process_peak_mib": 346.015625
+        },
+        {
+          "phase": "scorefile",
+          "seconds": 5.444319374975748,
+          "traced_peak_mib": 48.55349636077881,
+          "process_peak_mib": 354.09375
+        }
+      ]
+    },
+    {
+      "persons": 10000,
+      "ratings": 20000,
+      "fit_archive_bytes": 416041,
+      "optimizer_success": true,
+      "audit_status": "eta_identified",
+      "contrast_status": "observed",
+      "dense_design_cells": 200020000,
+      "reduced_cells": 4,
+      "phases": [
+        {
+          "phase": "fit",
+          "seconds": 13.631644957931712,
+          "traced_peak_mib": 62.57505130767822,
+          "process_peak_mib": 303.453125
+        },
+        {
+          "phase": "contrast_audit",
+          "seconds": 0.5287663340568542,
+          "traced_peak_mib": 9.609432220458984,
+          "process_peak_mib": 303.453125
+        },
+        {
+          "phase": "save_fit",
+          "seconds": 2.547507375013083,
+          "traced_peak_mib": 51.66582679748535,
+          "process_peak_mib": 307.96875
+        },
+        {
+          "phase": "load_fit",
+          "seconds": 3.9924395830603316,
+          "traced_peak_mib": 528.687876701355,
+          "process_peak_mib": 456.109375
+        },
+        {
+          "phase": "measures",
+          "seconds": 51.50338645896409,
+          "traced_peak_mib": 253.79967308044434,
+          "process_peak_mib": 771.75
+        },
+        {
+          "phase": "one_table",
+          "seconds": 38.04142029106151,
+          "traced_peak_mib": 240.59927463531494,
+          "process_peak_mib": 958.0
+        },
+        {
+          "phase": "agreement",
+          "seconds": 36.90265950001776,
+          "traced_peak_mib": 239.53095531463623,
+          "process_peak_mib": 1005.390625
+        },
+        {
+          "phase": "scorefile",
+          "seconds": 24.29013137507718,
+          "traced_peak_mib": 239.9230718612671,
+          "process_peak_mib": 1062.8125
+        }
+      ]
+    }
+  ]
+}

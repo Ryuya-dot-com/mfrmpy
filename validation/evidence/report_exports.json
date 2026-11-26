@@ -1,0 +1,302 @@
+{
+  "date": "2026-11-26",
+  "version": "0.2.3.dev2",
+  "published": false,
+  "scope": "Qualified Fair Average tables, prediction boundary guards, UTF-8 reports and incremental ZIPs; no estimator or interval-method changes.",
+  "changed_python_from_dev1": {
+    "mfrm_app/desktop_analysis.py": "2b84145055e10d48bb759e107e82ef03f89be5d2a354133a1bbaa94a5a0f2874",
+    "mfrm_app/desktop_outputs.py": "34d1cdf20fe1437b97739df9925ab4c6b58b153cb9a0edde2e85cd37cbe7e7ab",
+    "mfrmpy/__init__.py": "b40116dc1abcac7b143af87f8931d8d660178271ea2bc31aad2587369e40ebb9",
+    "mfrmpy/_reports.py": "d4547363febdc98767d906ef6b046ec9b72c3f20f38e6d8ccbb57c01dc0f01cb"
+  },
+  "test_sources": {
+    "tests/test_python_library.py": "5b2bab63f2e586583480c481d5f58f82a303c105513f187530aa65bd84358e54",
+    "tests/test_reports.py": "b635b1aaaeecd3debe97f8d6b750f58de362383c0825ad6f8c566e3b98dffd76",
+    "tests/test_gd_designs.py": "cfd4e2450d833528180793516971aaf41bd37a29275b17187a2b644930b3bc04"
+  },
+  "artifacts": {
+    "dist/development-reports-20261126/mfrmpy-0.2.3.dev2-py3-none-any.whl": "b978d5f4da33def447ed75b4c02735afdc58de152c29847667376ff08bb50f63",
+    "dist/development-reports-20261126/mfrmpy-0.2.3.dev2.tar.gz": "99c03ff66d5d6fcb4f298d9fb97c253203458d90839c3edc5ab4b45d71e0305a"
+  },
+  "wheel_rebuilt_from_sdist_byte_identical": true,
+  "twine_check": "passed",
+  "distributed_tests_match_checked_copies": true,
+  "environments": [
+    {
+      "environment": "312",
+      "python": "3.12.13 (main, Jun 23 2026, 15:44:24) [Clang 22.1.3 ]",
+      "packages": {
+        "mfrmpy": "0.2.3.dev2",
+        "numpy": "2.5.5",
+        "pandas": "3.1.1",
+        "scipy": "1.18.1",
+        "pyarrow": "26.0.1",
+        "pytest": "9.2.0"
+      },
+      "passed": 38,
+      "tests": [
+        "test_fair_average_matches_independent_category_probabilities[analysis0]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0]",
+        "test_fair_average_calibration_hold_and_long_text[analysis0]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis0]",
+        "test_fair_average_matches_independent_category_probabilities[analysis1]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1]",
+        "test_fair_average_calibration_hold_and_long_text[analysis1]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis1]",
+        "test_fair_average_matches_independent_category_probabilities[analysis2]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2]",
+        "test_fair_average_calibration_hold_and_long_text[analysis2]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis2]",
+        "test_pending_diagnostics_and_gd_report",
+        "test_import_keeps_ui_and_plotting_optional",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted0]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted0]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted0]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted1]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted1]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted1]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted2]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted2]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted2]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted3]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted3]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted3]",
+        "test_group_dff_saved_request_tables_and_csv[observed]",
+        "test_group_dff_figures_and_html_from_archive[observed]",
+        "test_group_dff_saved_request_tables_and_csv[no_shared_works]",
+        "test_group_dff_figures_and_html_from_archive[no_shared_works]",
+        "test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated",
+        "test_boundary_exclusion_counts_low_df_fit_guards_and_legacy_reload",
+        "test_diagnostic_plots_coordinates_exclusions_and_qualification",
+        "test_boundary_scenarios_all_ones_category_gaps_disconnected_mml_and_zero_df",
+        "test_api_consolidation_check_design_summary_table_kinds_and_aliases",
+        "test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening",
+        "test_partial_outputs_summary_exports_and_pca",
+        "test_export_switches_complete_sets_and_preserves_user_files"
+      ],
+      "archive_roundtrips": [
+        {
+          "file": "old-022-mfrm.mfrm",
+          "content_fingerprint": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+          "analysis_id": "ana_4f2c92193d1692f26d8ea9b0",
+          "kind": "basic-rsm-jmle-v1"
+        },
+        {
+          "file": "old-022-gd.mfrm",
+          "content_fingerprint": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1",
+          "analysis_id": "gd_f9e71900cacc04784744b002",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_one.mfrm",
+          "content_fingerprint": "5a60081512bd1dc92268b581965224b23bc15bfa2b3930b8c7bc8205248fb0a7",
+          "analysis_id": "gd_4b616038cff727024b1c3a9b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_two.mfrm",
+          "content_fingerprint": "4528b3f9b6ed354838b109ffc0dd1a3cb281073e2a8d8b1a819bea749f798517",
+          "analysis_id": "gd_23d6831c088b8f6c162cc1ea",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_one.mfrm",
+          "content_fingerprint": "751136fca15334b8da52fcc7c673f508a2e07140f74eaf80a3b8ae89095633ce",
+          "analysis_id": "gd_d7081ffb636105ffebaef4eb",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_two.mfrm",
+          "content_fingerprint": "55747aed8caf7c7c60424a7658576293d2d356f5704a793db61c128d59d4a631",
+          "analysis_id": "gd_926fd050d4c19e7109a87f42",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "unbalanced_gd_nested_missing.mfrm",
+          "content_fingerprint": "cb3ff73ce5337ad90978c2140e312175956cfe670aa3a0e990ef816f7d2b359b",
+          "analysis_id": "gd_280e986a3a053bd94d86ea4b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "m3_anchor_interval_example.mfrm",
+          "content_fingerprint": "c4b1b2401746b3a8ac7d3be5306e81c6aa42d39b78c604c4c6a1a73a0e6d9e05",
+          "analysis_id": "ana_2367782ff1ca709163d80d53",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m3_shared_anchor_example.mfrm",
+          "content_fingerprint": "ed1456339bd80ae53a3088f9f712946fad813ae22cc1cca9f896202dbcbea438",
+          "analysis_id": "ana_7a4b858e67a444e78200088f",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_sd_difference.mfrm",
+          "content_fingerprint": "a7c3fa328ec3ba736924fdf48067ab30cc5034ccf603a61547831c5386f3321e",
+          "analysis_id": "ana_73857088248fe47909b3fd32",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_missing_shared_works.mfrm",
+          "content_fingerprint": "9e52c5fa49db96b256dddbe20bacbb2828b4334e68f17c00bd6ca6040ce30ae9",
+          "analysis_id": "ana_82f54ac496a754009d463308",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5b_anchor_sensitivity_example.mfrm",
+          "content_fingerprint": "1c1ba8546b4c66b44f2e320a4b6f4e66f69cc1fcf5ef734c898214a1e8e06157",
+          "analysis_id": "ana_9811baed2cc6fe647da4013d",
+          "kind": "mfrm-analysis-v2"
+        }
+      ],
+      "warnings": "none"
+    },
+    {
+      "environment": "311-min",
+      "python": "3.11.14 (main, Feb  4 2026, 00:01:31) [Clang 21.1.4 ]",
+      "packages": {
+        "mfrmpy": "0.2.3.dev2",
+        "numpy": "1.26.0",
+        "pandas": "3.0.0",
+        "scipy": "1.10.0",
+        "pyarrow": "16.0.0",
+        "pytest": "9.2.0"
+      },
+      "passed": 38,
+      "tests": [
+        "test_fair_average_matches_independent_category_probabilities[analysis0]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0]",
+        "test_fair_average_calibration_hold_and_long_text[analysis0]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis0]",
+        "test_fair_average_matches_independent_category_probabilities[analysis1]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1]",
+        "test_fair_average_calibration_hold_and_long_text[analysis1]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis1]",
+        "test_fair_average_matches_independent_category_probabilities[analysis2]",
+        "test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2]",
+        "test_fair_average_calibration_hold_and_long_text[analysis2]",
+        "test_zip_figures_have_explicit_scope_and_match_fair_table[analysis2]",
+        "test_pending_diagnostics_and_gd_report",
+        "test_import_keeps_ui_and_plotting_optional",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted0]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted0]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted0]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted1]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted1]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted1]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted2]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted2]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted2]",
+        "test_model_routes_tables_and_zero_refit_roundtrip[fitted3]",
+        "test_optional_figures_and_report_reuse_retained_results[fitted3]",
+        "test_screening_only_se_intervals_and_four_series_reliability[fitted3]",
+        "test_group_dff_saved_request_tables_and_csv[observed]",
+        "test_group_dff_figures_and_html_from_archive[observed]",
+        "test_group_dff_saved_request_tables_and_csv[no_shared_works]",
+        "test_group_dff_figures_and_html_from_archive[no_shared_works]",
+        "test_audit_size_limit_rank_deficiency_and_non_convergence_are_separated",
+        "test_boundary_exclusion_counts_low_df_fit_guards_and_legacy_reload",
+        "test_diagnostic_plots_coordinates_exclusions_and_qualification",
+        "test_boundary_scenarios_all_ones_category_gaps_disconnected_mml_and_zero_df",
+        "test_api_consolidation_check_design_summary_table_kinds_and_aliases",
+        "test_plan_a_quad31_default_step_thresholds_scale_orientation_and_bias_screening",
+        "test_partial_outputs_summary_exports_and_pca",
+        "test_export_switches_complete_sets_and_preserves_user_files"
+      ],
+      "archive_roundtrips": [
+        {
+          "file": "old-022-mfrm.mfrm",
+          "content_fingerprint": "2d274afb7a32c7db48cc7eb1d7addb105c8e4b16f9e92cdffd8da6dacf43dfb4",
+          "analysis_id": "ana_4f2c92193d1692f26d8ea9b0",
+          "kind": "basic-rsm-jmle-v1"
+        },
+        {
+          "file": "old-022-gd.mfrm",
+          "content_fingerprint": "54fe3622c5ffbf8cef1749183fca101fb15fcf1e19a1a8554bce90ce1cec96f1",
+          "analysis_id": "gd_f9e71900cacc04784744b002",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_one.mfrm",
+          "content_fingerprint": "5a60081512bd1dc92268b581965224b23bc15bfa2b3930b8c7bc8205248fb0a7",
+          "analysis_id": "gd_4b616038cff727024b1c3a9b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "gd_interval_two.mfrm",
+          "content_fingerprint": "4528b3f9b6ed354838b109ffc0dd1a3cb281073e2a8d8b1a819bea749f798517",
+          "analysis_id": "gd_23d6831c088b8f6c162cc1ea",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_one.mfrm",
+          "content_fingerprint": "751136fca15334b8da52fcc7c673f508a2e07140f74eaf80a3b8ae89095633ce",
+          "analysis_id": "gd_d7081ffb636105ffebaef4eb",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "multivariate_gd_two.mfrm",
+          "content_fingerprint": "55747aed8caf7c7c60424a7658576293d2d356f5704a793db61c128d59d4a631",
+          "analysis_id": "gd_926fd050d4c19e7109a87f42",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "unbalanced_gd_nested_missing.mfrm",
+          "content_fingerprint": "cb3ff73ce5337ad90978c2140e312175956cfe670aa3a0e990ef816f7d2b359b",
+          "analysis_id": "gd_280e986a3a053bd94d86ea4b",
+          "kind": "gd-analysis-v2"
+        },
+        {
+          "file": "m3_anchor_interval_example.mfrm",
+          "content_fingerprint": "c4b1b2401746b3a8ac7d3be5306e81c6aa42d39b78c604c4c6a1a73a0e6d9e05",
+          "analysis_id": "ana_2367782ff1ca709163d80d53",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m3_shared_anchor_example.mfrm",
+          "content_fingerprint": "ed1456339bd80ae53a3088f9f712946fad813ae22cc1cca9f896202dbcbea438",
+          "analysis_id": "ana_7a4b858e67a444e78200088f",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_sd_difference.mfrm",
+          "content_fingerprint": "a7c3fa328ec3ba736924fdf48067ab30cc5034ccf603a61547831c5386f3321e",
+          "analysis_id": "ana_73857088248fe47909b3fd32",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5a_dff_missing_shared_works.mfrm",
+          "content_fingerprint": "9e52c5fa49db96b256dddbe20bacbb2828b4334e68f17c00bd6ca6040ce30ae9",
+          "analysis_id": "ana_82f54ac496a754009d463308",
+          "kind": "mfrm-analysis-v2"
+        },
+        {
+          "file": "m5b_anchor_sensitivity_example.mfrm",
+          "content_fingerprint": "1c1ba8546b4c66b44f2e320a4b6f4e66f69cc1fcf5ef734c898214a1e8e06157",
+          "analysis_id": "ana_9811baed2cc6fe647da4013d",
+          "kind": "mfrm-analysis-v2"
+        }
+      ],
+      "warnings": "13 upstream Matplotlib 3.8.0/pyparsing deprecations"
+    }
+  ],
+  "reused_evidence": "0.2.3.dev1 full 105 tests per environment; G1/G2/G3 simulations and external numerical comparisons. Only four packaged Python files changed; estimator modules identical.",
+  "not_checked": [
+    "Linux/Windows runtime",
+    "shared Web/Desktop app UI",
+    "remote CI",
+    "PyPI publication/installation",
+    "general Fair Average interval coverage",
+    "DFF model scope expansion"
+  ],
+  "report_samples": {
+    "validation/evidence/report_exports/m5a_dff_sd_difference.out": "c9b43c7c8abd075faec6af61bee523060c741ee071faea29e6264352a0065e4e",
+    "validation/evidence/report_exports/m5a_dff_missing_shared_works.out": "658c3f6aa564865d2682bed5588fb5b2784ef1bad49946df745a6b5b0b39dad9",
+    "validation/evidence/report_exports/writing_results.zip": "0d1d9d73ea2f5ce27aaa35e09e93f1f3f9cf3c29858bdccd4e0cb8ce8ecf80ab",
+    "validation/evidence/report_exports/writing.out": "840de12bff7866580072c9a2bb10f8771b41398f91f84f780fe883783e47a36c"
+  },
+  "sample_dff_states": {
+    "m5a_dff_sd_difference": "point_only: retained interval runtime/source mismatch",
+    "m5a_dff_missing_shared_works": "withheld: observed assignment support missing"
+  },
+  "visual_check": "writing_results.zip PNG inspected: fair-average coordinates, labels, identity line, caption and margins visible; all ZIP manifest SHA256 values verified"
+}

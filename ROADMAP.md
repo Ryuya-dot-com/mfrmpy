@@ -379,7 +379,7 @@ R照合後の変更は階数許容差の記録、表・保留説明、数値範�
 
 インストールした候補では、年度差・共有校正・DFF・出力の関連テスト30件が成功し、旧版を含む12保存例の再読込・再保存・表生成を再推定なしで確認した。DFFの480評定では +0.593 logit、95%区間 [−0.036, +1.222] を保存済みMMLと照合し、CMLの保存値 +0.984、[+0.177, +1.792] を別の推定法として併記した。432評定では実測のB校共通採点0、識別を回復しうる未取得セル40件と保留理由を保持した。[候補のDFFテキスト](validation/evidence/dff_candidate_dev3/m5a_dff_sd_difference/report.out)・[欠測例のテキスト](validation/evidence/dff_candidate_dev3/m5a_dff_missing_shared_works/report.out)
 
-**配布CIと候補の修正。** [ドラフトPR #3](https://github.com/Ryuya-dot-com/mfrmpy/pull/3) で7構成の検証を実行した。初回のWindows 3.11／3.12では、ZIPを読み取り専用で開いて `fsync` する処理が `Bad file descriptor` で失敗した。推定値・区間の数値照合は通過しており、修正は同期するZIPを `r+b` で開く処理に限る。数値実験は再利用し、出力テストと既存の配布CIで修正を検証する。初回成果物と修正版はSHA-256で区別する。[候補・導入・互換性の記録](validation/evidence/annual_candidate.json)
+**配布CIと候補の修正。** [ドラフトPR #3](https://github.com/Ryuya-dot-com/mfrmpy/pull/3) で7構成の検証を実行した。初回のWindows 3.11／3.12では、ZIPを読み取り専用で開いて `fsync` する処理が `Bad file descriptor` で失敗した。推定値・区間の数値照合は通過しており、同期するZIPを `r+b` で開くよう修正した。周辺の保存処理も点検し、Windowsの改行変換を避けて単独 `.out` とZIP内の `.out` を同じUTF-8バイト列で保存するようそろえた。変更はZIP保存処理に限り、数値実験は再利用した。インストールした修正版で出力に関わる17テストが通過し、既存の配布CIでWindowsを含む検証を進める。初回成果物と修正版はSHA-256で区別する。 Linux CIには日本語フォントがなく、図中の日本語IDで3件の字体不足警告が出る。UTF-8テキスト・CSVは通過し、図の日本語表示には対応フォントが必要である。依存下限のMatplotlibでは13件の上流の非推奨警告も記録した。[候補・導入・互換性の記録](validation/evidence/annual_candidate.json)
 
 両場面とも、返却率と保留理由を示し、公開例ではモデル近似と、その割付で検証できた被覆率・誤り率を明記する。検出力は設定した効果量ごとに示す。差の解釈には区間の幅と利用者が事前指定した実務上の差を使い、採点の公平性を調べるために確認すべき作品・採点基準までたどれるようにする。
 

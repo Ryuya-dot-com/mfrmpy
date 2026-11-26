@@ -92,7 +92,7 @@ def write_bundle(analysis, path, *, kind, plots):
     with tempfile.TemporaryDirectory(dir=path.parent, prefix=".mfrmpy-report-") as temporary:
         staging = Path(temporary)
         report = staging / "report.out"
-        report.write_text(render_text(analysis, qualified_tables), encoding="utf-8")
+        report.write_bytes(render_text(analysis, qualified_tables).encode("utf-8"))
         csv_paths = _export_csv(analysis, staging / "csv", qualified_tables) if qualified_tables else []
         if csv_paths:
             manifest = pd.read_csv(csv_paths[0], keep_default_na=False)

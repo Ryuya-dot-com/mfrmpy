@@ -13,8 +13,8 @@
     "pytest": "9.2.0"
   },
   "artifacts": {
-    "mfrmpy-0.2.3.dev3.tar.gz": "1fa1a39768997330bea16a0fa1f128bd882e20587c72913be2149092ff8b1a7e",
-    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "00e6974563c6920e7907376023ec64bd6150cbab310fdc425b5ffa98076ea064"
+    "mfrmpy-0.2.3.dev3.tar.gz": "07bb694f7c601425b308373f743ccd0e4a3265f3da572ea9d0029a9640193d9f",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "a585b5bf881174df0e73025e0602f3f8f13d1ecf006bd105f012574defbc35fc"
   },
   "tests": [
     {
@@ -233,8 +233,125 @@
       "failures": "0",
       "skipped": "0",
       "tests": "17",
+      "time": "20.451",
+      "timestamp": "2026-11-26T18:37:18.628906+09:00"
+    },
+    "sync_only_test": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "17",
       "time": "20.939",
       "timestamp": "2026-11-26T18:34:34.880520+09:00"
-    }
+    },
+    "newline_fix": "Write ZIP report.out as UTF-8 bytes, like standalone export_out, to avoid Windows newline translation.",
+    "changed_wheel_members": [
+      "mfrmpy/_reports.py",
+      "mfrmpy-0.2.3.dev3.dist-info/RECORD"
+    ]
+  },
+  "sync_only_artifacts": {
+    "mfrmpy-0.2.3.dev3.tar.gz": "1fa1a39768997330bea16a0fa1f128bd882e20587c72913be2149092ff8b1a7e",
+    "mfrmpy-0.2.3.dev3-py3-none-any.whl": "00e6974563c6920e7907376023ec64bd6150cbab310fdc425b5ffa98076ea064"
+  },
+  "warnings": [
+    "Linux CI lacks a CJK font: three missing-glyph warnings for Japanese IDs in figures; UTF-8 text and CSV checks pass. Japanese plot labels require an installed font containing those glyphs.",
+    "Minimum Matplotlib 3.8.0 with pyparsing 3.3.3 emits 13 upstream deprecation warnings."
+  ],
+  "sync_only_ci": {
+    "run_id": 45793404332,
+    "commit": "66626df7abbdafd48f34cf5969376c6b62f3c171",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45793404332",
+    "jobs": [
+      {
+        "id": 139817835048,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "results": []
+      },
+      {
+        "id": 139818002391,
+        "name": "test (windows-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:40:28.4304940Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4392357Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4478984Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:28.4480006Z 3 failed, 99 passed, 21 deselected in 219.47s (0:03:39)\r"
+        ]
+      },
+      {
+        "id": 139818002419,
+        "name": "test (macos-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:40:27.3074920Z 102 passed, 21 deselected in 231.72s (0:03:51)",
+          "2026-11-26T09:42:57.9755800Z 21 passed, 102 deselected in 141.55s (0:02:21)"
+        ]
+      },
+      {
+        "id": 139818002443,
+        "name": "test (macos-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:37:46.2044900Z 102 passed, 21 deselected in 93.53s (0:01:33)",
+          "2026-11-26T09:38:56.3809260Z 21 passed, 102 deselected in 67.11s (0:01:07)"
+        ]
+      },
+      {
+        "id": 139818002465,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:39:41.8004181Z 102 passed, 21 deselected in 202.83s (0:03:22)",
+          "2026-11-26T09:41:43.0110955Z 21 passed, 102 deselected, 3 warnings in 116.73s (0:01:56)"
+        ]
+      },
+      {
+        "id": 139818002505,
+        "name": "test (windows-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "failure",
+        "results": [
+          "2026-11-26T09:40:39.2851663Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis0] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.2917847Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis1] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.3163840Z FAILED test_reports.py::test_reports_roundtrip_without_refitting_or_optional_dependencies[analysis2] - AssertionError: assert 'mfrmpy analy...e reused.\\\\r\\\\n' == 'mfrmpy analy... be reused.\\\\n'\\n  \\n  - mfrmpy analysis re",
+          "2026-11-26T09:40:39.3165422Z 3 failed, 99 passed, 21 deselected in 231.74s (0:03:51)\r"
+        ]
+      },
+      {
+        "id": 139818002743,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:38:34.2326653Z 102 passed, 21 deselected in 130.02s (0:02:10)",
+          "2026-11-26T09:39:54.8325439Z 21 passed, 102 deselected, 16 warnings in 77.08s (0:01:17)"
+        ]
+      },
+      {
+        "id": 139818002935,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "status": "completed",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:38:44.5278384Z 102 passed, 21 deselected in 144.02s (0:02:24)",
+          "2026-11-26T09:40:13.5634511Z 21 passed, 102 deselected, 3 warnings in 84.98s (0:01:24)"
+        ]
+      },
+      {
+        "id": 139821753389,
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "skipped",
+        "results": []
+      }
+    ]
   }
 }

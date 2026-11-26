@@ -103,7 +103,7 @@
   ],
   "annual_comparison": "annual_api/comparison.json",
   "dff_examples": "dff_candidate_dev3",
-  "scope": "Installed-wheel verification. 18 annual API comparisons reuse independent saved calculations; no new coverage experiment. DFF CML reuses its saved result. All 12 legacy archives reopened without fitting. Publication remains incomplete.",
+  "scope": "Installed-wheel verification and seven successful CI configurations, each with 102 core and 21 figure/HTML tests. All final CI artifacts match local hashes. Numerical verification reuses 18 independent annual calculations and retained coverage studies. DFF CML reuses its saved result. All 12 legacy archives reopened without fitting. TestPyPI/PyPI publication and shared Web/desktop validation remain incomplete.",
   "identical_installed_python_files": 107,
   "upgrade": {
     "from_version": "0.2.2",
@@ -115,7 +115,8 @@
     },
     "matplotlib_installed": false,
     "pip_check": "passed",
-    "reopen_and_export": "MFRM and G/D projects retained; resave, text and CSV ZIP succeeded with refitting disabled"
+    "reopen_and_export": "MFRM and G/D projects retained; resave, text and CSV ZIP succeeded with refitting disabled",
+    "candidate_wheel_sha256": "a585b5bf881174df0e73025e0602f3f8f13d1ecf006bd105f012574defbc35fc"
   },
   "initial_artifacts": {
     "mfrmpy-0.2.3.dev3.tar.gz": "5fff1c53e58c02b72bf3dbe0f31ff1f4039effa62466bd79d26485f978a58406",
@@ -351,6 +352,150 @@
         "status": "completed",
         "conclusion": "skipped",
         "results": []
+      }
+    ]
+  },
+  "final_ci": {
+    "run_id": 45794736352,
+    "commit": "c0cf6b74d48b6ce2f88a451f358777cd141e3d6a",
+    "url": "https://github.com/Ryuya-dot-com/mfrmpy/actions/runs/45794736352",
+    "conclusion": "success",
+    "artifact": {
+      "id": 15103603631,
+      "name": "python-dist",
+      "size_in_bytes": 1813641,
+      "url": "https://api.github.com/repos/Ryuya-dot-com/mfrmpy/actions/artifacts/15103603631",
+      "archive_download_url": "https://api.github.com/repos/Ryuya-dot-com/mfrmpy/actions/artifacts/15103603631/zip",
+      "expired": false,
+      "created_at": "2026-11-26T09:44:36Z",
+      "expires_at": "2027-02-24T09:44:15Z",
+      "updated_at": "2026-11-26T09:44:36Z",
+      "digest": "sha256:3925dbffdcfe6694216cff72effe9cd030010074d1e39afb0ddaed92bb1b142c",
+      "workflow_run": {
+        "id": 45794736352,
+        "repository_id": 1461217222,
+        "head_repository_id": 1461217222,
+        "head_branch": "development/annual-drift-dev3",
+        "head_sha": "c0cf6b74d48b6ce2f88a451f358777cd141e3d6a"
+      }
+    },
+    "identical_to_local_artifacts": true,
+    "jobs": [
+      {
+        "id": 139822380012,
+        "name": "build",
+        "conclusion": "success",
+        "results": [],
+        "python": "2026-11-26T09:44:24.9328603Z Successfully set up CPython (3.12.16)",
+        "dependencies": [
+          "2026-11-26T09:44:31.8138442Z Successfully installed Pygments-2.21.0 SecretStorage-3.5.0 build-1.6.1 certifi-2026.11.20 cffi-2.1.1 charset_normalizer-3.5.3 cryptography-50.0.2 docutils-0.23 id-1.6.1 idna-3.20 jaraco.classes-3.4.0 jaraco.context-6.1.2 jaraco.functools-4.6.0 jeepney-0.9.0 keyring-25.7.0 markdown-it-py-4.3.0 mdurl-0.1.2 more-itertools-11.2.1 nh3-0.3.8 packaging-26.4 pycparser-3.12 pyproject_hooks-1.3.3 readme-renderer-46.0 requests-2.34.2 requests-toolbelt-1.0.0 rfc3986-2.0.0 rich-15.0.0 twine-7.0.0 urllib3-2.8.0"
+        ]
+      },
+      {
+        "id": 139822571504,
+        "name": "test (ubuntu-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:24.7355493Z 102 passed, 21 deselected in 144.97s (0:02:24)",
+          "2026-11-26T09:49:00.4730908Z 21 passed, 102 deselected, 3 warnings in 91.24s (0:01:31)"
+        ],
+        "python": "2026-11-26T09:44:43.8209788Z Successfully set up CPython (3.12.16)",
+        "dependencies": [
+          "2026-11-26T09:44:59.1707516Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:47:28.8716046Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571528,
+        "name": "test (ubuntu-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:27.7019753Z 102 passed, 21 deselected in 204.93s (0:03:24)",
+          "2026-11-26T09:50:30.0900231Z 21 passed, 102 deselected, 3 warnings in 117.52s (0:01:57)"
+        ],
+        "python": "2026-11-26T09:44:44.2145025Z Successfully set up CPython (3.11.18)",
+        "dependencies": [
+          "2026-11-26T09:45:02.0100688Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:48:32.2428329Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571544,
+        "name": "test (windows-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:46.3311935Z 102 passed, 21 deselected in 148.05s (0:02:28)",
+          "2026-11-26T09:49:35.7251208Z 21 passed, 102 deselected in 101.26s (0:01:41)"
+        ],
+        "python": "2026-11-26T09:44:46.0279265Z Successfully set up CPython (3.11.9)",
+        "dependencies": [
+          "2026-11-26T09:45:17.4681765Z Successfully installed colorama-0.4.6 iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:47:54.0524165Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571591,
+        "name": "test (windows-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:49:13.0144144Z 102 passed, 21 deselected in 222.89s (0:03:42)",
+          "2026-11-26T09:51:38.7929226Z 21 passed, 102 deselected in 136.49s (0:02:16)"
+        ],
+        "python": "2026-11-26T09:44:47.5695490Z Successfully set up CPython (3.12.10)",
+        "dependencies": [
+          "2026-11-26T09:45:29.0084963Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:49:21.8322748Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571602,
+        "name": "test (ubuntu-latest, 3.11, true)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:34.2991661Z 102 passed, 21 deselected in 216.71s (0:03:36)",
+          "2026-11-26T09:50:50.1397581Z 21 passed, 102 deselected, 16 warnings in 131.47s (0:02:11)"
+        ],
+        "python": "2026-11-26T09:44:42.4945971Z Successfully set up CPython (3.11.18)",
+        "dependencies": [
+          "2026-11-26T09:44:54.8917439Z Successfully installed numpy-1.26.0 pandas-3.0.0 pyarrow-16.0.0 python-dateutil-4.0.0 scipy-1.10.0 tzdata-2026.6",
+          "2026-11-26T09:44:57.0560528Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 packaging-26.4 pluggy-1.7.0 pygments-2.21.0 pytest-9.2.0",
+          "2026-11-26T09:48:38.3418152Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.8.0 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571664,
+        "name": "test (macos-latest, 3.11, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:48:05.4598820Z 102 passed, 21 deselected in 174.07s (0:02:54)",
+          "2026-11-26T09:50:14.6845010Z 21 passed, 102 deselected in 123.31s (0:02:03)"
+        ],
+        "python": "2026-11-26T09:44:47.8736600Z Successfully set up CPython (3.11.9)",
+        "dependencies": [
+          "2026-11-26T09:45:10.1939720Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.4.6 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.17.1 tzdata-2026.6",
+          "2026-11-26T09:48:10.7145680Z Successfully installed contourpy-1.3.3 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139822571686,
+        "name": "test (macos-latest, 3.12, false)",
+        "conclusion": "success",
+        "results": [
+          "2026-11-26T09:47:49.4885950Z 102 passed, 21 deselected in 165.17s (0:02:45)",
+          "2026-11-26T09:50:06.1020440Z 21 passed, 102 deselected in 128.94s (0:02:08)"
+        ],
+        "python": "2026-11-26T09:44:45.6318120Z Successfully set up CPython (3.12.10)",
+        "dependencies": [
+          "2026-11-26T09:45:03.3385180Z Successfully installed iniconfig-2.3.1 mfrmpy-0.2.3.dev3 numpy-2.5.5 packaging-26.4 pandas-3.1.1 pluggy-1.7.0 pyarrow-26.0.1 pygments-2.21.0 pytest-9.2.0 python-dateutil-4.0.0 scipy-1.18.1 tzdata-2026.6",
+          "2026-11-26T09:47:56.3484410Z Successfully installed contourpy-1.4.0 cycler-0.12.1 fonttools-4.69.1 kiwisolver-1.5.1 matplotlib-3.11.2 pillow-13.0.0 pyparsing-3.3.3"
+        ]
+      },
+      {
+        "id": 139826322190,
+        "name": "publish",
+        "conclusion": "skipped",
+        "results": [],
+        "dependencies": []
       }
     ]
   }

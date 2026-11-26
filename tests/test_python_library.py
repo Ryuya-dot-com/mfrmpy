@@ -216,6 +216,11 @@ def test_anchor_interval_bases_and_sd_persist(tmp_path, monkeypatch):
     shared = points.loc[("Overlapping", "calibration_propagated")]
     assert shared.Status == "withheld" and pd.isna(shared.SE) and '000' in shared.OverlapWorkIDs
     assert "share work" in shared.Reason and points.loc[("Overlapping", "conditional"), "SE"] > 0
+    levels = mfrmpy.tables(result, "Anchor sensitivity levels")[0][1].set_index(["Scenario", "Basis", "Level"])
+    assert levels.loc[("Known", "conditional", "R0"), "SE"] == 0
+    assert levels.loc[("Known", "conditional", "R0"), "Status"] == "fixed"
+    assert levels.loc[("Independent", "calibration_propagated", "R0"), "SE"]**2 == pytest.approx(.03)
+    assert levels.loc[("Independent", "calibration_propagated", "R1"), "SE"]**2 == pytest.approx(.02)
     assert frame.loc[frame.SE.notna(), "IncludesImportantDifference"].to_list() == [
         low <= .5 <= high for low, high in frame.loc[frame.SE.notna(), ["Lower", "Upper"]].itertuples(index=False)
     ]

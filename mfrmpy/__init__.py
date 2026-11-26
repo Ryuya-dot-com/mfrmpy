@@ -25,7 +25,7 @@ from mfrm_app.rater_dff import prepare_rater_dff_data, with_rater_dff
 
 from ._category_design import category_design
 
-__version__ = "0.2.3.dev3"
+__version__ = "0.2.3.dev4"
 
 __all__ = [
     "__version__", "analyze", "fit", "diagnose", "check_design", "check_rater_contrast", "category_design", "summary", "tables", "export_csv",
@@ -109,7 +109,7 @@ def _canonical_table_kind(title: str) -> str:
     if title in (rater_dff.TITLE, rater_dff.OVERLAP, rater_dff.SCORES, rater_dff.PLAN, rater_dff.GAPS):
         return "rater_dff"
     if title in (anchor_sensitivity.TITLE, anchor_sensitivity.CONSTRAINTS, anchor_sensitivity.WORKS,
-                 anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS):
+                 anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS, anchor_sensitivity.LEVELS):
         return "anchor_sensitivity"
     if title == "G/D: observed_coefficients":
         return "gd_observed"
@@ -454,7 +454,8 @@ def load_example():
 
 
 def plot(analysis, kind="wright", *, level=None, index=0, facet=None,
-         statistic="Infit", presentation="explained", gd_swap=False, top_n=40):
+         statistic="Infit", presentation="explained", gd_swap=False, top_n=40,
+         view="levels", style="forest", levels=None):
     """Return a Matplotlib Figure; install the ``figures`` extra first.
 
     Supported ``kind`` values include ``"wright"``, ``"pathway"`` (alias
@@ -465,12 +466,15 @@ def plot(analysis, kind="wright", *, level=None, index=0, facet=None,
     ``"residual_qq"``, ``"bias"``, ``"bias_ranked"``, ``"interval"``,
     ``"joint"``, ``"rater_dff"``, ``"anchor_sensitivity"``, ``"gd"``, ``"pca"`` (alias ``"residual_pca"``), and
     ``"pca_loadings"``. PCM Wright maps and category curves require ``level``.
+    ``anchor_sensitivity`` defaults to a colored forest of the selected levels.
+    Choose ``view="difference"`` for the retained contrast, ``style="halfeye"``
+    for a labelled normal approximation, or ``levels=[...]`` for other levels.
     No estimator is rerun to draw results.
     """
     from mfrm_app.desktop_outputs import analysis_figure
     return analysis_figure(analysis, kind, level=level, index=index, facet=facet,
                            statistic=statistic, presentation=presentation,
-                           gd_swap=gd_swap, top_n=top_n)
+                           gd_swap=gd_swap, top_n=top_n, view=view, style=style, levels=levels)
 
 
 def report_html(analysis, *, pathway_facet=None, pathway_statistic="Infit",

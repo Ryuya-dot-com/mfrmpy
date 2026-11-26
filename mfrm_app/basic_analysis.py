@@ -45,7 +45,7 @@ def _source_versions():
     else:
         modules = (engine, output_qualification, reporting_facts, project)
         paths = [Path(module.__file__) for module in modules] + [Path(__file__)]
-        for name in ("anchor_intervals", "anchor_sensitivity", "shared_calibration", "rater_contrast", "design_rank", "desktop_analysis", "desktop_examples",
+        for name in ("anchor_intervals", "anchor_levels", "anchor_sensitivity", "shared_calibration", "rater_contrast", "design_rank", "desktop_analysis", "desktop_examples",
                      "desktop_outputs", "bias_analysis", "generalizability", "gd_intervals", "multivariate_gd", "unbalanced_gd",
                      "reliability", "structural_intervals", "joint_interaction", "project_portability",
                      "mml_fixed_sd_review", "mml_joint"):

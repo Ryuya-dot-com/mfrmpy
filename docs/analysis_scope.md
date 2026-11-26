@@ -74,6 +74,15 @@ findings cannot be borrowed from single-year calibration. If occasion and
 rating mode are confounded, common works alone do not identify a mode-adjusted
 annual contrast. [API, assumptions and examples](python_library.md#compare-a-returning-rater-across-years)
 
+The Python comparison display defaults to a color-coded forest of individual
+rater levels, separated by scenario and origin. Their pointwise intervals retain
+the joint covariance, including estimated-origin and calibration terms. Interval
+overlap is not a test of the difference, and validation of a contrast does not
+qualify individual-level coverage. The difference display and normal-approximation
+half-eyes require explicit selection. Older files without individual evidence
+show recoverable points and hold reasons without refitting.
+[Display choices](python_library.md#choose-the-comparison-display)
+
 ## Specified structural intervals
 
 For supported unit-weight, fixed-SD RSM/PCM analyses, this output provides

@@ -10,9 +10,11 @@ methods and validation findings belong in their dedicated technical records.
 
 ## Unreleased
 
-The integrated local development candidate is `0.2.3.dev3`; it has not been
+The integrated local development candidate is `0.2.3.dev4`; it has not been
 published. Earlier development snapshots retained the `0.2.1` label and should
 be distinguished by their recorded artifact hashes.
+
+- Default anchor-sensitivity figures to color-coded individual-level forests in the Python API, HTML and ZIP. Retain native level estimates and full joint covariance, including estimated-origin and shared-calibration terms. Keep differences and labelled normal-approximation half-eyes as explicit choices; allow selecting three or more retained levels. Old archives show recoverable baseline points and explicit holds without refitting. Individual interval coverage is not inferred from contrast validation.
 
 - Extend shared anchor calibration with an explicit source facet and receiving-to-source level map. Reusing a prior estimate across years retains its covariance. Validate matching rating events and distinguish calibration overlap from cross-occasion overlap. Add an anchor-sensitivity interval plot and ordinary API annual examples with preserved confounding holds; coverage qualification remains conditional on existing annual evidence.
 

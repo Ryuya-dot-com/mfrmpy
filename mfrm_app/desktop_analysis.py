@@ -1477,7 +1477,7 @@ def current_additional_tables(analysis, *, extended: bool = False, include=None,
                 'Point estimates from the separate joint model; baseline maps and tables retain the original main-effects fit.'))
     if "rater_dff" in analysis and any(include(title) for title in (rater_dff.TITLE, rater_dff.OVERLAP, rater_dff.SCORES, rater_dff.PLAN, rater_dff.GAPS)):
         tables.extend(rater_dff.tables(analysis))
-    if "anchor_sensitivity" in analysis and any(include(title) for title in (anchor_sensitivity.TITLE, anchor_sensitivity.CONSTRAINTS, anchor_sensitivity.WORKS, anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS)):
+    if "anchor_sensitivity" in analysis and any(include(title) for title in (anchor_sensitivity.TITLE, anchor_sensitivity.CONSTRAINTS, anchor_sensitivity.WORKS, anchor_sensitivity.INTERVALS, anchor_sensitivity.OCCASIONS, anchor_sensitivity.LEVELS)):
         tables.extend(anchor_sensitivity.tables(analysis))
     if include("Connectivity and Scale Linking") and (linking := _connectivity_and_anchor_table(analysis)):
         tables.append(linking)

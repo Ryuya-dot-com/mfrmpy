@@ -188,7 +188,85 @@ def _rater_dff_figure(analysis):
     return maps.style_figure(fig)
 
 
-def _anchor_sensitivity_figure(analysis):
+def _forest_point(ax, estimate, low, high, y, color, marker, style, height=.25):
+    if pd.isna(estimate):
+        return
+    if pd.isna(low) or high == low:
+        ax.plot(estimate, y, marker=marker, color=color, linestyle='none')
+        return
+    ax.errorbar(estimate, y, xerr=[[estimate-low], [high-estimate]], fmt=marker, capsize=4, color=color)
+    if style == 'halfeye':
+        # Normal confidence approximation from the retained Wald SE, not draws.
+        from scipy.stats import norm
+        se = (high-low)/(2*norm.ppf(.975))
+        x = np.linspace(estimate-3.5*se, estimate+3.5*se, 161)
+        ax.fill_between(x, y, y-height*np.exp(-.5*((x-estimate)/se)**2), color=color, alpha=.25)
+
+
+def _anchor_sensitivity_figure(analysis, *, view='levels', style='forest', levels=None):
+    from . import anchor_levels
+    project.validate_analysis(analysis)
+    if 'anchor_sensitivity' not in analysis:
+        raise ValueError('No retained anchor sensitivity analysis')
+    if view not in ('levels', 'difference') or style not in ('forest', 'halfeye'):
+        raise ValueError("Use view='levels'|'difference' and style='forest'|'halfeye'")
+    if view == 'difference':
+        if levels is not None:
+            raise ValueError('levels selects individual levels; the difference is retained from the analysis')
+        return _anchor_difference_figure(analysis, style=style)
+    entry = analysis['anchor_sensitivity']
+    known = analysis['result']['config']['facet_levels'][entry['rater']]
+    if levels is None:
+        levels = entry['difference']
+    if (not isinstance(levels, (tuple, list)) or not levels or any(not isinstance(x, str) or x not in known for x in levels)
+            or len(set(levels)) != len(levels)):
+        raise ValueError('levels must contain distinct retained rater levels')
+    table = anchor_levels.table(analysis)
+    table = table.loc[table.Level.isin(levels)]
+    groups = list(table.groupby('Scenario', sort=False))
+    heights = [max(2.2, .32*len(rows)+1.5) for _, rows in groups]
+    fig = Figure(figsize=(11, sum(heights)+1.7), layout='constrained')
+    axes = fig.subplots(len(groups), 1, squeeze=False, gridspec_kw={'height_ratios': heights}).ravel()
+    colors = ('#0072b2', '#d55e00', '#009e73', '#cc79a7', '#e69f00', '#56b4e9', '#000000', '#6a3d9a')
+    markers = ('o', 's', '^', 'D', 'v', 'P', 'X', '*')
+    spacing = .7/len(levels)
+    for ax, (name, rows) in zip(axes, groups, strict=True):
+        bases = rows.Basis.drop_duplicates().tolist()
+        ticks = []
+        for j, basis in enumerate(bases):
+            block = rows.loc[rows.Basis.eq(basis)].set_index('Level')
+            notes = list(dict.fromkeys(block.Reason[block.Reason.ne('')]))
+            fixed = block.index[block.Status.eq('fixed')].tolist()
+            if fixed:
+                notes.append('Fixed: ' + ', '.join(fixed))
+            ticks.append(textwrap.fill(basis + ('\n' + '; '.join(notes) if notes else ''), 40))
+            for i, label in enumerate(levels):
+                row = block.loc[label]
+                y = j + (i-(len(levels)-1)/2)*spacing
+                _forest_point(ax, row.Estimate, row.Lower, row.Upper, y, colors[i % len(colors)],
+                              markers[i % len(markers)], style, height=spacing*.8)
+        for i, label in enumerate(levels):
+            ax.plot([], [], marker=markers[i % len(markers)], color=colors[i % len(colors)], linestyle='none', label=label)
+        ax.legend(loc='best', ncol=min(4, len(levels)), fontsize=9)
+        ax.set(yticks=range(len(bases)), yticklabels=ticks, ylim=(len(bases)-.5, -.65),
+               xlabel='Native rater coefficient (logits)')
+        ax.set_title(textwrap.fill(name + ' · ' + rows.Origin.iloc[0], 100), fontsize=10)
+        ax.grid(axis='x', alpha=.2)
+        if rows.Estimate.isna().all():
+            ax.set_xticks([])
+            ax.text(.5, .5, 'Level estimates not available', transform=ax.transAxes, ha='center')
+    note = (f"FacetSign={int(table.FacetSign.iloc[0])}: "
+            + ('larger coefficients lower predicted scores. ' if table.FacetSign.iloc[0] < 0 else 'larger coefficients raise predicted scores. ')
+            + 'Origins may differ across scenarios. Interval overlap does not test the difference. '
+              'Pointwise 95% model approximations; CoverageQualified=False. Fixed points have no conditional sampling interval.')
+    if style == 'halfeye':
+        note += ' Shading: normal approximation from estimate and SE, not posterior or empirical draws.'
+    fig.suptitle('Rater levels · ' + ('color-coded forest' if style == 'forest' else 'normal-approximation half-eyes'))
+    fig.supxlabel(textwrap.fill(note, 115), fontsize=8)
+    return maps.style_figure(fig)
+
+
+def _anchor_difference_figure(analysis, *, style='forest'):
     project.validate_analysis(analysis)
     if "anchor_sensitivity" not in analysis:
         raise ValueError("No retained anchor sensitivity analysis")
@@ -213,10 +291,7 @@ def _anchor_sensitivity_figure(analysis):
         if row["Estimate"] is not None:
             x = row["Estimate"]
             color = colors.get(row["Basis"], "#64748b")
-            if row["Lower"] is None:
-                ax.plot(x, index, 'o', color=color)
-            else:
-                ax.errorbar(x, index, xerr=[[x-row["Lower"]], [row["Upper"]-x]], fmt='o', capsize=4, color=color)
+            _forest_point(ax, x, row["Lower"], row["Upper"], index, color, 'o', style)
     if any(row["Estimate"] is not None for row in rows):
         ax.axvline(0, color='#64748b', linewidth=.8)
         if entry.get("important_difference") is not None:
@@ -232,6 +307,8 @@ def _anchor_sensitivity_figure(analysis):
             'CoverageQualified=False. Sampling-error propagation does not correct drift in the anchored raters.')
     if entry.get("important_difference") is not None:
         note += f' Dashed line: prespecified important difference = {entry["important_difference"]:g} logits.'
+    if style == 'halfeye':
+        note += ' Shading: normal approximation from estimate and SE, not posterior or empirical draws.'
     fig.supxlabel(textwrap.fill(note, 110), fontsize=8)
     return maps.style_figure(fig)
 
@@ -860,22 +937,24 @@ def _bias_ranked_figure(analysis, *, index=0, top_n=30):
     return maps.style_figure(fig)
 
 
-def analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statistic='Infit', presentation='explained', gd_swap=False, top_n=40):
+def analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statistic='Infit', presentation='explained', gd_swap=False, top_n=40, view='levels', style='forest', levels=None):
     from mfrm_app.figure_presentation import matplotlib_figure
     project.require_reportable_input(analysis)
     canonical = KIND_ALIASES.get(str(kind), str(kind))
+    if canonical != 'anchor_sensitivity' and (view != 'levels' or style != 'forest' or levels is not None):
+        raise ValueError('view, style and levels are options for anchor_sensitivity figures')
     if pending := _pending_output(analysis, canonical):
         raise ValueError(f"Output not computed. Use mfrmpy.diagnose(analysis, outputs='{pending}') first.")
-    fig = _analysis_figure(analysis, canonical, level=level, index=index, facet=facet, statistic=statistic, gd_swap=gd_swap, top_n=top_n)
+    fig = _analysis_figure(analysis, canonical, level=level, index=index, facet=facet, statistic=statistic, gd_swap=gd_swap, top_n=top_n, view=view, style=style, levels=levels)
     return matplotlib_figure(fig, presentation)
 
 
-def _analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statistic='Infit', gd_swap=False, top_n=40):
+def _analysis_figure(analysis, kind, *, level=None, index=0, facet=None, statistic='Infit', gd_swap=False, top_n=40, view='levels', style='forest', levels=None):
     """Draw retained values only; unavailable intervals never become error bars."""
     if kind == 'rater_dff':
         return _rater_dff_figure(analysis)
     if kind == 'anchor_sensitivity':
-        return _anchor_sensitivity_figure(analysis)
+        return _anchor_sensitivity_figure(analysis, view=view, style=style, levels=levels)
     if kind == 'pathway':
         result, diagnostics = _require_mfrm(analysis, kind)
         return maps.pathway_figure(result, diagnostics, facet=facet, statistic=statistic)

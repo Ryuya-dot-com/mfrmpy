@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from . import anchor_intervals, basic_analysis, engine, output_qualification, project, shared_calibration
+from . import anchor_intervals, anchor_levels, basic_analysis, engine, output_qualification, project, shared_calibration
 from .rater_contrast import check_rater_contrast
 
 
@@ -14,6 +14,7 @@ CONSTRAINTS = "Anchor sensitivity constraints"
 WORKS = "Anchor sensitivity shared works"
 INTERVALS = "Anchor sensitivity intervals"
 OCCASIONS = "Anchor sensitivity occasion overlap"
+LEVELS = anchor_levels.TITLE
 REFERENCE = "No anchors"
 _SUPPORTED = {"observed", "anchor_dependent"}
 _HOLD = {
@@ -173,6 +174,10 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
                    support=status, observation_estimable=audit["observation_estimable"],
                    population_prior_sd=sd, calibration=calibration,
                    estimate=None, reason=_HOLD.get(status, ""), fit_id=None)
+        labels = analysis["result"]["config"]["facet_levels"][rater]
+        level_info = dict(labels=list(labels), estimates=None, covariance=None,
+                          propagated_covariance=None, sensitivity=None,
+                          reason="Intervals not requested", propagation_reason="")
         if status in _SUPPORTED:
             try:
                 if name == REFERENCE:
@@ -188,15 +193,23 @@ def with_anchor_sensitivity(analysis, *, rater, difference, scenarios, intervals
                     result, fit_id = candidate["result"], candidate["analysis_id"]
                 row["estimate"], row["reason"] = _point(result, audit)
                 row["fit_id"] = fit_id
+                if row["estimate"] is not None:
+                    level_info["estimates"] = result["params"]["facets"][rater].tolist()
             except (ValueError, FloatingPointError, np.linalg.LinAlgError) as exc:
                 row["reason"] = f"Calibration failed: {exc}"
         if intervals:
             try:
                 if row["estimate"] is None:
                     raise ValueError(row["reason"])
-                row["interval"] = dict(anchor_intervals.intervals(result, audit, calibration, sources.get(name)), reason="")
+                info = anchor_intervals.intervals(result, audit, calibration, sources.get(name))
+                level_info.update(info.pop("levels"))
+                row["interval"] = dict(info, reason="")
             except (ValueError, FloatingPointError, np.linalg.LinAlgError) as exc:
                 row["interval"] = dict(se=None, propagated_se=None, sensitivity=None, propagation_reason="", reason=str(exc))
+                level_info["reason"] = str(exc)
+        if row["estimate"] is None:
+            level_info["reason"] = row["reason"]
+        row["level_estimates"] = level_info
         rows.append(row)
 
     out = dict(analysis, anchor_sensitivity=dict(
@@ -274,6 +287,7 @@ def validate_entry(analysis, entry):
                 or number == 0 and calibration_id not in (None, analysis["analysis_id"])):
             raise project.ProjectError("An anchor scenario must retain a supported estimate or a reason")
         _validate_intervals(analysis, entry, row)
+        anchor_levels.validate(analysis, entry, row)
 
 
 def _validate_intervals(analysis, entry, row):
@@ -416,7 +430,7 @@ def tables(analysis):
                   WorkIDs=json.dumps(link["persons"], ensure_ascii=False))
              for link in (overlap["path"] or [dict(from_rater=left, to_rater=right, persons=[])])]
     tables = [
-        (TITLE, pd.DataFrame(rows), "Point estimates in severity logits for the first level minus the second. "
+        (TITLE, pd.DataFrame(rows), "Point estimates in native coefficient logits for the first level minus the second. "
          "The ratings are common to all scenarios. A change in NoncenterFacet changes which facet carries the "
          "free location. Review the scenario and anchor values together."),
         (CONSTRAINTS, pd.DataFrame(constraints, columns=["Scenario", "Kind", "Facet", "Group", "FacetSign",
@@ -441,6 +455,7 @@ def tables(analysis):
         )]), "All fitted works shared by the selected occasions, regardless of rater. This is distinct from the "
             "selected raters' shared-work path and from CalibrationWorks/OverlapWorks in the interval table. "
             "The contrast is FirstLevel minus SecondLevel; shared works alone do not remove occasion/mode confounding."))
+    tables.append((LEVELS, anchor_levels.table(analysis), anchor_levels.NOTE))
     return tables
 
 

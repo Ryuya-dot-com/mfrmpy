@@ -4,7 +4,7 @@
 notebooks. It uses the same Python engine as the existing MFRM Web and desktop
 applications. It does not require R, FACETS, Streamlit or Tkinter for analysis.
 
-This checkout is **0.2.3.dev3**, an unpublished development candidate. It adds
+This checkout is **0.2.3.dev4**, an unpublished development candidate. It adds
 fit/diagnostic separation, reduced design audits, G/Phi intervals under explicit
 balanced normal-model assumptions, multivariate G/D, and explicit MINQUE(0) for
 supported unbalanced/nested designs. Sections marked “development version” describe
@@ -27,7 +27,7 @@ python -m pip install mfrmpy
 To use this local development candidate, install its built wheel explicitly:
 
 ```bash
-python -m pip install dist/development-annual-20261126/mfrmpy-0.2.3.dev3-py3-none-any.whl
+python -m pip install dist/development-forest-20261126/mfrmpy-0.2.3.dev4-py3-none-any.whl
 ```
 
 The development version has not been uploaded. A plain PyPI installation does
@@ -579,9 +579,9 @@ returns +0.203 logit without anchors and −0.703 with previous values fixed;
 the conditional and shared-calibration SEs are 0.334 and 0.314. Its
 [confounded counterpart](../validation/evidence/annual_api/annual_mode_confounded.out)
 withholds the contrast when rating occasion and live/video mode coincide,
-including when only previous-year rater values are fixed. The plot shows
-retained model-based intervals or the hold reason, with an optional dashed
-line for the signed important difference. A sampling-error adjustment does not
+including when only previous-year rater values are fixed. The default plot is a
+color-coded forest of the selected individual levels. An explicitly selected
+difference plot also shows the signed important-difference line. A sampling-error adjustment does not
 remove bias from anchored raters whose severity actually changes.
 
 The public-API check reproduced 18 cases from the existing annual experiments;
@@ -591,6 +591,57 @@ it is not a new coverage study. `CoverageQualified=False` and
 not single-year evidence or the overlap count alone. Older files without these
 interval records remain point-only in the ordinary API; the special validation
 record in the earlier example is not silently promoted into an API interval.
+
+### Choose the comparison display
+
+The default for `anchor_sensitivity`, including the automatic HTML and ZIP
+figures, is **only a color-coded forest of the selected rater levels**.
+Colors and marker shapes identify the levels. Each scenario has its own panel
+and states its origin: an unanchored fixed person mean and an estimated person
+mean located by anchors are different reference systems. Conditional and
+calibration-propagated uncertainty appear as separate labelled rows.
+
+```python
+# Default: individual B-R3 and A-R3 estimates and their retained intervals.
+fig = mfrmpy.plot(linked, "anchor_sensitivity")
+
+# Explicit alternatives, independent choices of target and display form:
+delta = mfrmpy.plot(linked, "anchor_sensitivity", view="difference")
+halfeye = mfrmpy.plot(linked, "anchor_sensitivity", style="halfeye")
+three = mfrmpy.plot(linked, "anchor_sensitivity",
+                    levels=["A-R1", "A-R3", "B-R3"])
+level_table = mfrmpy.tables(linked, "Anchor sensitivity levels")[0][1]
+mfrmpy.export_bundle(linked, "chosen_figures.zip", kind="anchor_sensitivity",
+    plots=[{"kind": "anchor_sensitivity"},
+           {"kind": "anchor_sensitivity", "view": "difference"}])
+```
+
+The x-axis uses native coefficients in logits. With `FacetSign=-1`, larger
+values lower predicted scores (greater severity); with `+1`, the direction is
+reversed. Pointwise intervals are normal approximations, not simultaneous
+intervals. Fixed anchors appear as fixed points under conditional uncertainty;
+propagation can give them nonzero calibration uncertainty. Half-eye shading is
+explicitly a normal approximation from the estimate and SE, not posterior draws
+or an empirical distribution. No additional density dependency is required.
+
+Individual interval overlap does **not** determine whether the difference
+excludes zero. The saved `level_estimates` contain the native estimates and
+joint covariance for every fitted rater level, with anchor sensitivities and
+joint work contributions when available. The public level table includes
+`JointCovariance` and its `LevelOrder`; these recover the contrast variance as
+`V[first, first] + V[second, second] - 2*V[first, second]`. The original difference
+table remains the direct source for the prespecified comparison and its signed
+important difference. The important-difference line is absent from the level
+plot because it is a threshold for a difference, not for a native level.
+
+These individual intervals have not received a separate coverage qualification;
+`CoverageQualified=False` remains explicit. Existing contrast simulations are
+not evidence for individual-level coverage. Old files without level records
+recover baseline points from the saved fit, withhold unavailable alternate
+levels/intervals with a reason, and never refit or split a contrast SE into two
+individual SEs. Their retained differences remain available via
+`view="difference"`. To customize beyond these choices, use the public tables
+and the plotting library of your choice.
 
 ### Compare alternate anchor settings
 

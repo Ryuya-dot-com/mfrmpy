@@ -88,22 +88,28 @@ def source_settings(source, target, fixed, rater, rating_id, *, facet=None, leve
 
 
 def person_influence(problem, point, order, direction):
-    """Directional marginal score by person in native fixed-SD RSM coordinates."""
+    """Marginal scores by person for one direction or a matrix of columns."""
+    direction = np.asarray(direction)
+    scalar = direction.ndim == 1
+    if scalar:
+        direction = direction[:, None]
     nodes, weights = mml_joint.normal_rule(order)
     evaluated = problem.evaluate(point, nodes, weights, moments=False)
     predictor = problem.design @ point[:-1]
     probability = softmax(predictor + np.exp(point[-1])*nodes[:, None, None]*problem.k, axis=-1)
     derivative = problem.design @ direction
-    observed = np.einsum("nik,ik->n", problem.counts, derivative)
-    expected = np.einsum("qik,ik->qi", probability, derivative)
-    score = observed - np.einsum("nq,ni,qi->n", evaluated["posterior"], problem.cell_totals, expected, optimize=True)
-    if not np.isfinite(score).all() or not np.isclose(score.sum(), -evaluated["gradient"][:-1] @ direction,
+    observed = np.einsum("nik,ikd->nd", problem.counts, derivative)
+    expected = np.einsum("qik,ikd->qid", probability, derivative)
+    score = observed - np.einsum("nq,ni,qid->nd", evaluated["posterior"], problem.cell_totals, expected, optimize=True)
+    if not np.isfinite(score).all() or not np.allclose(score.sum(axis=0), -evaluated["gradient"][:-1] @ direction,
                                                        atol=1e-9, rtol=1e-9):
         raise ValueError("Person contributions disagree with the marginal likelihood gradient")
-    return pd.Series(score, index=problem.person_labels)
+    return (pd.Series(score[:, 0], index=problem.person_labels) if scalar else
+            pd.DataFrame(score, index=problem.person_labels))
 
 
-def contributions(source, rater, levels, sensitivity, target, mapping=None):
+def calibration_scores(source, rater, levels, sensitivity, mapping=None):
+    """Joint calibration influence for native coefficients or contrasts."""
     result = source["result"]
     cfg = result["config"]
     if mapping and "level_map" in mapping:
@@ -116,12 +122,10 @@ def contributions(source, rater, levels, sensitivity, target, mapping=None):
     ix = {row["Level"]: i for i, row in enumerate(record["targets"])}
     # Repeated source rows represent the same estimate, with perfect covariance.
     jacobian = np.asarray(record["target_jacobian"])[[ix[level] for level in levels]]
-    direction = np.linalg.solve(record["calculations"][0]["information"], sensitivity @ jacobian)
+    directions = np.linalg.solve(record["calculations"][0]["information"], (sensitivity @ jacobian).T)
     problem = mml_joint.GroupedMmlLikelihood(result["prep"]["data"], cfg, allow_all_centered=True)
     point = np.r_[record["coordinates"], np.log(engine.get_population_prior_sd(cfg))]
-    calibration = person_influence(problem, point, cfg["quad_points"], direction)
-    components = variance_components(calibration, target)
-    return dict(calibration=calibration.to_dict(), receiving=target.to_dict(), **components)
+    return person_influence(problem, point, cfg["quad_points"], directions)
 
 
 def variance_components(calibration, receiving):

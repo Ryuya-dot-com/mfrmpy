@@ -56,7 +56,7 @@ def fit_with_anchor_origin(data, settings, audit):
     )))
 
 
-def anchored_information(result, audit):
+def anchored_information(result, audit, *, include_levels=False):
     """Project the observed information onto free and fixed-value coordinates."""
     cfg, prep, params = (result[k] for k in ("config", "prep", "params"))
     rater = audit["rater"]
@@ -120,7 +120,18 @@ def anchored_information(result, audit):
     if (not np.isfinite(variance) or variance <= 0 or not np.isfinite(sensitivity).all()
             or not np.isclose(sensitivity.sum(), 0., rtol=0, atol=1e-10)):
         raise ValueError("Anchored contrast variance or sensitivity is invalid")
-    return float(np.sqrt(variance)), sensitivity, (problem, point, q, free @ direction)
+    output = (float(np.sqrt(variance)), sensitivity, (problem, point, q, free @ direction))
+    if not include_levels:
+        return output
+    # Native coefficients exclude the fitted population shift absorbed into q.
+    selected = eye[list(index.values())]
+    level_jacobian = selected @ free
+    level_jacobian[:, -1] -= 1.
+    level_direction = level_jacobian @ covariance
+    level_sensitivity = selected @ anchors - level_direction @ (free.T @ at_fit @ anchors)
+    return (*output, dict(covariance=(level_direction @ level_jacobian.T).tolist(),
+                         sensitivity=level_sensitivity.tolist(),
+                         receiving=(problem, point, q, free @ level_direction.T)))
 
 
 def intervals(result, audit, calibration, source=None):
@@ -132,17 +143,34 @@ def intervals(result, audit, calibration, source=None):
         row, = (row for row in record["table"] if row["Kind"] == "difference")
         if not row["CIEligible"]:
             raise ValueError(row["Reason"])
-        return dict(se=row["SE"], propagated_se=None, sensitivity=None, propagation_reason="")
+        count = len(result["config"]["facet_levels"][audit["rater"]])
+        return dict(se=row["SE"], propagated_se=None, sensitivity=None, propagation_reason="",
+                    levels=dict(covariance=np.asarray(record["target_covariance"])[:count, :count].tolist(),
+                                propagated_covariance=None, sensitivity=None, reason="", propagation_reason=""))
 
-    se, sensitivity, receiving = anchored_information(result, audit)
+    se, sensitivity, receiving, levels = anchored_information(result, audit, include_levels=True)
+    level_receiving = levels.pop("receiving")
+    levels.update(propagated_covariance=None, reason="", propagation_reason="")
     reason = ""
     propagated = None
     evidence = {}
     if source is not None:
         try:
-            target = shared_calibration.person_influence(*receiving)
-            shared = shared_calibration.contributions(source, audit["rater"], calibration["levels"], sensitivity, target,
-                                                     mapping=calibration.get("source"))
+            problem, point, q, directions = level_receiving
+            target = shared_calibration.person_influence(problem, point, q, directions)
+            calibrated = shared_calibration.calibration_scores(source, audit["rater"], calibration["levels"],
+                         np.asarray(levels["sensitivity"]), mapping=calibration.get("source"))
+            joint = calibrated.add(target, fill_value=0.)
+            levels["propagated_covariance"] = (joint.T @ joint).to_numpy().tolist()
+            levels["shared"] = {key: dict(zip(frame.index, frame.to_numpy().tolist(), strict=True))
+                                for key, frame in (("calibration", calibrated), ("receiving", target))}
+            labels = result["config"]["facet_levels"][audit["rater"]]
+            weights = np.zeros(len(labels))
+            for term in audit["contrast_weights"]:
+                weights[labels.index(term["rater_level"])] = term["weight"]
+            a, b = calibrated @ weights, target @ weights
+            shared = dict(calibration=a.to_dict(), receiving=b.to_dict(),
+                          **shared_calibration.variance_components(a, b))
             evidence["shared"] = shared
             propagated = shared["se"]
         except (ValueError, FloatingPointError, np.linalg.LinAlgError) as exc:
@@ -154,6 +182,12 @@ def intervals(result, audit, calibration, source=None):
     elif calibration["kind"] == "independent":
         v = float(sensitivity @ np.asarray(calibration["covariance"]) @ sensitivity)
         propagated = float(np.hypot(se, np.sqrt(max(v, 0.))))
+        s = np.asarray(levels["sensitivity"])
+        levels["propagated_covariance"] = (np.asarray(levels["covariance"]) + s @ np.asarray(calibration["covariance"]) @ s.T).tolist()
         if not np.isfinite(propagated):
             reason, propagated = "Nonfinite propagated contrast standard error", None
-    return dict(se=se, propagated_se=propagated, sensitivity=sensitivity.tolist(), propagation_reason=reason, **evidence)
+    if reason:
+        levels["propagated_covariance"] = None
+        levels.pop("shared", None)
+    levels["propagation_reason"] = reason
+    return dict(se=se, propagated_se=propagated, sensitivity=sensitivity.tolist(), propagation_reason=reason, levels=levels, **evidence)
